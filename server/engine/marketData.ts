@@ -1,0 +1,289 @@
+import type { Candle, Liquidation, Timeframe } from "../../shared/market.js";
+import type { DerivativesInput } from "../../shared/scoring.js";
+
+/** What the scanner needs from a market-data source. Swap this for another exchange or a mock. */
+export interface Ticker24h { change24hPct: number; volume24h: number }
+export interface OrderBookSnapshot {
+  bidVolume: number | null;
+  askVolume: number | null;
+  imbalance: number | null;
+  spread: number | null;
+  midpoint: number | null;
+}
+
+export interface MarketSnapshot {
+  ticker: Ticker24h;
+  derivatives: DerivativesInput;
+  orderBook: OrderBookSnapshot;
+  timestamp: number;
+}
+
+/** Execution-quality hard filters. OFF unless HARD_FILTERS=true. Live scanner only (not replayed in the backtest). */
+export interface HardFilterConfig {
+  enabled: boolean;
+  /** Block when (ask - bid) / mid exceeds this percent. */
+  maxSpreadPct: number;
+  /** Block when 24h quote volume (USD) is below this. 0 = check off. */
+  minVolume24hUsd: number;
+  /** Block when the market snapshot is older than this. */
+  maxDataAgeMs: number;
+}
+
+export function loadHardFilterConfig(env: NodeJS.ProcessEnv = process.env): HardFilterConfig {
+  const n = (raw: string | undefined, d: number): number => {
+    const v = Number(raw);
+    return raw !== undefined && raw !== "" && Number.isFinite(v) && v >= 0 ? v : d;
+  };
+  return {
+    enabled: ["1", "true", "yes"].includes((env.HARD_FILTERS ?? "").toLowerCase()),
+    maxSpreadPct: n(env.MAX_SPREAD_PCT, 0.1),
+    minVolume24hUsd: n(env.MIN_VOLUME_24H_USD, 0),
+    maxDataAgeMs: n(env.MAX_DATA_AGE_MS, 15_000),
+  };
+}
+
+/** Returns a block reason, or null when the trade may go ahead. Missing data blocks (fail closed) when enabled. */
+export function checkHardFilters(snap: MarketSnapshot | null, now: number, cfg: HardFilterConfig): string | null {
+  if (!cfg.enabled) return null;
+  if (!snap) return "Hard filter: market snapshot unavailable";
+  const age = now - snap.timestamp;
+  if (!(age <= cfg.maxDataAgeMs)) return `Hard filter: market data is ${Math.round(age / 1000)}s old (max ${cfg.maxDataAgeMs / 1000}s)`;
+  const { spread, midpoint } = snap.orderBook;
+  if (spread === null || midpoint === null || !(midpoint > 0) || !(spread >= 0)) return "Hard filter: order-book spread unavailable";
+  const pct = (spread / midpoint) * 100;
+  if (pct > cfg.maxSpreadPct) return `Hard filter: spread ${pct.toFixed(3)}% is above ${cfg.maxSpreadPct}%`;
+  if (cfg.minVolume24hUsd > 0) {
+    const v = snap.ticker.volume24h;
+    if (!(v > 0)) return "Hard filter: 24h volume unavailable"; // the snapshot reports 0 when the ticker call failed
+    if (v < cfg.minVolume24hUsd) return `Hard filter: 24h volume ${Math.round(v)} is below ${cfg.minVolume24hUsd}`;
+  }
+  return null;
+}
+
+export interface MarketData {
+  /** CLOSED candles only, oldest first. `now` decides which candle is still forming. */
+  getCandles(symbol: string, tf: Timeframe, limit: number, now: number, includeForming?: boolean): Promise<Candle[]>;
+  getTicker24h(symbol: string): Promise<Ticker24h>;
+  /** Each field is null when its endpoint failed or is unavailable. */
+  getDerivatives(symbol: string, tf: Timeframe): Promise<DerivativesInput>;
+  /** Combined real-time market-analysis snapshot. */
+    getMarketSnapshot(symbol: string, tf: Timeframe): Promise<MarketSnapshot>;
+  /** Which OKX market the data came from. */
+  marketTypeOf?(symbol: string): "swap" | "spot";
+  /** Recent liquidation events (optional). Quantity units are exchange contracts: use ratios only. */
+  getLiquidations?(symbol: string): Promise<Liquidation[]>;
+}
+
+export interface MarketDataConfig { spotUrl: string; futuresUrl: string; timeoutMs: number }
+export const DEFAULT_MARKET_CONFIG: MarketDataConfig = {
+  spotUrl: "https://data-api.binance.vision",
+  futuresUrl: "https://fapi.binance.com",
+  timeoutMs: 8000,
+};
+
+export const BINANCE_INTERVAL: Record<Timeframe, string> = {
+  "1m": "1m", "5m": "5m", "15m": "15m", "30m": "30m", "1H": "1h", "4H": "4h", "1D": "1d",
+};
+/** Higher timeframe used for confirmation. 1D has none, so it scores 0 and is listed as unavailable. */
+export const CONFIRMATION_TF: Record<Timeframe, Timeframe | null> = {
+  "1m": "5m", "5m": "15m", "15m": "1H", "30m": "4H", "1H": "4H", "4H": "1D", "1D": null,
+};
+export const EXECUTION_TF: Record<Timeframe, Timeframe> = {
+  "1m": "1m", "5m": "1m", "15m": "1m", "30m": "1m", "1H": "5m", "4H": "15m", "1D": "1H",
+};
+// openInterestHist / long-short ratio only support these periods (no 1m)
+const STATS_PERIOD: Record<Timeframe, string> = {
+  "1m": "5m", "5m": "5m", "15m": "15m", "30m": "30m", "1H": "1h", "4H": "4h", "1D": "1d",
+};
+
+const toNum = (v: unknown): number => {
+  const n = typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" ? Number(v) : NaN;
+  if (!Number.isFinite(n)) throw new Error("Non-numeric value in exchange response");
+  return n;
+};
+const asArray = (v: unknown): unknown[] => {
+  if (!Array.isArray(v)) throw new Error("Unexpected exchange response shape");
+  return v;
+};
+const asObject = (v: unknown): Record<string, unknown> => {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) throw new Error("Unexpected exchange response shape");
+  return v as Record<string, unknown>;
+};
+const settled = <T>(r: PromiseSettledResult<T>): T | null => (r.status === "fulfilled" ? r.value : null);
+
+export class BinanceMarketData implements MarketData {
+  constructor(
+    private readonly cfg: MarketDataConfig = DEFAULT_MARKET_CONFIG,
+    private readonly fetchFn: typeof fetch = fetch,
+  ) {}
+
+  private blockedUntil = 0;
+
+  private mkt(symbol: string): { base: string; prefix: string; sym: string; scale: number } {
+    const fut = (process.env.MARKET_SOURCE ?? "futures").toLowerCase() === "futures";
+    if (!fut) return { base: this.cfg.spotUrl, prefix: "/api/v3", sym: symbol, scale: 1 };
+    const k1000 = ["PEPEUSDT", "SHIBUSDT", "BONKUSDT", "FLOKIUSDT", "SATSUSDT", "XECUSDT", "LUNCUSDT"].includes(symbol);
+    return { base: this.cfg.futuresUrl, prefix: "/fapi/v1", sym: k1000 ? `1000${symbol}` : symbol, scale: k1000 ? 1000 : 1 };
+  }
+  private async getJson(base: string, path: string, params: Record<string, string | number>): Promise<unknown> {
+    if (Date.now() < this.blockedUntil) {
+      throw new Error(`Binance cooldown active (${Math.ceil((this.blockedUntil - Date.now()) / 60000)} min left)`);
+    }
+    const url = new URL(path, base);
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), this.cfg.timeoutMs);
+    try {
+      const res = await this.fetchFn(url.toString(), { signal: ctrl.signal });
+     if (res.status === 418 || res.status === 429) {
+        const retry = Number((res as any).headers?.get?.("retry-after")) || 0;
+        this.blockedUntil = Date.now() + Math.max(retry * 1000, 30 * 60 * 1000);
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status} from ${url.host}${url.pathname}`);
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async getCandles(symbol: string, tf: Timeframe, limit: number, now: number, includeForming = false): Promise<Candle[]> {
+    const m = this.mkt(symbol);
+    const raw = await this.getJson(m.base, `${m.prefix}/klines`, { symbol: m.sym, interval: BINANCE_INTERVAL[tf], limit: Math.min(limit + 1, 1000) });
+    const out: Candle[] = [];
+    for (const row of asArray(raw)) {
+      const r = asArray(row);
+      if (!includeForming && toNum(r[6]) > now) continue; // scanner ignores forming candle; tracker passes includeForming=true
+      out.push({ timestamp: toNum(r[0]), open: toNum(r[1]) / m.scale, high: toNum(r[2]) / m.scale, low: toNum(r[3]) / m.scale, close: toNum(r[4]) / m.scale, volume: toNum(r[5]) * m.scale });
+    }
+    return out.slice(-limit);
+  }
+
+  async getTicker24h(symbol: string): Promise<Ticker24h> {
+    const m = this.mkt(symbol);
+    const o = asObject(await this.getJson(m.base, `${m.prefix}/ticker/24hr`, { symbol: m.sym }));
+    return { change24hPct: toNum(o.priceChangePercent), volume24h: toNum(o.quoteVolume) };
+  }
+
+    async getMarketSnapshot(symbol: string, tf: Timeframe): Promise<MarketSnapshot> {
+    const [ticker, derivatives, orderBook] = await Promise.allSettled([
+      this.getTicker24h(symbol),
+      this.getDerivatives(symbol, tf),
+      this.getOrderBook(symbol),
+    ]);
+
+    const safeTicker: Ticker24h =
+      ticker.status === "fulfilled"
+        ? ticker.value
+        : { change24hPct: 0, volume24h: 0 };
+
+    const safeDerivatives: DerivativesInput =
+      derivatives.status === "fulfilled"
+        ? derivatives.value
+        : {
+            fundingRate: null,
+            oiChangePct: null,
+            longShortRatio: null,
+            bookImbalance: null,
+          };
+
+    const safeOrderBook: OrderBookSnapshot =
+      orderBook.status === "fulfilled"
+        ? orderBook.value
+        : {
+            bidVolume: null,
+            askVolume: null,
+            imbalance: null,
+            spread: null,
+            midpoint: null,
+          };
+
+    return {
+      ticker: safeTicker,
+      derivatives: safeDerivatives,
+      orderBook: safeOrderBook,
+      timestamp: Date.now(),
+    };
+  }
+
+  private async getOrderBook(symbol: string): Promise<OrderBookSnapshot> {
+    const m = this.mkt(symbol);
+    const raw = await this.getJson(
+      m.base,
+      `${m.prefix}/depth`,
+      { symbol: m.sym, limit: 20 },
+    );
+
+    const o = asObject(raw);
+
+    const sum = (side: unknown): number =>
+      asArray(side).reduce<number>(
+        (total, level) => total + toNum(asArray(level)[1]),
+        0,
+      );
+
+    const bids = asArray(o.bids);
+    const asks = asArray(o.asks);
+
+    const bidVolume = sum(bids);
+    const askVolume = sum(asks);
+
+    const bestBid =
+      bids.length > 0 ? toNum(asArray(bids[0])[0]) : null;
+
+    const bestAsk =
+      asks.length > 0 ? toNum(asArray(asks[0])[0]) : null;
+
+    const midpoint =
+      bestBid !== null && bestAsk !== null
+        ? (bestBid + bestAsk) / 2
+        : null;
+
+    const spread =
+      bestBid !== null && bestAsk !== null
+        ? bestAsk - bestBid
+        : null;
+
+    const total = bidVolume + askVolume;
+
+    return {
+      bidVolume,
+      askVolume,
+      imbalance: total > 0 ? (bidVolume - askVolume) / total : null,
+      spread,
+      midpoint,
+    };
+  }
+
+  async getDerivatives(symbol: string, tf: Timeframe): Promise<DerivativesInput> {
+    const period = STATS_PERIOD[tf];
+    const [funding, oi, ls, book, top, taker] = await Promise.allSettled([
+      this.getJson(this.cfg.futuresUrl, "/fapi/v1/premiumIndex", { symbol })
+        .then((r) => toNum(asObject(r).lastFundingRate))
+        .catch(async () => {
+          const rows = asArray(await this.getJson(this.cfg.futuresUrl, "/fapi/v1/fundingRate", { symbol, limit: 1 }));
+          return toNum(asObject(rows[0]).fundingRate);
+        }),
+      this.getJson(this.cfg.futuresUrl, "/futures/data/openInterestHist", { symbol, period, limit: 15 }).then((r) => {
+        const rows = asArray(r);
+        const first = toNum(asObject(rows[0]).sumOpenInterest), last = toNum(asObject(rows[rows.length - 1]).sumOpenInterest);
+        if (rows.length < 2 || first <= 0) throw new Error("Not enough open-interest history");
+        return ((last - first) / first) * 100;
+      }),
+      this.getJson(this.cfg.futuresUrl, "/futures/data/globalLongShortAccountRatio", { symbol, period, limit: 1 }).then((r) => toNum(asObject(asArray(r)[0]).longShortRatio)),
+      this.getJson(this.mkt(symbol).base, `${this.mkt(symbol).prefix}/depth`, { symbol: this.mkt(symbol).sym, limit: 20 }).then((r) => {
+        const o = asObject(r);
+        const sum = (side: unknown): number => asArray(side).reduce<number>((a, lvl) => a + toNum(asArray(lvl)[1]), 0);
+        const bid = sum(o.bids), ask = sum(o.asks);
+        if (bid + ask <= 0) throw new Error("Empty order book");
+        return (bid - ask) / (bid + ask); // CALCULATIONS.md: (bid-ask)/(bid+ask)
+      }),
+    this.getJson(this.cfg.futuresUrl, "/futures/data/topLongShortPositionRatio", { symbol, period, limit: 1 }).then((r) => toNum(asObject(asArray(r)[0]).longShortRatio)),
+      this.getJson(this.cfg.futuresUrl, "/futures/data/takerlongshortRatio", { symbol, period, limit: 1 }).then((r) => toNum(asObject(asArray(r)[0]).buySellRatio)),
+    ]);
+    return {
+      fundingRate: settled(funding), oiChangePct: settled(oi), longShortRatio: settled(ls), bookImbalance: settled(book),
+            topTraderRatio: settled(top), takerBuySellRatio: settled(taker),
+      asOf: Date.now(), source: "binance-futures",
+    };
+  }
+}
