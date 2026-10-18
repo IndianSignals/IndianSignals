@@ -1,0 +1,1864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CoinGabbarSignals — Backend Control Center</title>
+<meta name="description" content="CoinGabbarSignals internal backend control center">
+<style>
+:root{--bg:#020810;--panel:#071424;--panel2:#0a1a2d;--panel3:#0d2138;--line:#193451;--text:#dce9f6;--muted:#71869e;--soft:#9eb1c5;--cyan:#27bfff;--green:#21e39a;--red:#ff5368;--yellow:#ffc84d;--orange:#ff9e45;--purple:#9b86ff}
+*{box-sizing:border-box}html,body{margin:0;background:#000;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:12px}button,input,select{font:inherit;color:inherit}button{cursor:pointer}
+.app{min-height:100vh;background:radial-gradient(circle at 55% 0,#0b213b 0,#030a13 32%,#000 78%)}
+.top{height:62px;border-bottom:1px solid var(--line);background:#031020;display:flex;align-items:center;padding:0 18px;gap:20px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:9px;width:190px}.mark{width:31px;height:31px;border:2px solid #f4b42f;border-radius:50%;display:grid;place-items:center;color:#f4b42f;font-weight:900}.brand b{font-size:12px}.brand small{display:block;color:#f4b42f;font-size:8px;margin-top:3px}
+.toplinks{display:flex;gap:22px;flex:1}.toplinks a{color:#8196ac;text-decoration:none;font-size:10px}.toplinks a.active{color:#fff}.env{padding:5px 8px;border:1px solid #174f40;background:#06271f;color:#40eaa8;border-radius:4px;font-size:8px}.user{padding:6px 10px;border:1px solid #2a4058;background:#071427;border-radius:4px;font-size:9px}
+.layout{display:grid;grid-template-columns:190px minmax(0,1fr);max-width:1450px;margin:auto;min-height:calc(100vh - 62px)}
+.side{border-right:1px solid var(--line);background:rgba(3,14,28,.92);padding:16px 10px;position:sticky;top:62px;height:calc(100vh - 62px);overflow:auto}.side h4{font-size:8px;color:#617991;text-transform:uppercase;letter-spacing:.1em;margin:12px 9px 7px}.nav{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:4px;color:#8da2b8;text-decoration:none;font-size:9px;margin:2px 0}.nav:hover,.nav.active{background:linear-gradient(90deg,#0c2a47,#09203a);color:#e7f7ff}.nav.active{box-shadow:inset 2px 0 var(--cyan)}.ico{width:15px;text-align:center;color:#83abc9}.count{margin-left:auto;background:#102e48;color:#72d2ff;border-radius:9px;padding:2px 6px;font-size:7px}
+.main{padding:18px;min-width:0}.title{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}.title h1{font-size:17px;margin:0 0 4px}.title p{margin:0;color:var(--muted);font-size:9px}.actions{display:flex;gap:7px}.btn{background:#08192c;border:1px solid #27425e;border-radius:4px;padding:7px 10px;font-size:9px}.btn.primary{background:#073454;border-color:#1a8bc3;color:#dff6ff}
+.cards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.card{border:1px solid var(--line);background:linear-gradient(135deg,#081729,#061222);border-radius:5px;padding:11px}.label{color:#70859c;font-size:7px;text-transform:uppercase;letter-spacing:.07em}.value{font-size:16px;font-weight:800;margin-top:6px}.sub{color:#7890a7;font-size:7px;margin-top:4px}.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.cyan{color:var(--cyan)}
+.grid2{display:grid;grid-template-columns:1.45fr .9fr;gap:10px;margin-top:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.panel{border:1px solid var(--line);background:#061221;border-radius:5px;overflow:hidden}.ph{height:40px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 12px}.ph b{font-size:10px}.ph span{color:var(--muted);font-size:8px}.pb{padding:11px}
+.table{width:100%;border-collapse:collapse}.table th{color:#627b95;text-align:left;font-size:7px;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line)}.table td{padding:8px;border-bottom:1px solid #10253d;font-size:8px;color:#b6c7d8}.table tr:last-child td{border-bottom:0}.status{display:inline-flex;padding:3px 6px;border-radius:8px;font-size:7px}.active{background:#06392e;color:#39e8a5}.pending{background:#3a2d06;color:#ffd45b}.danger{background:#3b1018;color:#ff7383}.neutral{background:#13273c;color:#a4bad0}
+.health{display:grid;gap:8px}.healthrow{display:grid;grid-template-columns:1fr auto;align-items:center;padding:7px 8px;border:1px solid #142c46;background:#07182a;border-radius:4px}.healthrow small{color:#70869e;display:block;margin-top:3px}.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;background:var(--green);box-shadow:0 0 8px rgba(33,227,154,.45)}
+.bar{height:5px;background:#10273f;border-radius:5px;overflow:hidden;margin-top:8px}.fill{height:100%;background:linear-gradient(90deg,#1689c7,#28d6a0);width:78%}
+.log{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:8px;line-height:1.8;color:#8fa7bd;max-height:220px;overflow:auto}.log .ok{color:#39dfa3}.log .warn{color:#ffc84d}.log .err{color:#ff6578}
+.pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.stage{border:1px solid #183653;background:#07182a;border-radius:4px;padding:8px;text-align:center}.stage b{display:block;font-size:8px}.stage span{font-size:7px;color:#70869e;display:block;margin-top:4px}
+.footer{padding:20px 0 10px;color:#536b83;font-size:8px;text-align:right}
+@media(max-width:1050px){.cards{grid-template-columns:repeat(3,1fr)}.grid2,.grid3{grid-template-columns:1fr}.pipeline{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.toplinks{display:none}.layout{grid-template-columns:1fr}.side{position:fixed;left:-210px;top:62px;width:190px;z-index:30;transition:.2s}.side.open{left:0}.main{padding:10px}.cards{grid-template-columns:repeat(2,1fr)}.pipeline{grid-template-columns:repeat(2,1fr)}.brand{width:auto}.menu{display:block!important}}
+.menu{display:none;background:none;border:1px solid #28445f;border-radius:4px;padding:6px 8px}
+.login-page{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 20%,#0c3150 0,#020810 45%,#000 80%);
+  padding:20px;
+}
+
+.login-card{
+  width:100%;
+  max-width:390px;
+  padding:32px;
+  border:1px solid #1b4263;
+  border-radius:14px;
+  background:linear-gradient(145deg,#081a2d,#030b15);
+  box-shadow:0 25px 80px rgba(0,0,0,.6);
+}
+
+.login-logo{
+  width:58px;
+  height:58px;
+  margin:0 auto 16px;
+  border:2px solid #f4b42f;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  color:#f4b42f;
+  font-size:18px;
+  font-weight:900;
+}
+
+.login-card h1{
+  text-align:center;
+  margin:0;
+  font-size:20px;
+}
+
+.login-card p{
+  text-align:center;
+  color:#71869e;
+  margin:7px 0 25px;
+}
+
+.login-card label{
+  display:block;
+  color:#9eb1c5;
+  font-size:11px;
+  margin:14px 0 6px;
+}
+
+.login-card input{
+  width:100%;
+  padding:12px;
+  border:1px solid #24425e;
+  border-radius:6px;
+  background:#061221;
+  outline:none;
+}
+
+.login-card input:focus{
+  border-color:#27bfff;
+}
+
+.login-card button{
+  width:100%;
+  margin-top:22px;
+  padding:12px;
+  border:0;
+  border-radius:6px;
+  background:#0879ad;
+  color:white;
+  font-weight:800;
+}
+
+#loginError{
+  color:#ff6578;
+  font-size:11px;
+  text-align:center;
+  margin-top:12px;
+  min-height:16px;
+}
+</style>
+<script>
+try { var t = JSON.parse(localStorage.getItem("cg_theme")); } catch (e) { var t = null; }
+document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+</script>
+<style id="themeCss">
+html[data-theme="light"]{--bg:#f4f7fb;--panel:#fff;--panel2:#f1f5f9;--panel3:#e8eef6;--line:#d9e2ec;--text:#0f172a;--muted:#64748b;--soft:#475569;--cyan:#0b7fb8;--green:#0f9d6a;--red:#d92d45;--yellow:#b7791f;--orange:#c2641a;--purple:#6d4fd6}
+html[data-theme="light"],html[data-theme="light"] body{background:#f4f7fb;color:var(--text)}
+html[data-theme="light"] .app{background:#f4f7fb}
+html[data-theme="light"] .top{background:#fff;border-bottom-color:#d9e2ec}
+html[data-theme="light"] .brand b{color:#0f172a}
+html[data-theme="light"] .toplinks a{color:#64748b}
+html[data-theme="light"] .toplinks a.active{color:#0f172a;background:transparent}
+html[data-theme="light"] .env{background:#e3f8ee;border-color:#9fdcc3;color:#087a52}
+html[data-theme="light"] .user,html[data-theme="light"] .menu{background:#f1f5f9;border-color:#d0dae6;color:#0f172a}
+html[data-theme="light"] .side{background:#fff;border-right-color:#d9e2ec}
+html[data-theme="light"] .side h4{color:#7a8ba0}
+html[data-theme="light"] .nav{color:#475569}
+html[data-theme="light"] .nav:hover,html[data-theme="light"] .nav.active{background:#e6f2fb;color:#0b5f8c;box-shadow:none}
+html[data-theme="light"] .nav.active{box-shadow:inset 2px 0 #0b7fb8}
+html[data-theme="light"] .ico{color:#6b86a0}
+html[data-theme="light"] .count{background:#dbeafe;color:#1d5fa8}
+html[data-theme="light"] .card,html[data-theme="light"] .panel,html[data-theme="light"] .healthrow,html[data-theme="light"] .stage{background:#fff;border-color:#d9e2ec;color:#0f172a}
+html[data-theme="light"] .label,html[data-theme="light"] .sub,html[data-theme="light"] .ph span,html[data-theme="light"] .healthrow small,html[data-theme="light"] .stage span,html[data-theme="light"] .title p{color:#64748b}
+html[data-theme="light"] .ph{border-bottom-color:#d9e2ec}
+html[data-theme="light"] .table th{color:#64748b;border-bottom-color:#d9e2ec}
+html[data-theme="light"] .table td{color:#1e293b;border-bottom-color:#edf1f6}
+html[data-theme="light"] .btn{background:#fff;border-color:#c9d6e4;color:#0f172a}
+html[data-theme="light"] .btn.primary{background:#0b7fb8;border-color:#0b7fb8;color:#fff}
+html[data-theme="light"] .bar{background:#e2e8f0}
+html[data-theme="light"] .log{color:#475569}
+html[data-theme="light"] .footer{color:#7a8ba0}
+html[data-theme="light"] .active{background:#d9f7ea;color:#087a52}
+html[data-theme="light"] .pending{background:#fff3cd;color:#8a6100}
+html[data-theme="light"] .danger{background:#fde2e5;color:#b4233a}
+html[data-theme="light"] .neutral{background:#e6edf5;color:#475569}
+html[data-theme="light"] input,html[data-theme="light"] select,html[data-theme="light"] textarea,html[data-theme="light"] .fi{background:#fff!important;color:#0f172a!important;border-color:#c9d6e4!important}
+html[data-theme="light"] .login-page{background:#eef3f9}
+html[data-theme="light"] .login-card{background:#fff;border-color:#d9e2ec;box-shadow:0 20px 60px rgba(15,23,42,.12)}
+html[data-theme="light"] .login-card p{color:#64748b}
+html[data-theme="light"] .login-card label{color:#475569}
+html[data-theme="light"] .login-card button{background:#0b7fb8}
+html[data-theme="light"] #modal{background:rgba(15,23,42,.45)}
+</style>
+</head>
+<body>
+
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-logo">CG</div>
+
+    <h1>CoinGabbarSignals</h1>
+    <p>Backend Control Center</p>
+
+    <form id="loginForm">
+
+      <label>Email</label>
+      <input
+        id="email"
+        type="email"
+        placeholder="Admin email"
+        required
+      >
+
+      <label>Password</label>
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        required
+      >
+
+      <button type="submit">
+        LOGIN TO BACKEND
+      </button>
+
+      <div id="loginError"></div>
+
+    </form>
+  </div>
+</div>
+<style>
+.fi{width:100%;padding:9px;border:1px solid #24425e;border-radius:5px;background:#061221;outline:none;font-size:11px}
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;align-items:center;justify-content:center;padding:16px}
+</style>
+<div id="modal">
+  <form id="sigForm" class="panel" style="width:100%;max-width:420px;padding:16px;display:grid;gap:8px">
+    <b style="font-size:13px">Create Signal</b>
+    <input class="fi" id="f_symbol" placeholder="Symbol (BTCUSDT)" required>
+    <select class="fi" id="f_side"><option>LONG</option><option>SHORT</option><option>NO_TRADE</option></select>
+    <select class="fi" id="f_tf"><option>1m</option><option>5m</option><option>15m</option><option>30m</option><option selected>1H</option><option>4H</option><option>1D</option></select>
+    <input class="fi" id="f_score" type="number" min="0" max="100" placeholder="Score 0-100" required>
+    <input class="fi" id="f_entry" type="number" step="any" placeholder="Entry" required>
+    <input class="fi" id="f_stop" type="number" step="any" placeholder="Stop loss" required>
+    <input class="fi" id="f_targets" placeholder="Targets: 68000,70000" required>
+    <input class="fi" id="f_note" placeholder="Rationale (optional)">
+    <div id="sigMsg" style="font-size:10px;min-height:14px"></div>
+    <div class="actions"><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="cancelBtn">Cancel</button></div>
+  </form>
+</div>
+<div id="backendApp" style="display:none">
+<div class="app">
+<header class="top">
+<button class="menu" id="menu">☰</button>
+<div class="brand"><div class="mark">CG</div><div><b>CoinGabbarSignals</b><small>BACKEND CONTROL CENTER</small></div></div>
+<nav class="toplinks"><a class="active" href="#">Dashboard</a><a href="#">Signals</a><a href="#">Market Data</a><a href="#">Calculations</a><a href="#">Backtests</a><a href="#">System</a></nav>
+<span class="env">● DEMO / API ONLINE</span><span class="user">Admin ▾</span>
+</header>
+<div class="layout">
+<aside class="side" id="side">
+<h4>Control Center</h4>
+<a class="nav active" href="#"><span class="ico">▦</span>Dashboard</a>
+<a class="nav" href="#"><span class="ico">⚡</span>Signal Engine <span class="count">12</span></a>
+<a class="nav" href="#"><span class="ico">◈</span>Signal Events</a>
+<a class="nav" href="#"><span class="ico">▣</span>Signal History</a>
+<a class="nav" href="#"><span class="ico">📈</span>Signal Chart</a>
+<a class="nav" href="#"><span class="ico">◌</span>Market Data</a>
+<a class="nav" href="#"><span class="ico">ƒ</span>Indicators</a>
+<a class="nav" href="#"><span class="ico">✦</span>Score Breakdown</a>
+<a class="nav" href="#"><span class="ico">◎</span>Risk Engine</a>
+<a class="nav" href="#"><span class="ico">↗</span>Performance</a>
+<a class="nav" href="#"><span class="ico">▤</span>Backtesting</a>
+<a class="nav" href="#"><span class="ico">✚</span>Scan Health</a>
+<h4>Data & Users</h4>
+<a class="nav" href="#"><span class="ico">☆</span>Watchlists</a>
+<a class="nav" href="#"><span class="ico">♢</span>Alerts <span class="count">4</span></a>
+<a class="nav" href="#"><span class="ico">♙</span>Users</a>
+<a class="nav" href="#"><span class="ico">◫</span>Database</a>
+<h4>Security</h4>
+<a class="nav" href="#"><span class="ico">✓</span>Audit Logs</a>
+<a class="nav" href="#"><span class="ico">⚿</span>API & Keys</a>
+<a class="nav" href="#"><span class="ico">⌬</span>Engine Config</a>
+<a class="nav" href="#"><span class="ico">⚙</span>Settings</a>
+</aside>
+<main class="main">
+<div class="title"><div><h1>Backend Control Center</h1><p>CoinGabbarSignals internal operations, engines, data quality and system monitoring.</p></div><div class="actions"><button class="btn" onclick="location.reload()">↻ Refresh</button><button class="btn primary" id="createBtn">+ Create Signal</button></div></div>
+
+<section class="cards">
+<div class="card"><div class="label">Active Signals</div><div class="value green">12</div><div class="sub">3 entry triggered</div></div>
+<div class="card"><div class="label">Market Feeds</div><div class="value cyan">8/8</div><div class="sub">All providers responding</div></div>
+<div class="card"><div class="label">API Requests</div><div class="value">18.4K</div><div class="sub">Last 24 hours</div></div>
+<div class="card"><div class="label">Data Quality</div><div class="value green">99.2%</div><div class="sub">Fresh observations</div></div>
+<div class="card"><div class="label">Backtests</div><div class="value">24</div><div class="sub">2 running</div></div>
+<div class="card"><div class="label">System Errors</div><div class="value yellow">3</div><div class="sub">Needs review</div></div>
+</section>
+
+<div class="grid2">
+<section class="panel">
+<div class="ph"><b>Signal Engine Monitor</b><span>Pipeline status</span></div>
+<div class="pb">
+<div class="pipeline">
+<div class="stage"><b>Market Data</b><span class="green">● Healthy</span></div>
+<div class="stage"><b>Validation</b><span class="green">● Healthy</span></div>
+<div class="stage"><b>Indicators</b><span class="green">● Healthy</span></div>
+<div class="stage"><b>Structure</b><span class="green">● Healthy</span></div>
+<div class="stage"><b>Risk Engine</b><span class="green">● Healthy</span></div>
+<div class="stage"><b>Signal Score</b><span class="green">● Healthy</span></div>
+</div>
+<div style="margin-top:12px">
+<table class="table"><thead><tr><th>Signal</th><th>Direction</th><th>Score</th><th>Status</th><th>Updated</th></tr></thead>
+<tbody>
+<tr><td>BTC/USDT · CGB-230928</td><td class="green">LONG</td><td>89/100</td><td><span class="status active">ACTIVE</span></td><td>20:41:22</td></tr>
+<tr><td>ETH/USDT · CGB-230927</td><td class="red">SHORT</td><td>82/100</td><td><span class="status pending">ENTRY</span></td><td>20:40:08</td></tr>
+<tr><td>SOL/USDT · CGB-230926</td><td class="green">LONG</td><td>76/100</td><td><span class="status active">ACTIVE</span></td><td>20:38:51</td></tr>
+<tr><td>DOGE/USDT · CGB-230925</td><td class="neutral">WAIT</td><td>58/100</td><td><span class="status neutral">NO SIGNAL</span></td><td>20:37:10</td></tr>
+</tbody></table>
+</div>
+</div>
+</section>
+
+<section class="panel">
+<div class="ph"><b>System Health</b><span>Updated now</span></div>
+<div class="pb health">
+<div class="healthrow"><div>API Server<small>Latency 42ms</small></div><div><span class="dot"></span><b class="green">ONLINE</b></div></div>
+<div class="healthrow"><div>Database<small>Connections 18 / 100</small></div><div><span class="dot"></span><b class="green">ONLINE</b></div></div>
+<div class="healthrow"><div>Market Providers<small>8 active providers</small></div><div><span class="dot"></span><b class="green">ONLINE</b></div></div>
+<div class="healthrow"><div>Queue Worker<small>14 jobs pending</small></div><div><span class="dot"></span><b class="green">ONLINE</b></div></div>
+<div class="healthrow"><div>Memory<small>62% utilization</small><div class="bar"><div class="fill" style="width:62%"></div></div></div><b class="cyan">62%</b></div>
+</div>
+</section>
+</div>
+
+<div class="grid3">
+<section class="panel"><div class="ph"><b>Market Data Quality</b><span id="mdqInfo">Binance live</span></div><div class="pb" style="max-height:420px;overflow:auto"><table class="table"><thead><tr><th>Coin</th><th>Price</th><th>24h</th><th>Status</th></tr></thead><tbody id="liveFeed">
+<tr><td>Binance</td><td>BTC/USDT</td><td class="green">FRESH</td><td>38ms</td></tr>
+<tr><td>Bybit</td><td>BTC/USDT</td><td class="green">FRESH</td><td>51ms</td></tr>
+<tr><td>CoinGlass</td><td>Derivatives</td><td class="green">FRESH</td><td>94ms</td></tr>
+<tr><td>News Provider</td><td>Market News</td><td class="yellow">DELAYED</td><td>1.8s</td></tr>
+</tbody></table></div></section>
+<section class="panel"><div class="ph"><b>Risk & Execution</b><span>Current checks</span></div><div class="pb"><table class="table"><tbody>
+<tr><td>Critical failures</td><td class="green">0</td></tr>
+<tr><td>Invalid SL</td><td class="green">0</td></tr>
+<tr><td>Negative R:R</td><td class="green">0</td></tr>
+<tr><td>Extreme spread</td><td class="yellow">1</td></tr>
+<tr><td>Stale signals blocked</td><td>7</td></tr>
+</tbody></table></div></section>
+<section class="panel"><div class="ph"><b>Alert Queue</b><span id="alertInfo">Loading...</span></div><div class="pb"><table class="table"><tbody id="alertBody">
+<tr><td colspan="3" style="opacity:.7">Loading...</td></tr>
+</tbody></table></div></section>
+</div>
+
+<div class="grid2">
+<section class="panel"><div class="ph"><b>Recent Audit Activity</b><span>Signals, scans, settings</span></div><div class="pb"><div class="log" id="auditBody">
+<div>Loading...</div>
+</div></div></section>
+<section class="panel"><div class="ph"><b>Database Overview</b><span id="dbInfo">Loading...</span></div><div class="pb"><table class="table"><tbody id="dbBody">
+<tr><td colspan="3" style="opacity:.7">Loading...</td></tr>
+</tbody></table></div></section>
+</div>
+
+<div class="footer">CoinGabbarSignals Backend Control Center · Internal operations interface · Demo values shown for UI preview</div>
+</main>
+</div>
+</div>
+</div>
+<script>
+const loginPage = document.getElementById("loginPage");
+const backendApp = document.getElementById("backendApp");
+const loginForm = document.getElementById("loginForm");
+const loginError = document.getElementById("loginError");
+
+function showBackend() {
+  loginPage.style.display = "none";
+  backendApp.style.display = "block";
+}
+
+if (sessionStorage.getItem("cg_admin_logged_in") === "true") {
+  showBackend();
+}
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  loginError.textContent = "Logging in...";
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    const response = await fetch("https://coingabbarsignals-1.onrender.com/api/v1/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Login failed");
+    }
+
+    sessionStorage.setItem("cg_admin_logged_in", "true");
+    sessionStorage.setItem("cg_admin_token", data.token);
+
+    sessionStorage.setItem(
+      "cg_admin_user",
+      JSON.stringify(data.user)
+    );
+
+    showBackend();
+
+  } catch (error) {
+    loginError.textContent = error.message;
+  }
+});
+</script>
+<script>
+const API = "https://coingabbarsignals-1.onrender.com/api/v1";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function logout() {
+  sessionStorage.clear();
+  location.reload();
+}
+
+async function api(path, opts = {}) {
+  const token = sessionStorage.getItem("cg_admin_token");
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: "Bearer " + token } : {})
+    }
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { logout(); throw new Error("Session expired"); }
+  if (!res.ok) {
+    const d = data.details ? " — " + data.details.map(x => x.message).join(", ") : "";
+    throw new Error((data.error || "Request failed") + d);
+  }
+  return data;
+}
+
+// ---------- menu + views ----------
+const side = $("side"), main = document.querySelector(".main");
+$("menu").addEventListener("click", () => side.classList.toggle("open"));
+
+const dashParts = [...main.children].filter(el => !el.classList.contains("title"));
+const host = document.createElement("div");
+host.style.display = "none";
+main.appendChild(host);
+
+function setActive(name) {
+  document.querySelectorAll(".nav").forEach(a =>
+    a.classList.toggle("active", a.textContent.replace(/\d+$/, "").trim().replace(/^\S+\s*/, "") === name || a.textContent.includes(name)));
+  document.querySelectorAll(".toplinks a").forEach(a =>
+    a.classList.toggle("active", a.textContent.trim() === name));
+}
+
+async function signalsView() {
+  host.innerHTML = '<div class="panel"><div class="ph"><b>Signals</b><span>Loading…</span></div></div>';
+  try {
+    const d = await api("/signals?limit=50");
+    const rows = d.signals.map(s => `<tr>
+      <td>${esc(s.symbol)}${s.strategyVersion ? `<br><span style="opacity:.6;font-size:10px">${esc(s.strategyVersion)} · ${s.settingsVersion ? "cfg v" + esc(s.settingsVersion) : "default cfg"}</span>` : ""}</td>
+      <td class="${s.side === "LONG" ? "green" : s.side === "SHORT" ? "red" : ""}">${esc(s.side)}</td>
+      <td>${esc(s.timeframe)}</td><td>${esc(s.score)}/100</td>
+      <td>${esc(s.entry)}</td><td>${esc(s.stop)}</td>
+      <td>${esc((s.targets || []).join(", "))}</td>
+      <td><span class="status ${s.status === "ACTIVE" ? "active" : "neutral"}">${esc(s.status)}</span>${s.outcomeClosed && ["TP1_HIT", "TP2_HIT"].includes(s.status) && !(s.hits && s.hits.sl) ? `<br><small style="opacity:.8;font-size:8px">Exit${s.outcomeAt ? " · " + new Date(s.outcomeAt).toLocaleString() : ""}${s.exit != null ? " @ " + esc(s.exit) : ""}</small>` : ""}</td>
+      <td>${new Date(s.createdAt).toLocaleString()}</td>
+      <td>${s.source === "engine" && ["ACTIVE", "TP1_HIT", "TP2_HIT"].includes(s.status) && !s.outcomeClosed ? `<button class="btn" data-exit="${esc(s.id)}">Exit</button>` : ""}</td></tr>`).join("");
+    host.innerHTML = `<div class="panel"><div class="ph"><b>Signals</b><span>${d.count} records</span></div>
+      <div class="pb" style="overflow:auto"><table class="table"><thead><tr><th>Symbol</th><th>Side</th><th>TF</th><th>Score</th><th>Entry</th><th>Stop</th><th>Targets</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="10">No signals yet</td></tr>'}</tbody></table></div></div>`;
+    host.querySelectorAll("[data-exit]").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("Exit this signal?")) return;
+      b.disabled = true; b.textContent = "...";
+      try {
+        await api("/engine/signals/" + encodeURIComponent(b.dataset.exit) + "/exit", { method: "POST" });
+        signalsView();
+      } catch (e) { alert(e.message); b.disabled = false; b.textContent = "Exit"; }
+    }));
+  } catch (e) {
+    host.innerHTML = `<div class="panel"><div class="pb red">${esc(e.message)}</div></div>`;
+  }
+}
+
+// ===== SECTION VIEWS: all sidebar and top-nav items (client side, no new backend needed) =====
+const SYMS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "LINKUSDT", "TRXUSDT"];
+const DEFAULT_WATCH = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
+const BIN = "https://data-api.binance.vision/api/v3";
+const INP = "padding:8px;background:#07101d;color:#fff;border:1px solid #1d3550;border-radius:6px";
+const ls = {
+  get: (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v === null ? d : v; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const fmt = (n, d = 6) => Number(n).toLocaleString("en-US", { maximumFractionDigits: d });
+// price-aware formatter: bade price pe kam digit, chhote price (PEPE/SHIB/BONK) pe zyada digit
+const fmtP = (n) => {
+  n = Number(n);
+  if (!isFinite(n)) return "-";
+  if (n === 0) return "0";
+  const a = Math.abs(n);
+  const d = a >= 1000 ? 2 : a >= 1 ? 4 : Math.min(12, Math.ceil(-Math.log10(a)) + 3);
+  return n.toLocaleString("en-US", { maximumFractionDigits: d });
+};
+const opts = (a) => a.map(x => `<option>${x}</option>`).join("");
+const th = (cols) => `<thead><tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr></thead>`;
+const panel = (title, right, body, live) =>
+  `<div class="panel"${live ? ` data-live="${live}"` : ""}><div class="ph"><b>${esc(title)}</b><span>${right || ""}</span></div><div class="pb" style="overflow:auto">${body}</div></div>`;
+
+async function tickers(symbols) {
+  const r = await fetch(BIN + "/ticker/24hr?symbols=" + encodeURIComponent(JSON.stringify(symbols)));
+  if (!r.ok) throw new Error("Binance HTTP " + r.status);
+  return r.json();
+}
+async function klines(sym, tf, n = 300) {
+  const r = await fetch(`${BIN}/klines?symbol=${sym}&interval=${tf}&limit=${n}`);
+  if (!r.ok) throw new Error("Binance HTTP " + r.status);
+  return (await r.json()).map(k => ({ c: +k[4] }));
+}
+const ema = (a, p) => { const k = 2 / (p + 1); let e = a[0]; return a.map(v => (e = v * k + e * (1 - k))); };
+const rsi = (c, p = 14) => {
+  let g = 0, l = 0;
+  for (let i = 1; i <= p; i++) { const d = c[i] - c[i - 1]; if (d >= 0) g += d; else l -= d; }
+  g /= p; l /= p;
+  for (let i = p + 1; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * (p - 1) + Math.max(d, 0)) / p; l = (l * (p - 1) + Math.max(-d, 0)) / p; }
+  return l === 0 ? 100 : 100 - 100 / (1 + g / l);
+};
+
+// auto refresh that stops by itself when the user leaves the view
+let viewTimer = null;
+function autoRefresh(name, fn) {
+  clearInterval(viewTimer);
+  viewTimer = setInterval(() => {
+    if (host.dataset.view !== name || host.style.display === "none" || !host.querySelector(`[data-live="${name}"]`)) return clearInterval(viewTimer);
+    fn();
+  }, ls.get("cg_refresh", 10000));
+}
+const rowErr = (cols, e) => `<tr><td colspan="${cols}" class="red">${esc(e.message)}</td></tr>`;
+
+async function marketView() {
+  host.innerHTML = panel("Market Data", '<span id="vt">Loading...</span>',
+    `<table class="table">${th(["Symbol", "Price", "24h %", "High", "Low", "Volume (M USDT)"])}<tbody id="vb"></tbody></table>`, "Market Data");
+  const load = async () => {
+    try {
+      const t0 = performance.now(), rows = await tickers(SYMS), ms = Math.round(performance.now() - t0);
+      if (!$("vb")) return;
+      $("vb").innerHTML = rows.map(x => { const ch = +x.priceChangePercent; return `<tr><td>${esc(x.symbol)}</td><td>$${fmtP(x.lastPrice)}</td><td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td><td>${fmtP(x.highPrice)}</td><td>${fmtP(x.lowPrice)}</td><td>${(x.quoteVolume / 1e6).toFixed(1)}</td></tr>`; }).join("");
+      $("vt").textContent = `Binance LIVE · ${ms}ms · ${new Date().toLocaleTimeString()}`;
+    } catch (e) { if ($("vb")) $("vb").innerHTML = rowErr(6, e); }
+  };
+  await load(); autoRefresh("Market Data", load);
+}
+
+async function indicatorsView() {
+  const TFS = ["5m", "15m", "1h", "4h", "1d"];
+  const COLS = 7;
+  const state = { data: {}, runId: 0, busy: false, symbols: [] };
+
+  host.innerHTML = panel("Indicators",
+    `<input id="iq" placeholder="Search coin" style="${INP};width:110px"> ` +
+    `<select id="itrend" class="btn"><option value="">All trends</option><option>Bullish</option><option>Bearish</option></select> ` +
+    `<select id="isort" class="btn"><option value="symbol">Sort: Symbol</option><option value="rsiAsc">RSI low → high</option><option value="rsiDesc">RSI high → low</option><option value="macd">MACD hist</option></select> ` +
+    `<select id="itf" class="btn">${TFS.map(t => `<option ${t === "1h" ? "selected" : ""}>${t}</option>`).join("")}</select> ` +
+    `<span id="iinfo">Loading...</span>`,
+    `<table class="table">${th(["Symbol", "Price", "RSI 14", "EMA 20", "EMA 50", "MACD hist", "Trend"])}<tbody id="vb"><tr><td colspan="${COLS}">Loading tracked coins...</td></tr></tbody></table>`,
+    "Indicators");
+
+  const calc = (c) => {
+    const e20 = ema(c, 20).at(-1), e50 = ema(c, 50).at(-1);
+    const e12 = ema(c, 12), e26 = ema(c, 26), macd = e12.map((v, i) => v - e26[i]);
+    const hist = macd.at(-1) - ema(macd, 9).at(-1);
+    return { price: c.at(-1), rsi: rsi(c), e20, e50, hist, up: e20 > e50 };
+  };
+
+  const render = () => {
+    if (!$("vb")) return;
+    const q = ($("iq").value || "").trim().toUpperCase(), tr = $("itrend").value, sort = $("isort").value;
+    let list = state.symbols.map(s => ({ s, d: state.data[s] })).filter(x => !q || x.s.includes(q));
+    if (tr) list = list.filter(x => x.d && !x.d.err && (x.d.up ? "Bullish" : "Bearish") === tr);
+    const ok = (x) => x.d && !x.d.err;
+    if (sort === "rsiAsc") list.sort((a, b) => (ok(a) ? a.d.rsi : 999) - (ok(b) ? b.d.rsi : 999));
+    else if (sort === "rsiDesc") list.sort((a, b) => (ok(b) ? b.d.rsi : -1) - (ok(a) ? a.d.rsi : -1));
+    else if (sort === "macd") list.sort((a, b) => (ok(b) ? b.d.hist : -Infinity) - (ok(a) ? a.d.hist : -Infinity));
+    $("vb").innerHTML = list.map(({ s, d }) => {
+      if (!d) return `<tr><td>${esc(s)}</td><td colspan="${COLS - 1}">Loading...</td></tr>`;
+      if (d.err) return `<tr><td>${esc(s)}</td><td colspan="${COLS - 1}" class="red">${esc(d.err)}</td></tr>`;
+   return `<tr><td>${esc(s)}</td><td>$${fmtP(d.price)}</td><td class="${d.rsi > 70 ? "red" : d.rsi < 30 ? "green" : ""}">${d.rsi.toFixed(1)}</td><td>${fmtP(d.e20)}</td><td>${fmtP(d.e50)}</td><td class="${d.hist >= 0 ? "green" : "red"}">${fmtP(d.hist)}</td><td class="${d.up ? "green" : "red"}">${d.up ? "Bullish" : "Bearish"}</td></tr>`;
+    }).join("") || `<tr><td colspan="${COLS}">No coin matches</td></tr>`;
+  };
+
+  const load = async () => {
+    const tf = $("itf") && $("itf").value;
+    if (!tf || state.busy) return;
+    const id = ++state.runId;
+    state.busy = true;
+    const t0 = performance.now();
+    try {
+      state.symbols = await getTrackedSymbols();          // server SCAN_SYMBOLS (top 100 tracked), fallback list agar API na mile
+      let i = 0, done = 0, fail = 0;
+      const stale = () => id !== state.runId || !$("vb");
+      const worker = async () => {
+        while (i < state.symbols.length) {
+          if (stale()) return;
+          const s = state.symbols[i++];
+          try { state.data[s] = calc((await klines(s, tf, 200)).map(x => x.c)); }
+          catch (e) { fail++; state.data[s] = { err: e.message }; }
+          done++;
+          if (done % 10 === 0 && !stale()) { render(); $("iinfo").textContent = `Updating ${done}/${state.symbols.length}...`; }
+        }
+      };
+      await Promise.all(Array.from({ length: 8 }, worker));  // 8 parallel requests, Binance rate-limit safe
+      if (stale()) return;
+      render();
+      const ms = Math.round(performance.now() - t0);
+      $("iinfo").textContent = `${state.symbols.length - fail}/${state.symbols.length} OK · ${tf} · ${ms}ms · ${new Date().toLocaleTimeString()}`;
+    } catch (e) {
+      if ($("vb")) $("vb").innerHTML = rowErr(COLS, e);
+    } finally {
+      if (id === state.runId) state.busy = false;
+    }
+  };
+
+  $("itf").onchange = () => { state.data = {}; state.runId++; state.busy = false; render(); load(); };
+  $("iq").oninput = render; $("itrend").onchange = render; $("isort").onchange = render;
+  await load();
+  autoRefresh("Indicators", load);
+}
+
+function riskView() {
+  const f = (id, label, v) => `<label style="display:block;margin:6px 0">${label}<input id="${id}" type="number" step="any" value="${v}" style="width:100%;${INP}"></label>`;
+  host.innerHTML = panel("Risk Engine", "Position size calculator",
+    `<div style="max-width:420px">${f("r_bal", "Account balance (USDT)", 1000)}${f("r_pct", "Risk per trade (%)", 1)}${f("r_ent", "Entry price", 100)}${f("r_stp", "Stop loss", 95)}${f("r_tgt", "Target", 110)}<div id="r_out" style="margin-top:12px"></div></div>`);
+  const calc = () => {
+    const [b, p, e, s, t] = ["r_bal", "r_pct", "r_ent", "r_stp", "r_tgt"].map(i => +$(i).value);
+    const risk = b * p / 100, d = Math.abs(e - s);
+    if (!(d > 0)) { $("r_out").innerHTML = '<span class="red">Entry and stop cannot be equal</span>'; return; }
+    const qty = risk / d, notional = qty * e, rr = Math.abs(t - e) / d, side = s < e ? "LONG" : "SHORT", okT = side === "LONG" ? t > e : t < e;
+    $("r_out").innerHTML = `Side: <b>${side}</b><br>Risk amount: <b>$${fmt(risk, 2)}</b><br>Position size: <b>${fmt(qty, 6)}</b> units<br>Notional: <b>$${fmt(notional, 2)}</b> (${fmt(notional / b, 2)}x balance)<br>Reward:Risk: <b class="${okT && rr >= 2 ? "green" : "red"}">${okT ? rr.toFixed(2) : "target on wrong side"}</b>`;
+  };
+  host.querySelectorAll("input").forEach(i => i.oninput = calc); calc();
+}
+
+async function performanceView() {
+  host.innerHTML = panel("Performance", "Loading...", "");
+  try {
+    const s = (await api("/signals?limit=100")).signals, n = s.length;
+    const by = (k, v) => s.filter(x => x[k] === v).length;
+    const avg = n ? (s.reduce((a, x) => a + (+x.score || 0), 0) / n).toFixed(1) : "0";
+    const card = (l, v) => `<div class="card"><div class="label">${l}</div><div class="value">${v}</div></div>`;
+    host.innerHTML = panel("Performance", `${n} signals (last 100)`,
+      `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px">${card("Active", by("status", "ACTIVE"))}${card("Closed", by("status", "CLOSED"))}${card("Long", by("side", "LONG"))}${card("Short", by("side", "SHORT"))}${card("Avg score", avg)}</div><p style="opacity:.7">Win rate needs an exit price or pnl field on closed signals. Add it in the backend to enable it.</p>`);
+  } catch (e) { host.innerHTML = panel("Performance", "", `<span class="red">${esc(e.message)}</span>`); }
+}
+
+function backtestView() {
+  const root = API.replace("/api/v1", "");
+  host.innerHTML = panel("Backtesting", "Real signal engine, same rules as live scanner",
+    `<div style="display:grid;gap:8px;max-width:420px">
+      <input id="bk" type="password" placeholder="BACKTEST_KEY" autocomplete="off" style="${INP}">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="bd" class="btn">${opts(["7", "14", "30", "60", "90", "180"])}</select>
+        <select id="bt" class="btn">${opts(["15m", "30m", "1H", "4H"])}</select>
+        <select id="bm" class="btn">${opts(["60", "65", "70", "75", "80", "85"])}</select>
+      </div>
+      <small style="opacity:.7">Days / Timeframe / Min score</small>
+      <input id="bc" placeholder="Coins (optional): BTCUSDT,ETHUSDT" style="${INP}">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="bp" class="btn">${opts(["B", "A"])}</select>
+        <input id="bs2" value="default" placeholder="default | active | 3" style="${INP};flex:1;min-width:120px">
+      </div>
+      <small style="opacity:.7">Profile (live is B) / Engine settings: default, active (what is live now) or a version number like 3</small>
+      <button id="bgo" class="btn p">Run backtest</button>
+      <button id="bhb" class="btn">Saved runs</button>
+    </div>
+    <pre id="bout" style="margin-top:12px;white-space:pre;overflow-x:auto;font-size:12px;line-height:1.5"></pre>
+    <div id="bhist" style="margin-top:16px"></div>`);
+$("bd").value = "30"; $("bt").value = "1H"; $("bm").value = "75";
+  const loadHist = async () => {
+    const key = $("bk").value.trim();
+    if (!key) { $("bout").textContent = "Enter BACKTEST_KEY first."; return; }
+    try {
+      const r = await fetch(root + "/engine/backtest-history?key=" + encodeURIComponent(key));
+      if (!r.ok) { $("bhist").textContent = await r.text(); return; }
+      const j = await r.json(), by = {};
+      (j.runs || []).forEach(x => { (by[x.date] = by[x.date] || []).push(x); });
+      const days = Object.keys(by);
+      $("bhist").innerHTML = days.length ? days.map(d => `<div style="margin:10px 0 4px;font-weight:700">${esc(d)}</div>` + by[d].map(x => `<div class="bh" data-id="${esc(x.id)}" style="cursor:pointer;padding:6px 8px;border:1px solid #1d3550;border-radius:6px;margin-bottom:4px;font-size:12px">${esc(new Date(x.createdAt).toLocaleTimeString())} | ${esc(x.params.tf)} ${esc(x.params.days)}d score ${esc(x.params.minScore)} | ${esc(x.summary.trades)} trades, win ${(+x.summary.winPct).toFixed(0)}%, avg R ${(+x.summary.avgR).toFixed(2)} | ${esc(x.summary.verdict)}</div>`).join("")).join("") : "<span style=\"opacity:.7\">No saved runs yet.</span>";
+      $("bhist").querySelectorAll(".bh").forEach(el => { el.onclick = async () => { const rr = await fetch(root + "/engine/backtest-history?key=" + encodeURIComponent(key) + "&id=" + el.dataset.id); $("bout").textContent = await rr.text(); }; });
+    } catch (e) { $("bhist").textContent = "Request failed: " + e.message; }
+  };
+  $("bhb").onclick = loadHist;
+  $("bgo").onclick = async () => {
+    const key = $("bk").value.trim();
+    if (!key) { $("bout").textContent = "Enter BACKTEST_KEY first."; return; }
+    const q = new URLSearchParams({ key, days: $("bd").value, tf: $("bt").value, minScore: $("bm").value });
+    const coins = $("bc").value.trim();
+    if (coins) q.set("symbols", coins);
+    q.set("profile", $("bp").value);
+    q.set("settings", $("bs2").value.trim() || "default");
+    $("bgo").disabled = true;
+    $("bout").textContent = "Running... this can take 15-60 seconds.";
+    try {
+      const r = await fetch(root + "/engine/backtest?" + q.toString());
+      $("bout").textContent = await r.text();
+      loadHist();
+    } catch (e) { $("bout").textContent = "Request failed: " + e.message; }
+    $("bgo").disabled = false;
+  };
+}
+
+function oldBacktestView() {
+  host.innerHTML = panel("Backtesting", "EMA 20/50 crossover, long only, last 1000 candles, 0.2% fee per trade",
+    `<select id="bs" class="btn">${opts(SYMS)}</select> <select id="bt" class="btn">${opts(["15m", "1h", "4h", "1d"])}</select> <button id="bgo" class="btn p">Run</button><div id="bout" style="margin-top:12px"></div>`);
+  $("bgo").onclick = async () => {
+    $("bout").textContent = "Running...";
+    try {
+      const c = (await klines($("bs").value, $("bt").value, 1000)).map(x => x.c), a = ema(c, 20), b = ema(c, 50);
+      let pos = null, eq = 1, peak = 1, dd = 0, wins = 0, n = 0;
+      for (let i = 50; i < c.length; i++) {
+        if (!pos && a[i] > b[i] && a[i - 1] <= b[i - 1]) pos = c[i];
+        else if (pos && a[i] < b[i] && a[i - 1] >= b[i - 1]) {
+          const r = c[i] / pos - 1 - 0.002; eq *= 1 + r; n++; if (r > 0) wins++; pos = null;
+          peak = Math.max(peak, eq); dd = Math.max(dd, 1 - eq / peak);
+        }
+      }
+      const ret = (eq - 1) * 100, bh = (c.at(-1) / c[50] - 1) * 100;
+      $("bout").innerHTML = `Trades: <b>${n}</b><br>Win rate: <b>${n ? (wins / n * 100).toFixed(1) : 0}%</b><br>Strategy return: <b class="${ret >= 0 ? "green" : "red"}">${ret.toFixed(2)}%</b><br>Max drawdown: <b class="red">${(dd * 100).toFixed(2)}%</b><br>Buy and hold: <b>${bh.toFixed(2)}%</b>`;
+    } catch (e) { $("bout").innerHTML = `<span class="red">${esc(e.message)}</span>`; }
+  };
+}
+
+async function watchView() {
+  host.innerHTML = panel("Watchlists", "Saved in this browser",
+    `<input id="wi" placeholder="e.g. LINKUSDT" style="${INP}"> <button id="wa" class="btn p">Add</button> <span id="wm" class="red"></span><table class="table" style="margin-top:10px">${th(["Symbol", "Price", "24h %", ""])}<tbody id="vb"></tbody></table>`, "Watchlists");
+  const load = async () => {
+    const list = ls.get("cg_watch", DEFAULT_WATCH); if (!$("vb")) return;
+    if (!list.length) { $("vb").innerHTML = '<tr><td colspan="4">Empty. Add a symbol above.</td></tr>'; return; }
+    try {
+      const rows = await tickers(list); if (!$("vb")) return;
+      $("vb").innerHTML = rows.map(x => { const ch = +x.priceChangePercent; return `<tr><td>${esc(x.symbol)}</td><td>$${fmtP(x.lastPrice)}</td><td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td><td><button class="btn" data-rm="${esc(x.symbol)}">Remove</button></td></tr>`; }).join("");
+    } catch (e) { if ($("vb")) $("vb").innerHTML = rowErr(4, e); }
+  };
+  $("wa").onclick = async () => {
+    const s = $("wi").value.trim().toUpperCase(); if (!s) return;
+    const r = await fetch(`${BIN}/ticker/price?symbol=${encodeURIComponent(s)}`).catch(() => null);
+    if (!r || !r.ok) { $("wm").textContent = "Symbol not found on Binance"; return; }
+    const l = ls.get("cg_watch", DEFAULT_WATCH); if (!l.includes(s)) l.push(s);
+    ls.set("cg_watch", l); $("wm").textContent = ""; $("wi").value = ""; load();
+  };
+  $("vb").onclick = e => { const s = e.target.dataset.rm; if (!s) return; ls.set("cg_watch", ls.get("cg_watch", DEFAULT_WATCH).filter(x => x !== s)); load(); };
+  await load(); autoRefresh("Watchlists", load);
+}
+
+async function alertsView() {
+  host.innerHTML = panel("Alerts", "Checked while this page is open",
+    `<select id="as" class="btn">${opts(SYMS)}</select> <select id="ad" class="btn">${opts(["above", "below"])}</select> <input id="ap" type="number" step="any" placeholder="price" style="${INP};width:110px"> <button id="aa" class="btn p">Add</button><table class="table" style="margin-top:10px">${th(["Symbol", "Condition", "Now", "Status", ""])}<tbody id="vb"></tbody></table>`, "Alerts");
+  const load = async () => {
+    const list = ls.get("cg_alerts", []); if (!$("vb")) return;
+    if (!list.length) { $("vb").innerHTML = '<tr><td colspan="5">No alerts yet.</td></tr>'; return; }
+    try {
+      const px = {}; (await tickers([...new Set(list.map(a => a.sym))])).forEach(x => px[x.symbol] = +x.lastPrice);
+      list.forEach(a => { const p = px[a.sym]; if (!a.hit && ((a.dir === "above" && p >= a.price) || (a.dir === "below" && p <= a.price))) a.hit = new Date().toLocaleString(); });
+      ls.set("cg_alerts", list); if (!$("vb")) return;
+      $("vb").innerHTML = list.map((a, i) => `<tr><td>${esc(a.sym)}</td><td>${a.dir} ${fmt(a.price)}</td><td>${fmt(px[a.sym])}</td><td class="${a.hit ? "green" : ""}">${a.hit ? "Triggered " + esc(a.hit) : "Waiting"}</td><td><button class="btn" data-rm="${i}">x</button></td></tr>`).join("");
+    } catch (e) { if ($("vb")) $("vb").innerHTML = rowErr(5, e); }
+  };
+  $("aa").onclick = () => {
+    const p = +$("ap").value; if (!(p > 0)) return;
+    const l = ls.get("cg_alerts", []); l.push({ sym: $("as").value, dir: $("ad").value, price: p, hit: false });
+    ls.set("cg_alerts", l); $("ap").value = ""; load();
+  };
+  $("vb").onclick = e => { const i = e.target.dataset.rm; if (i === undefined) return; const l = ls.get("cg_alerts", []); l.splice(+i, 1); ls.set("cg_alerts", l); load(); };
+  await load(); autoRefresh("Alerts", load);
+}
+
+function usersView() {
+  let u = {}; try { u = JSON.parse(sessionStorage.getItem("cg_admin_user")) || {}; } catch {}
+  host.innerHTML = panel("Users", "Current session",
+    `<table class="table">${th(["Email", "Role"])}<tbody><tr><td>${esc(u.email || "-")}</td><td>${esc(u.role || "-")}</td></tr></tbody></table><p style="opacity:.7">Full user list needs an admin route: GET /api/v1/admin/users. Not built yet.</p>`);
+}
+
+async function databaseView() {
+  host.innerHTML = panel("Database / System", "Checking...", "");
+  const t0 = performance.now();
+  try {
+    const r = await fetch(API + "/health"), d = await r.json(), ms = Math.round(performance.now() - t0);
+    host.innerHTML = panel("Database / System", `${ms}ms`,
+      `API status: <b class="${r.ok ? "green" : "red"}">${esc(d.status)}</b><br>Database: <b>${esc(d.database)}</b><p style="opacity:.7">Note: /health currently returns a fixed "connected" text. Add a real MongoDB ping in server/app.ts for a true check.</p>`);
+  } catch (e) { host.innerHTML = panel("Database / System", "", '<span class="red">API unreachable. Render free tier may be asleep, retry in 30 seconds.</span>'); }
+}
+
+function auditView() {
+  host.innerHTML = panel("Audit Logs", "Backend needed",
+    "<p>Needs a MongoDB collection <b>audit_logs</b> and an admin route GET /api/v1/admin/audit-logs. Not built yet.</p>");
+}
+
+function apiKeysView() {
+  const eps = ["/health", "/signals?limit=1", "/engine/status", "/engine/signals?limit=1"];
+  host.innerHTML = panel("API & Keys", esc(API),
+    `<table class="table">${th(["Method", "Endpoint", "Result", ""])}<tbody>${eps.map((p, i) => `<tr><td>GET</td><td>${esc(p)}</td><td id="ep${i}">-</td><td><button class="btn" data-i="${i}">Test</button></td></tr>`).join("")}</tbody></table><p style="opacity:.7">No API keys are stored in this page. Requests use your admin login token.</p>`);
+  host.querySelectorAll("button[data-i]").forEach(b => b.onclick = async () => {
+    const i = b.dataset.i, el = $("ep" + i), t0 = performance.now(); el.textContent = "...";
+    try {
+      const token = sessionStorage.getItem("cg_admin_token");
+      const r = await fetch(API + eps[i], { headers: token ? { Authorization: "Bearer " + token } : {} });
+      el.innerHTML = `<span class="${r.ok ? "green" : "red"}">${r.status}</span> ${Math.round(performance.now() - t0)}ms`;
+    } catch (e) { el.innerHTML = '<span class="red">unreachable</span>'; }
+  });
+}
+
+function settingsView() {
+  const cur = ls.get("cg_refresh", 10000);
+  host.innerHTML = panel("Settings", "Saved in this browser",
+    `<label>Live refresh interval <select id="sr" class="btn">${[5, 10, 30, 60].map(s => `<option value="${s * 1000}" ${s * 1000 === cur ? "selected" : ""}>${s}s</option>`).join("")}</select></label><br><br><label>Theme <select id="st" class="btn"><option value="light" ${ls.get("cg_theme", "light") !== "dark" ? "selected" : ""}>Light</option><option value="dark" ${ls.get("cg_theme", "light") === "dark" ? "selected" : ""}>Dark</option></select></label><br><br><button id="sx" class="btn">Reset watchlist and alerts</button> <span id="sm" class="green"></span>`);
+$("sr").onchange = () => { ls.set("cg_refresh", +$("sr").value); $("sm").textContent = "Saved"; };
+  $("st").onchange = () => { ls.set("cg_theme", $("st").value); document.documentElement.setAttribute("data-theme", $("st").value); $("sm").textContent = "Saved"; };
+  $("sx").onclick = () => { if (confirm("Reset watchlist and alerts?")) { localStorage.removeItem("cg_watch"); localStorage.removeItem("cg_alerts"); $("sm").textContent = "Reset done"; } };
+}
+
+setInterval(() => {
+  const el = document.getElementById("scNext");
+  if (!el) return;
+  const at = window.__nextScanAt;
+  if (!at) { el.textContent = "--:--"; return; }
+  const sec = Math.round((at - Date.now()) / 1000);
+  if (sec > 0) { el.textContent = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); el.style.color = ""; }
+  else { el.textContent = "now..."; el.style.color = "#f1a933"; }
+}, 1000);
+
+function scLeft() {
+  const at = window.__nextScanAt;
+  if (!at) return "--:--";
+  const sec = Math.round((at - Date.now()) / 1000);
+  return sec > 0 ? Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0") : "now...";
+}
+
+async function scanView() {
+  if (!host.querySelector('[data-live="Scan Health"]')) host.innerHTML = panel("Scan Health", "Loading...", "Loading...", "Scan Health");
+  autoRefresh("Scan Health", scanView);
+  try {
+    const d = await api("/engine/status"), lr = d.lastRun, res = (lr && lr.results) || [];
+    const n = (f) => res.filter(f).length;
+    const every = Math.round((d.intervalMs || 0) / 60000);
+    const age = lr ? Math.round((Date.now() - Date.parse(lr.finishedAt)) / 60000) : null;
+    const stale = !lr || age > every * 2 + 2;
+    window.__nextScanAt = lr ? Date.parse(lr.startedAt || lr.finishedAt) + (d.intervalMs || 0) : 0;
+    const done = new Set(res.map(r => r.symbol));
+    const missing = d.symbols.filter(s => !done.has(s));
+    const card = (l, v, c = "", sub = "") => `<div class="card"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="sub">${sub}</div></div>`;
+    const rows = [...res].sort((a, b) => b.score - a.score).map(r => `<tr><td>${esc(r.symbol)}</td><td class="${r.direction === "LONG" ? "green" : r.direction === "SHORT" ? "red" : ""}">${esc(r.direction === "NO_TRADE" ? "No trade" : r.direction === "WAIT" ? "Wait" : r.direction)}</td><td>${esc(r.score)}</td><td><span class="status ${r.outcome === "emitted" ? "active" : r.outcome === "error" ? "danger" : "neutral"}">${esc(r.outcome === "emitted" ? "New signal" : r.outcome === "duplicate" ? "Already open" : r.outcome === "error" ? "Error" : (r.direction === "LONG" || r.direction === "SHORT") ? "Limit full" : "No setup")}</span>${r.error ? ` <small class="red">${esc(r.error)}</small>` : ""}</td><td class="${r.bias === "LONG" ? "green" : r.bias === "SHORT" ? "red" : ""}">${esc(r.bias === "NEUTRAL" ? "Neutral" : r.bias || "-")}</td><td style="min-width:220px;font-size:12px">${esc(r.reason || "-")}</td><td style="min-width:200px;font-size:12px">${esc((r.conflicts || []).join(" · ") || "-")}</td></tr>`).join("");
+    host.innerHTML = panel("Scan Health", `${esc(d.timeframe)} · every ${every} min`,
+      `<div class="cards" style="margin-bottom:10px">
+        ${card("Auto scan", d.autoScan ? "ON" : "OFF", d.autoScan ? "green" : "red", d.scanning ? "scanning now" : `idle · next in <b id='scNext'>${scLeft()}</b>`)}
+        ${card("Tracked coins", d.symbols.length, d.symbols.length >= 100 ? "green" : "yellow", "server SCAN_SYMBOLS")}
+        ${card("Last scan", lr ? age + " min ago" : "never", stale ? "red" : "green", lr ? esc(new Date(lr.finishedAt).toLocaleTimeString()) : "")}
+        ${card("Scanned", lr ? lr.scanned : 0, "", "coins in last run")}
+        ${card("New signals", lr ? lr.emitted : 0, "cyan", "last run")}
+        ${card("Errors", lr ? lr.errors : 0, lr && lr.errors ? "red" : "green", "last run")}
+      </div>
+      <p>LONG <b class="green">${n(r => r.direction === "LONG")}</b> · SHORT <b class="red">${n(r => r.direction === "SHORT")}</b> · WAIT/NO TRADE <b>${n(r => r.direction !== "LONG" && r.direction !== "SHORT")}</b><br>
+      Score 75+ : <b class="cyan">${n(r => r.score >= 75)}</b> · 60 to 74 : <b>${n(r => r.score >= 60 && r.score < 75)}</b> · below 60 : <b>${n(r => r.score < 60)}</b><br>
+      Already open (duplicate) : <b>${n(r => r.outcome === "duplicate")}</b> · Skipped (no setup) : : <b>${n(r => r.outcome === "not_emitted")}</b><br>
+      Not scanned in last run : <b class="${missing.length ? "red" : "green"}">${missing.length}</b>${missing.length ? " (" + esc(missing.join(", ")) + ")" : ""}</p>
+      <table class="table">${th(["Coin", "Direction", "Score", "Result", "Bias", "Reason", "Conflicts"])}<tbody>${rows || '<tr><td colspan="7">No scan has run yet</td></tr>'}</tbody></table>`, "Scan Health");
+  } catch (e) {
+    host.innerHTML = panel("Scan Health", "", `<span class="red">${esc(e.message)}</span>`, "Scan Health");
+  }
+}
+
+async function scoreViewOld() {
+  host.innerHTML = panel("Score Breakdown", "Loading...", "Loading...");
+  try {
+    const d = await api("/engine/signals?limit=100");
+    const list = [...(d.signals || [])].sort((a, b) => (b.score?.total || 0) - (a.score?.total || 0));
+    if (!list.length) { host.innerHTML = panel("Score Breakdown", "", "Abhi koi scan data nahi hai. Pehle scan chalne do."); return; }
+    const MAXS = { marketContext: 10, trendMTF: 20, structure: 15, liquiditySR: 10, volumeMomentum: 15, derivativesOrderbook: 10, newsFundamentals: 5, riskExecution: 15 };
+    const LBL = { marketContext: "Market context", trendMTF: "Trend + MTF", structure: "Structure", liquiditySR: "Liquidity / S-R", volumeMomentum: "Volume + momentum", derivativesOrderbook: "Derivatives + order book", newsFundamentals: "News + fundamentals", riskExecution: "Risk + execution" };
+    const sg = (x) => x > 0 ? 1 : x < 0 ? -1 : 0;
+    const n2 = (v, k = 2) => v == null || !Number.isFinite(+v) ? "-" : (+v).toFixed(k);
+
+    const draw = (sym) => {
+      const s = list.find(x => x.symbol === sym) || list[0];
+      const t = s.technical || {}, dv = s.derivatives || {}, p = s.market?.currentPrice;
+      const dir = s.structure?.bias === "LONG" ? 1 : s.structure?.bias === "SHORT" ? -1 : 0;
+      const stat = (bull) => bull === null ? ["N/A", "yellow"]
+        : dir === 0 ? [bull > 0 ? "Bullish" : bull < 0 ? "Bearish" : "Neutral", bull > 0 ? "green" : bull < 0 ? "red" : "yellow"]
+        : bull * dir > 0 ? ["Supports", "green"] : bull * dir < 0 ? ["Against", "red"] : ["Neutral", "yellow"];
+      const rows = [];
+      const add = (name, group, reading, bull) => rows.push({ name, group, reading, bull });
+
+      if (t.ema20 != null) add("EMA 20 / EMA 50", "Trend", `${n2(t.ema20, 4)} / ${n2(t.ema50, 4)}`, sg(t.ema20 - t.ema50));
+      if (t.ema50 != null && p) add("Price vs EMA 50", "Trend", `${n2(p, 4)} vs ${n2(t.ema50, 4)}`, sg(p - t.ema50));
+      if (t.ema20 != null) add("SMA 200", "Trend", t.sma200 == null ? "not enough candles" : n2(t.sma200, 4), t.sma200 == null || !p ? null : sg(p - t.sma200));
+      if (t.adx) add("ADX / DI", "Trend", `${n2(t.adx.adx, 0)} · ${t.adx.strength} · ${t.adx.bias}`, t.adx.bias === "bullish" ? 1 : t.adx.bias === "bearish" ? -1 : 0);
+      if (t.bollinger) add("Bollinger", "Structure", `${t.bollinger.context} · ${t.bollinger.direction}`, t.bollinger.direction === "up" ? 1 : t.bollinger.direction === "down" ? -1 : 0);
+      if (t.macd) add("MACD", "Momentum", `hist ${n2(t.macd.histogram, 5)} · ${t.macd.histogramState} · cross ${t.macd.crossover}`, sg(t.macd.histogram));
+      if (t.rsi) add("RSI 14", "Momentum", `${n2(t.rsi.value, 1)} · ${t.rsi.zone} · ${t.rsi.momentum}`, t.rsi.value > 72 || t.rsi.value < 28 ? 0 : t.rsi.value >= 50 ? 1 : -1);
+      if (t.stochRsi) add("Stoch RSI", "Momentum", `K ${n2(t.stochRsi.k, 0)} / D ${n2(t.stochRsi.d, 0)} · ${t.stochRsi.zone}`, sg(t.stochRsi.k - t.stochRsi.d));
+      if (t.obv) add("OBV", "Volume", `slope ${t.obv.slope} · divergence ${t.obv.divergence}`, t.obv.slope === "up" ? 1 : t.obv.slope === "down" ? -1 : 0);
+      if (t.vwap) add("VWAP", "Volume", `price ${t.vwap.relationship} VWAP`, t.vwap.relationship === "above" ? 1 : t.vwap.relationship === "below" ? -1 : 0);
+      if (t.atr && p) { const ap = t.atr.value / p * 100; add("ATR", "Risk", `${n2(t.atr.value, 5)} (${n2(ap, 2)}% of price)`, ap >= 0.3 && ap <= 6 ? 0 : null); }
+
+      const f = dv.fundingRate;
+      add("Funding rate", "Derivatives", f == null ? "not available" : n2(f * 100, 4) + "%", f == null ? null : f > 0.0003 ? -1 : f < -0.0003 ? 1 : 0);
+      add("Open interest change", "Derivatives", dv.oiChangePct == null ? "not available" : n2(dv.oiChangePct, 2) + "%", dv.oiChangePct == null ? null : sg(dv.oiChangePct));
+      add("Long/Short ratio", "Derivatives", dv.longShortRatio == null ? "not available" : n2(dv.longShortRatio, 2), dv.longShortRatio == null ? null : dv.longShortRatio > 2.5 ? -1 : dv.longShortRatio < 0.4 ? 1 : 0);
+      add("Order book imbalance", "Derivatives", dv.bookImbalance == null ? "not available" : n2(dv.bookImbalance, 3), dv.bookImbalance == null ? null : Math.abs(dv.bookImbalance) < 0.05 ? 0 : sg(dv.bookImbalance));
+      add("Top trader ratio", "Derivatives", dv.topTraderRatio == null ? "not available" : n2(dv.topTraderRatio, 2), dv.topTraderRatio == null ? null : dv.topTraderRatio >= 1.1 ? 1 : dv.topTraderRatio <= 0.9 ? -1 : 0);
+      add("Taker buy/sell", "Derivatives", dv.takerBuySellRatio == null ? "not available" : n2(dv.takerBuySellRatio, 2), dv.takerBuySellRatio == null ? null : dv.takerBuySellRatio >= 1.1 ? 1 : dv.takerBuySellRatio <= 0.9 ? -1 : 0);
+
+      const indRows = rows.map(r => { const [txt, c] = r.name === "ATR" && r.bull === 0 ? ["OK range", "green"] : r.name === "ATR" ? ["Quiet/Volatile", "red"] : stat(r.bull);
+        return `<tr><td>${esc(r.name)}</td><td>${esc(r.group)}</td><td>${esc(r.reading)}</td><td class="${c}">${txt}</td></tr>`; }).join("");
+
+      const sc = s.score || {};
+      const scoreRows = Object.keys(MAXS).map(k => { const v = sc[k] ?? 0, pc = Math.round(v / MAXS[k] * 100);
+        return `<tr><td>${LBL[k]}</td><td>${v} / ${MAXS[k]}</td><td style="width:45%"><div style="background:#1d3550;height:6px;border-radius:3px"><div style="width:${pc}%;background:${pc >= 70 ? "#40eaa8" : pc >= 40 ? "#e5b94b" : "#ef5b6b"};height:6px;border-radius:3px"></div></div></td></tr>`; }).join("");
+
+      const rs = s.reasoning || {};
+      const ul = (a, c) => (a && a.length) ? `<ul style="margin:4px 0 10px 18px">${a.map(x => `<li class="${c}">${esc(x)}</li>`).join("")}</ul>` : '<div style="opacity:.6;margin:4px 0 10px">none</div>';
+      const miss = (s.marketContext && s.marketContext.unavailable) || [];
+
+      const body = `
+        <p><b>${esc(s.symbol)}</b> · ${esc(s.timeframe?.primary || "")} · Direction <b class="${s.direction === "LONG" ? "green" : s.direction === "SHORT" ? "red" : ""}">${esc(s.direction)}</b> · Bias ${esc(s.structure?.bias || "-")} · Total score <b class="cyan">${esc(sc.total ?? 0)}/100</b><br>
+        <small>${esc(rs.primaryReason || "")}<br>Data: ${esc(s.dataQuality?.status || "-")} · Updated ${s.timestamps?.updatedAt ? new Date(s.timestamps.updatedAt).toLocaleString() : "-"}</small></p>
+        <b>Score breakdown</b>
+        <table class="table" style="margin:6px 0 12px">${th(["Category", "Points", ""])}<tbody>${scoreRows}</tbody></table>
+        <b>Indicators used in scoring</b>
+        <table class="table" style="margin:6px 0 12px">${th(["Indicator", "Group", "Reading", "Status"])}<tbody>${indRows}</tbody></table>
+        <b>Confirmations</b>${ul(rs.confirmations, "green")}
+        <b>Conflicts</b>${ul(rs.conflicts, "red")}
+        <b>Warnings</b>${ul(rs.warnings, "yellow")}
+        <b>Data not available (scored 0)</b>${ul(miss, "")}`;
+
+      host.innerHTML = panel("Score Breakdown",
+        `<select id="scSym" class="btn">${list.map(x => `<option value="${esc(x.symbol)}" ${x.symbol === s.symbol ? "selected" : ""}>${esc(x.symbol)} · ${esc(x.score?.total ?? 0)}</option>`).join("")}</select>`, body);
+      $("scSym").onchange = () => draw($("scSym").value);
+    };
+    draw(list[0].symbol);
+  } catch (e) {
+    host.innerHTML = panel("Score Breakdown", "", `<span class="red">${esc(e.message)}</span>`);
+  }
+}
+
+async function scoreView() {
+  host.innerHTML = panel("Score Breakdown", "Loading...", "Loading...");
+  try {
+    const [sd, ld] = await Promise.all([api("/engine/signals?limit=100"), api("/signals?limit=300")]);
+    const scans = [...(sd.signals || [])].sort((a, b) => (b.score?.total || 0) - (a.score?.total || 0));
+    const LIVE = ["ACTIVE", "TP1_HIT", "TP2_HIT"], seen = new Set();
+    // live = still running: SL hit / closed / expired signals are skipped
+    const live = (ld.signals || []).filter(x => x.source === "engine" && LIVE.includes(x.status) && !x.outcomeClosed && !(x.hits && x.hits.sl))
+      .filter(x => { const k = x.symbol + "|" + x.timeframe; if (seen.has(k)) return false; seen.add(k); return true; });
+    const liveBy = {};
+    live.forEach(x => { (liveBy[x.symbol] = liveBy[x.symbol] || []).push(x); });
+    const names = [...new Set([...live.map(x => x.symbol), ...scans.map(x => x.symbol)])];
+    if (!names.length) { host.innerHTML = panel("Score Breakdown", "", "Abhi koi scan data nahi hai. Pehle scan chalne do."); return; }
+
+    const MAXS = { marketContext: 10, trendMTF: 20, structure: 15, liquiditySR: 10, volumeMomentum: 15, derivativesOrderbook: 10, newsFundamentals: 5, riskExecution: 15 };
+    const LBL = { marketContext: "Market context", trendMTF: "Trend + MTF", structure: "Structure", liquiditySR: "Liquidity / S-R", volumeMomentum: "Volume + momentum", derivativesOrderbook: "Derivatives + order book", newsFundamentals: "News + fundamentals", riskExecution: "Risk + execution" };
+    const sg = (x) => x > 0 ? 1 : x < 0 ? -1 : 0;
+    const n2 = (v, k = 2) => v == null || !Number.isFinite(+v) ? "-" : (+v).toFixed(k);
+    const cls = (side) => side === "LONG" ? "green" : side === "SHORT" ? "red" : "";
+    const scanScore = (n) => (scans.find(x => x.symbol === n)?.score?.total ?? 0);
+    const scoreOf = (n) => liveBy[n] ? liveBy[n][0].score : scanScore(n);
+
+    const liveRows = live.map(x => `<tr>
+      <td><b>${esc(x.symbol)}</b></td><td class="${cls(x.side)}">${esc(x.side)}</td><td>${esc(x.timeframe)}</td><td>${esc(x.score)}</td>
+      <td>${esc(x.entry)}</td><td>${esc(x.stop)}</td><td><span class="status active">${esc(x.status)}</span></td>
+      <td><button class="btn" data-sym="${esc(x.symbol)}">View</button></td></tr>`).join("");
+    host.innerHTML = panel("Score Breakdown", `<span>${live.length} live</span>`, `
+      <b>Live signals (SL hit hone par hat jayenge)</b>
+      <div style="overflow:auto"><table class="table" style="margin:6px 0 14px">${th(["Coin", "Side", "TF", "Score", "Entry", "SL", "Status", ""])}<tbody>${liveRows || '<tr><td colspan="8">Abhi koi live signal nahi hai</td></tr>'}</tbody></table></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input id="scQ" class="btn" placeholder="Search coin (jaise BCH)..." autocomplete="off" style="flex:1;min-width:140px;text-align:left">
+        <select id="scSym" class="btn" style="flex:1;min-width:150px"></select>
+      </div>
+      <div id="scBody"></div>`);
+
+    const sel = $("scSym"), q = $("scQ");
+    const fill = (text) => {
+      const qq = (text || "").trim().toUpperCase();
+      const m = names.filter(n => !qq || n.includes(qq));
+      sel.innerHTML = m.map(n => `<option value="${esc(n)}">${liveBy[n] ? "● " : ""}${esc(n)} · ${esc(scoreOf(n))}${liveBy[n] ? " · LIVE " + esc(liveBy[n][0].side) : ""}</option>`).join("") || '<option value="">No match</option>';
+      return m;
+    };
+
+    const draw = (sym) => {
+      const body = $("scBody");
+      if (!sym) { body.innerHTML = '<p style="opacity:.7">Is naam ka koi coin nahi mila.</p>'; return; }
+      const lv = (liveBy[sym] || [])[0];
+      const s = (lv && scans.find(x => x.symbol === sym && x.timeframe?.primary === lv.timeframe)) || scans.find(x => x.symbol === sym);
+      const t = s?.technical || {}, dv = s?.derivatives || {}, p = s?.market?.currentPrice;
+      const side = lv ? lv.side : s?.structure?.bias;
+      const dir = side === "LONG" ? 1 : side === "SHORT" ? -1 : 0;
+      const stat = (bull) => bull === null ? ["N/A", "yellow"]
+        : dir === 0 ? [bull > 0 ? "Bullish" : bull < 0 ? "Bearish" : "Neutral", bull > 0 ? "green" : bull < 0 ? "red" : "yellow"]
+        : bull * dir > 0 ? ["Supports", "green"] : bull * dir < 0 ? ["Against", "red"] : ["Neutral", "yellow"];
+      const rows = [];
+      const add = (name, group, reading, bull) => rows.push({ name, group, reading, bull });
+
+      if (t.ema20 != null) add("EMA 20 / EMA 50", "Trend", `${n2(t.ema20, 4)} / ${n2(t.ema50, 4)}`, sg(t.ema20 - t.ema50));
+      if (t.ema50 != null && p) add("Price vs EMA 50", "Trend", `${n2(p, 4)} vs ${n2(t.ema50, 4)}`, sg(p - t.ema50));
+      if (t.ema20 != null) add("SMA 200", "Trend", t.sma200 == null ? "not enough candles" : n2(t.sma200, 4), t.sma200 == null || !p ? null : sg(p - t.sma200));
+      if (t.adx) add("ADX / DI", "Trend", `${n2(t.adx.adx, 0)} · ${t.adx.strength} · ${t.adx.bias}`, t.adx.bias === "bullish" ? 1 : t.adx.bias === "bearish" ? -1 : 0);
+      if (t.bollinger) add("Bollinger", "Structure", `${t.bollinger.context} · ${t.bollinger.direction}`, t.bollinger.direction === "up" ? 1 : t.bollinger.direction === "down" ? -1 : 0);
+      if (t.macd) add("MACD", "Momentum", `hist ${n2(t.macd.histogram, 5)} · ${t.macd.histogramState} · cross ${t.macd.crossover}`, sg(t.macd.histogram));
+      if (t.rsi) add("RSI 14", "Momentum", `${n2(t.rsi.value, 1)} · ${t.rsi.zone} · ${t.rsi.momentum}`, t.rsi.value > 72 || t.rsi.value < 28 ? 0 : t.rsi.value >= 50 ? 1 : -1);
+      if (t.stochRsi) add("Stoch RSI", "Momentum", `K ${n2(t.stochRsi.k, 0)} / D ${n2(t.stochRsi.d, 0)} · ${t.stochRsi.zone}`, sg(t.stochRsi.k - t.stochRsi.d));
+      if (t.obv) add("OBV", "Volume", `slope ${t.obv.slope} · divergence ${t.obv.divergence}`, t.obv.slope === "up" ? 1 : t.obv.slope === "down" ? -1 : 0);
+      if (t.vwap) add("VWAP", "Volume", `price ${t.vwap.relationship} VWAP`, t.vwap.relationship === "above" ? 1 : t.vwap.relationship === "below" ? -1 : 0);
+      if (t.atr && p) { const ap = t.atr.value / p * 100; add("ATR", "Risk", `${n2(t.atr.value, 5)} (${n2(ap, 2)}% of price)`, ap >= 0.3 && ap <= 6 ? 0 : null); }
+      if (s) {
+        const f = dv.fundingRate;
+        add("Funding rate", "Derivatives", f == null ? "not available" : n2(f * 100, 4) + "%", f == null ? null : f > 0.0003 ? -1 : f < -0.0003 ? 1 : 0);
+        add("Open interest change", "Derivatives", dv.oiChangePct == null ? "not available" : n2(dv.oiChangePct, 2) + "%", dv.oiChangePct == null ? null : sg(dv.oiChangePct));
+        add("Long/Short ratio", "Derivatives", dv.longShortRatio == null ? "not available" : n2(dv.longShortRatio, 2), dv.longShortRatio == null ? null : dv.longShortRatio > 2.5 ? -1 : dv.longShortRatio < 0.4 ? 1 : 0);
+        add("Order book imbalance", "Derivatives", dv.bookImbalance == null ? "not available" : n2(dv.bookImbalance, 3), dv.bookImbalance == null ? null : Math.abs(dv.bookImbalance) < 0.05 ? 0 : sg(dv.bookImbalance));
+        add("Top trader ratio", "Derivatives", dv.topTraderRatio == null ? "not available" : n2(dv.topTraderRatio, 2), dv.topTraderRatio == null ? null : dv.topTraderRatio >= 1.1 ? 1 : dv.topTraderRatio <= 0.9 ? -1 : 0);
+        add("Taker buy/sell", "Derivatives", dv.takerBuySellRatio == null ? "not available" : n2(dv.takerBuySellRatio, 2), dv.takerBuySellRatio == null ? null : dv.takerBuySellRatio >= 1.1 ? 1 : dv.takerBuySellRatio <= 0.9 ? -1 : 0);
+      }
+
+      const indRows = rows.map(r => { const [txt, c] = r.name === "ATR" && r.bull === 0 ? ["OK range", "green"] : r.name === "ATR" ? ["Quiet/Volatile", "red"] : stat(r.bull);
+        return `<tr><td>${esc(r.name)}</td><td>${esc(r.group)}</td><td>${esc(r.reading)}</td><td class="${c}">${txt}</td></tr>`; }).join("");
+
+      const sc = (lv ? lv.scoreBreakdown : s?.score) || {};
+      const scoreRows = Object.keys(MAXS).map(k => { const v = sc[k] ?? 0, pc = Math.round(v / MAXS[k] * 100);
+        return `<tr><td>${LBL[k]}</td><td>${v} / ${MAXS[k]}</td><td style="width:45%"><div style="background:#1d3550;height:6px;border-radius:3px"><div style="width:${pc}%;background:${pc >= 70 ? "#40eaa8" : pc >= 40 ? "#e5b94b" : "#ef5b6b"};height:6px;border-radius:3px"></div></div></td></tr>`; }).join("");
+
+            // SMC + Liquidation details (saved by the scanner on every signal)
+      const sm = s?.smc || {}, lq = s?.liquidation || {};
+      const sRows = [];
+      const sAdd = (name, reading, bull) => sRows.push({ name, reading, bull });
+      const bonus = sc.smcLiquidity ?? ((sm.pts || 0) + (lq.pts || 0));
+      if (sm.available || lq.available) sAdd("Bonus points (SMC + Liquidation)" + (lv && sc.smcLiquidity === undefined ? " · latest scan" : ""), (bonus > 0 ? "+" : "") + bonus + " (max +8)", dir === 0 ? 0 : sg(bonus) * dir);
+      if (sm.available) {
+        const lb = sm.lastBreak, ob = sm.orderBlock, fv = sm.fvg, sw = sm.sweep;
+        sAdd("Market structure", lb ? `${lb.side} ${lb.type === "CHOCH" ? "CHoCH" : "BOS"} · ${lb.barsAgo} candles ago · trend ${sm.trend}` : `no break yet · trend ${sm.trend}`, lb && lb.barsAgo <= 30 ? (lb.side === "bullish" ? 1 : -1) : 0);
+        sAdd("Order block", ob ? `${ob.side} ${n2(ob.low, 4)} – ${n2(ob.high, 4)}${ob.atPrice ? " · price inside" : ""}` : "none nearby", ob && ob.atPrice ? (ob.side === "bullish" ? 1 : -1) : 0);
+        sAdd("Fair value gap", fv ? `${fv.side} ${n2(fv.low, 4)} – ${n2(fv.high, 4)}${fv.atPrice ? " · price near" : ""}` : "none open", fv && fv.atPrice ? (fv.side === "bullish" ? 1 : -1) : 0);
+        sAdd("Liquidity sweep", sw ? `${sw.side} sweep of ${n2(sw.level, 4)} · ${sw.barsAgo} candles ago` : "none in last 6 candles", sw && sw.barsAgo <= 5 ? (sw.side === "bullish" ? 1 : -1) : 0);
+        sAdd("Premium / discount", `${sm.zone} (range ${n2(sm.rangeLow, 4)} – ${n2(sm.rangeHigh, 4)})`, sm.zone === "discount" ? 1 : sm.zone === "premium" ? -1 : 0);
+      } else sAdd("SMC", `not available (mode ${sm.mode || "off"}, or signal saved before SMC was added)`, null);
+      if (lq.available) {
+        sAdd("Liquidation flow", `${lq.dominant} liquidations ${lq.dominancePct}% · ${lq.events} events`, dir === 0 ? 0 : sg(lq.pts) * dir);
+        sAdd("Liquidation clusters", `longs ${lq.clusterLong == null ? "-" : n2(lq.clusterLong, 4)} · shorts ${lq.clusterShort == null ? "-" : n2(lq.clusterShort, 4)}`, 0);
+      } else sAdd("Liquidations", `not available (mode ${lq.mode || "off"}, or fewer than 5 recent events)`, null);
+      const smcRows = sRows.map(r => { const [txt, c] = stat(r.bull); return `<tr><td>${esc(r.name)}</td><td>${esc(r.reading)}</td><td class="${c}">${txt}</td></tr>`; }).join("");
+
+      const rs = lv ? { primaryReason: lv.rationale, confirmations: lv.confirmations, conflicts: lv.conflicts, warnings: lv.warnings } : (s?.reasoning || {});
+      const ul = (a, c) => (a && a.length) ? `<ul style="margin:4px 0 10px 18px">${a.map(x => `<li class="${c}">${esc(x)}</li>`).join("")}</ul>` : '<div style="opacity:.6;margin:4px 0 10px">none</div>';
+      const miss = (s?.marketContext && s.marketContext.unavailable) || [];
+
+      const head = lv
+        ? `<b>${esc(sym)}</b> · ${esc(lv.timeframe)} · <b class="${cls(lv.side)}">LIVE ${esc(lv.side)}</b> · ${esc(lv.status)} · Score <b class="cyan">${esc(lv.score)}/100</b><br>
+           <small>Entry ${esc(lv.entry)} · SL ${esc(lv.stop)} · TP ${esc((lv.targets || []).join(" / "))}<br>${esc(rs.primaryReason || "")}<br>Created ${new Date(lv.createdAt).toLocaleString()}${s ? " · Indicators: latest scan " + new Date(s.timestamps?.updatedAt).toLocaleString() : ""}</small>`
+        : s ? `<b>${esc(s.symbol)}</b> · ${esc(s.timeframe?.primary || "")} · Direction <b class="${cls(s.direction)}">${esc(s.direction)}</b> · Bias ${esc(s.structure?.bias || "-")} · Total score <b class="cyan">${esc(sc.total ?? 0)}/100</b><br>
+           <small>${esc(rs.primaryReason || "")}<br>Data: ${esc(s.dataQuality?.status || "-")} · Updated ${s.timestamps?.updatedAt ? new Date(s.timestamps.updatedAt).toLocaleString() : "-"}</small>`
+        : `<b>${esc(sym)}</b>`;
+
+      $("scBody").innerHTML = `
+        <p>${head}</p>
+        <b>Score breakdown${lv ? " (signal ke time ka)" : ""}</b>
+        <table class="table" style="margin:6px 0 12px">${th(["Category", "Points", ""])}<tbody>${scoreRows}</tbody></table>
+                <b>SMC + Liquidation (Smart Money)</b>
+        <table class="table" style="margin:6px 0 12px">${th(["Item", "Reading", "Status"])}<tbody>${smcRows}</tbody></table>
+        <b>Indicators used in scoring${lv ? " (abhi ki scan reading)" : ""}</b>
+        <table class="table" style="margin:6px 0 12px">${th(["Indicator", "Group", "Reading", "Status"])}<tbody>${indRows || '<tr><td colspan="4">Is coin ka latest scan data abhi nahi hai</td></tr>'}</tbody></table>
+        <b>Confirmations</b>${ul(rs.confirmations, "green")}
+        <b>Conflicts</b>${ul(rs.conflicts, "red")}
+        <b>Warnings</b>${ul(rs.warnings, "yellow")}
+        <b>Data not available (scored 0)</b>${ul(miss, "")}`;
+    };
+
+    const pick = (sym) => { if (!names.includes(sym)) return; q.value = ""; fill(""); sel.value = sym; draw(sym); };
+    q.oninput = () => { const m = fill(q.value); draw(m[0]); };
+    q.onkeydown = (e) => { if (e.key === "Enter") { const m = fill(q.value); if (m[0]) { sel.value = m[0]; draw(m[0]); } q.blur(); } };
+    sel.onchange = () => draw(sel.value);
+    host.querySelectorAll("[data-sym]").forEach(b => b.addEventListener("click", () => { pick(b.dataset.sym); $("scBody").scrollIntoView({ behavior: "smooth" }); }));
+
+    fill("");
+    draw(names[0]);
+  } catch (e) {
+    host.innerHTML = panel("Score Breakdown", "", `<span class="red">${esc(e.message)}</span>`);
+  }
+}
+
+// ===== Engine Config: indicator periods + on/off switches, versioned (talks to /api/v1/engine/settings) =====
+const ENG_PERIODS = [
+  ["emaFast", "EMA fast", 2, 100], ["emaSlow", "EMA slow", 3, 200], ["smaTrend", "SMA trend", 20, 400],
+  ["rsi", "RSI period", 2, 50], ["atr", "ATR period", 2, 50], ["adx", "ADX period", 2, 50],
+  ["macdFast", "MACD fast", 2, 50], ["macdSlow", "MACD slow", 3, 100], ["macdSignal", "MACD signal", 2, 50],
+  ["bbPeriod", "Bollinger period", 5, 100], ["bbMult", "Bollinger width", 0.5, 5]
+];
+const ENG_TOGGLES = [
+  ["rsi", "RSI"], ["macd", "MACD"], ["stochRsi", "Stochastic RSI"], ["obv", "OBV"],
+    ["vwap", "VWAP"], ["bollinger", "Bollinger Bands"], ["derivatives", "Derivatives data"], ["orderBook", "Order book"],
+  ["pivots", "Swing pivots (S/R)"], ["smc", "SMC zones"], ["liquidation", "Liquidation clusters"]
+];
+
+async function engApi(path, method, body) {
+  const token = sessionStorage.getItem("cg_admin_token");
+  const res = await fetch(API + path, {
+    method: method || "GET",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {})
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { logout(); throw new Error("Session expired"); }
+  if (!res.ok) {
+    const list = Array.isArray(data.details) ? data.details : Array.isArray(data.errors) ? data.errors : [];
+    const head = data.error || (list.length ? "Settings are not valid" : "Request failed");
+    throw new Error(head + (list.length ? ": " + list.join("; ") : ""));
+  }
+  return data;
+}
+
+function engDiff(s, d) {
+  const out = [];
+  ENG_PERIODS.forEach(([k, label]) => { if (s.periods[k] !== d.periods[k]) out.push(label + " " + s.periods[k]); });
+  ENG_TOGGLES.forEach(([k, label]) => { if ((s.toggles[k] ?? d.toggles[k]) !== d.toggles[k]) out.push(label + ((s.toggles[k] ?? d.toggles[k]) ? " on" : " off")); });
+  return out.length ? out.join(", ") : "same as defaults";
+}
+
+async function engineConfigView(flash) {
+  host.innerHTML = panel("Engine Config", "Loading…", "");
+  let d;
+  try { d = await engApi("/engine/settings"); }
+    catch (e) { host.innerHTML = panel("Engine Config", "", `<span class="red">${esc(e.message)}</span>`); return; }
+  let pr = { builtin: [], custom: [] };
+  try { pr = await engApi("/engine/presets"); } catch (e) { /* presets unavailable: the rest of the page still works */ }
+  const allPresets = [...(pr.builtin || []), ...(pr.custom || []).filter(p => p.status === "saved")];
+  let curPreset = null;
+
+  const base = d.active ? d.active.settings : d.defaults;
+  const box = INP + ";width:100%;box-sizing:border-box";
+  const when = (t) => (t ? new Date(t).toLocaleString() : "-");
+
+  const live = d.active
+    ? `<b class="green">Version ${esc(d.active.version)} is live</b><br>${esc(engDiff(d.active.settings, d.defaults))}<br><span style="opacity:.7;font-size:11px">Activated ${esc(when(d.active.activatedAt))} by ${esc(d.active.activatedBy || "-")}</span>`
+    : `<b>Built-in defaults are live</b><br><span style="opacity:.7;font-size:11px">No saved version is active.</span>`;
+
+  const periodInputs = ENG_PERIODS.map(([k, label, min, max]) =>
+    `<label style="display:block;font-size:11px">${esc(label)} <span style="opacity:.6">(${min}–${max})</span>` +
+    `<input data-p="${k}" type="number" inputmode="decimal" step="${k === "bbMult" ? "0.1" : "1"}" min="${min}" max="${max}" value="${esc(base.periods[k])}" style="${box}"></label>`).join("");
+  const toggleInputs = ENG_TOGGLES.map(([k, label]) =>
+    `<label style="display:flex;gap:8px;align-items:center;font-size:13px;padding:6px 0"><input data-t="${k}" type="checkbox" ${(base.toggles[k] ?? d.defaults.toggles[k]) ? "checked" : ""}> ${esc(label)}</label>`).join("");
+
+  const rows = (d.versions || []).map(v => `<tr>
+      <td>v${esc(v.version)}</td>
+      <td><span class="status ${v.status === "active" ? "active" : "neutral"}">${esc(v.status)}</span></td>
+            <td style="min-width:160px">${v.preset ? `<span class="status neutral">${esc(v.preset.name)}${v.preset.modified ? " (customised)" : ""}</span><br>` : ""}${esc(engDiff(v.settings, d.defaults))}${v.note ? `<br><span style="opacity:.7;font-size:11px">${esc(v.note)}</span>` : ""}</td>
+      <td style="font-size:11px">${esc(v.createdBy)}<br>${esc(when(v.createdAt))}</td>
+      <td>${v.status === "active" ? "" : `<button class="btn" data-act="${esc(v.version)}">Activate</button>`}</td></tr>`).join("");
+
+    const presetOpts = allPresets.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.status === "builtin" ? "" : " (custom v" + esc(p.version) + ")"}</option>`).join("");
+  const presetPanel = allPresets.length ? panel("Indicator presets", "Fills the form only. Nothing goes live until you save a draft and activate it", `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <label style="font-size:11px;flex:1;min-width:200px">Preset<select id="epSel" style="${box}"><option value="">- choose a preset -</option>${presetOpts}</select></label>
+        <button class="btn" id="epApply">Apply</button><button class="btn" id="epReset">Reset</button>
+        <button class="btn" id="epDup">Duplicate</button><button class="btn" id="epSaveCustom">Save as custom preset</button>
+      </div>
+      <div id="epDesc" style="font-size:11px;opacity:.75;margin-top:8px"></div>
+      <div style="margin-top:12px;border-top:1px solid rgba(128,128,128,.25);padding-top:10px">
+        <b style="font-size:12px">Compare two presets</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:6px">
+          <label style="font-size:11px;flex:1;min-width:160px">A<select id="epA" style="${box}">${presetOpts}</select></label>
+          <label style="font-size:11px;flex:1;min-width:160px">B<select id="epB" style="${box}">${presetOpts}</select></label>
+          <button class="btn" id="epCompare">Compare</button></div>
+        <div id="epCmp" style="font-size:12px;margin-top:8px"></div></div>`) + `<div style="height:10px"></div>` : "";
+
+  host.innerHTML =
+    panel("Live now", "", `${live}<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="ecRollback">Roll back</button><button class="btn" id="ecReset">Use built-in defaults</button></div>`) +
+    `<div style="height:10px"></div>` + presetPanel +
+    panel("New draft", "A draft does nothing until you activate it", `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px">${periodInputs}</div>
+      <div style="margin-top:12px"><b style="font-size:12px">Indicators on / off</b>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 12px">${toggleInputs}</div></div>
+            <div id="epWarn" class="red" style="margin-top:10px;font-size:12px"></div>
+      <div id="epSummary" style="margin-top:10px;font-size:12px;border:1px solid rgba(128,128,128,.25);border-radius:8px;padding:8px"></div>
+      <label style="display:block;margin-top:10px;font-size:11px">Note (optional)<input id="ecNote" maxlength="200" placeholder="Why this change?" style="${box}"></label>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="ecCheck">Check</button><button class="btn primary" id="ecSave">Save draft</button><button class="btn" id="ecDefaults">Load defaults</button></div>
+      <div id="ecMsg" style="margin-top:10px;font-size:12px;min-height:16px"></div>
+      <ul style="font-size:11px;opacity:.75;padding-left:18px;margin:10px 0 0">
+        <li>An activated version applies from the next scan (every 15 minutes).</li>
+        <li>On/off switches work in the full engine (profile B and C). Profile A (CORE4) ignores them. Periods apply to all.</li>
+        <li>Switching an indicator off lowers the maximum score, and the score is rescaled to 100. Derivatives off stops profile C from trading.</li>
+        <li>ATR and the safety checks (stale data, spread, invalid stop) can never be switched off.</li>
+                <li>Backtests use a saved version only when you run them with settings=&lt;version&gt;. They replay candles only, so derivatives, order-book and liquidation parts are not replayed. A preset is not "backtested" until you have run it that way.</li>
+        <li>A preset never goes live by itself. Only an admin can activate a saved draft.</li>
+      </ul>`) +
+    `<div style="height:10px"></div>` +
+    panel("Saved versions", `${(d.versions || []).length} shown`,
+      `<table class="table">${th(["Ver", "Status", "Changes", "Saved by", ""])}<tbody>${rows || '<tr><td colspan="5">Nothing saved yet</td></tr>'}</tbody></table>`);
+
+  const msg = (t, bad) => { const el = $("ecMsg"); if (!el) return; el.className = bad ? "red" : "green"; el.textContent = t; };
+  if (flash) msg(flash, false);
+  const collect = () => {
+    const periods = {}, toggles = {};
+    host.querySelectorAll("[data-p]").forEach(i => { periods[i.dataset.p] = i.value === "" ? NaN : Number(i.value); });
+    host.querySelectorAll("[data-t]").forEach(i => { toggles[i.dataset.t] = i.checked; });
+    return { periods, toggles };
+  };
+  const busy = (btn, label, fn) => async () => {
+    const old = btn.textContent; btn.disabled = true; btn.textContent = label;
+    try { await fn(); } catch (e) { msg(e.message, true); } finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = old; } }
+  };
+
+  $("ecCheck").onclick = busy($("ecCheck"), "Checking…", async () => {
+    await engApi("/engine/settings/validate", "POST", { settings: collect() });
+    msg("These settings are valid. Nothing was saved.", false);
+  });
+  $("ecSave").onclick = busy($("ecSave"), "Saving…", async () => {
+    const r = await engApi("/engine/settings/drafts", "POST", { settings: collect(), note: $("ecNote").value, ...(curPreset ? { presetId: curPreset.id } : {}) });
+    await engineConfigView("Saved as draft v" + r.version.version + ". It is not live until you activate it.");
+  });
+  const fillForm = (st) => {
+    host.querySelectorAll("[data-p]").forEach(i => { i.value = st.periods[i.dataset.p]; });
+    host.querySelectorAll("[data-t]").forEach(i => { i.checked = !!st.toggles[i.dataset.t]; });
+  };
+  const refreshSummary = async () => {
+    const box2 = $("epSummary"), warn = $("epWarn");
+    if (!box2) return;
+    try {
+      const r = await fetch(API + "/engine/presets/summary", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + (sessionStorage.getItem("cg_admin_token") || "") }, body: JSON.stringify({ settings: collect(), ...(curPreset ? { presetId: curPreset.id } : {}) }) });
+      const j = await r.json();
+      if (!j.summary) { box2.textContent = (j.errors || [j.error || "Could not summarise"]).join("; "); warn.textContent = ""; return; }
+      const sm = j.summary;
+      box2.innerHTML = `<b>Indicator summary</b> <span style="opacity:.7">(not a quality score)</span><br>` +
+        `<b>On:</b> ${esc(sm.enabled.join(", ") || "none")}<br><b>Off:</b> ${esc(sm.disabled.join(", ") || "none")}<br>` +
+        (sm.families.length ? `<b>Evidence families:</b> ${sm.families.map(f => esc(f.label) + " (" + esc(f.enabled.join(" + ")) + ")" + (f.note ? " - correlated, counted as one" : "")).join("; ")}<br>` : "") +
+        (sm.dataNeeded.length ? `<b>Needs fresh data:</b> ${esc(sm.dataNeeded.join(", "))}<br>` : "") +
+        `<b>Always on:</b> ${esc(sm.safety.join(", "))}` +
+        ((j.backtestCaveats || []).length ? `<br><span style="opacity:.75">Backtest: ${esc(j.backtestCaveats.join(" "))}</span>` : "") +
+        (j.errors && j.errors.length ? `<br><span class="red">${esc(j.errors.join("; "))}</span>` : "");
+      warn.innerHTML = (j.warnings || []).map(w => "⚠ " + esc(w)).join("<br>");
+    } catch (e) { box2.textContent = ""; }
+  };
+  host.querySelectorAll("[data-p],[data-t]").forEach(i => i.addEventListener("change", refreshSummary));
+  const pick = () => allPresets.find(p => p.id === ($("epSel") || {}).value) || null;
+  const applyPreset = (p) => {
+    curPreset = p;
+    if (p) { fillForm(p.settings); $("epDesc").textContent = p.description + " Required: " + (p.required.join(", ") || "none") + "."; }
+    else $("epDesc").textContent = "";
+    refreshSummary();
+  };
+  if ($("epApply")) {
+    $("epApply").onclick = () => { const p = pick(); if (!p) { msg("Choose a preset first.", true); return; } applyPreset(p); msg("Preset \"" + p.name + "\" loaded into the form. Nothing was saved.", false); };
+    $("epReset").onclick = () => { if (curPreset) { fillForm(curPreset.settings); refreshSummary(); msg("Form reset to the preset values.", false); } else { fillForm(d.defaults); refreshSummary(); msg("Form reset to the defaults.", false); } };
+    $("epDup").onclick = busy($("epDup"), "…", async () => {
+      const p = pick(); if (!p) throw new Error("Choose a preset first.");
+      const name = prompt("Name for the copy:", "Copy of " + p.name); if (!name) return;
+      await engApi("/engine/presets/" + encodeURIComponent(p.id) + "/duplicate", "POST", { name });
+      await engineConfigView("Copy \"" + name + "\" saved as a custom preset.");
+    });
+    $("epSaveCustom").onclick = busy($("epSaveCustom"), "…", async () => {
+      const name = prompt("Name for the custom preset:"); if (!name) return;
+      await engApi("/engine/presets", "POST", { name, description: $("ecNote").value, settings: collect(), required: curPreset ? curPreset.required : [] });
+      await engineConfigView("Custom preset \"" + name + "\" saved. It is not live.");
+    });
+    $("epCompare").onclick = busy($("epCompare"), "…", async () => {
+      const r = await engApi("/engine/presets/compare", "POST", { a: $("epA").value, b: $("epB").value });
+      const rowsT = r.diff.toggles.map(t => `<tr><td>${esc(t.label)}</td><td>${t.a ? "on" : "off"}</td><td>${t.b ? "on" : "off"}</td></tr>`).join("");
+      const rowsP = r.diff.periods.map(t => `<tr><td>${esc(t.key)}</td><td>${esc(t.a)}</td><td>${esc(t.b)}</td></tr>`).join("");
+      $("epCmp").innerHTML = r.diff.same ? "These presets are identical." : `<table class="table"><thead><tr><th>Difference</th><th>${esc(r.a.name)}</th><th>${esc(r.b.name)}</th></tr></thead><tbody>${rowsT}${rowsP}</tbody></table>`;
+    });
+  }
+  refreshSummary();
+  $("ecDefaults").onclick = () => {
+    curPreset = null; if ($("epDesc")) $("epDesc").textContent = "";
+    host.querySelectorAll("[data-p]").forEach(i => { i.value = d.defaults.periods[i.dataset.p]; });
+    host.querySelectorAll("[data-t]").forEach(i => { i.checked = !!d.defaults.toggles[i.dataset.t]; });
+    refreshSummary();
+    msg("Defaults loaded into the form. Nothing was saved.", false);
+  };
+  host.querySelectorAll("[data-act]").forEach(b => {
+    b.onclick = busy(b, "…", async () => {
+      if (!confirm("Make version " + b.dataset.act + " live? It applies from the next scan.")) return;
+      await engApi("/engine/settings/" + encodeURIComponent(b.dataset.act) + "/activate", "POST");
+      await engineConfigView("Version " + b.dataset.act + " is now live.");
+    });
+  });
+  $("ecRollback").onclick = busy($("ecRollback"), "…", async () => {
+    if (!confirm("Go back to the version that was live before this one?")) return;
+    const r = await engApi("/engine/settings/rollback", "POST");
+    await engineConfigView("Rolled back. Version " + r.version.version + " is live.");
+  });
+  $("ecReset").onclick = busy($("ecReset"), "…", async () => {
+    if (!confirm("Switch back to the built-in defaults? Saved versions are kept.")) return;
+    await engApi("/engine/settings/reset", "POST");
+    await engineConfigView("Built-in defaults are live.");
+  });
+}
+// ===== Signal Chart: read-only chart of a signal with every indicator its configuration uses =====
+// Only GET requests are made. Nothing on this page can create, change, close or delete a signal or a setting.
+// Several CDNs are tried one after another, so one blocked or slow CDN does not break the chart.
+const LWC_URLS = [
+  "https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js",
+  "https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.2.0/lightweight-charts.standalone.production.js"
+];
+let lwcPromise = null;
+function loadScriptOnce(src) {
+  return new Promise((ok, bad) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = ok; s.onerror = () => { s.remove(); bad(new Error("failed: " + src)); };
+    document.head.appendChild(s);
+  });
+}
+function loadLwc() {
+  if (window.LightweightCharts) return Promise.resolve();
+  if (!lwcPromise) lwcPromise = (async () => {
+    for (const url of LWC_URLS) {
+      try { await loadScriptOnce(url); if (window.LightweightCharts) return; } catch (e) { /* try the next CDN */ }
+    }
+    throw new Error("Chart library could not be loaded from any CDN. Check your internet / ad-blocker and press Refresh.");
+  })().catch(e => { lwcPromise = null; throw e; });
+  return lwcPromise;
+}
+
+const CH_DEF_PERIODS = { emaFast: 20, emaSlow: 50, smaTrend: 200, rsi: 14, atr: 14, adx: 14, macdFast: 12, macdSlow: 26, macdSignal: 9, bbPeriod: 20, bbMult: 2 };
+const CH_DEF_TOGGLES = { rsi: true, macd: true, stochRsi: true, obv: true, vwap: true, bollinger: true, derivatives: true, orderBook: true, pivots: true, smc: true, liquidation: true };
+// Indicators that are always drawn because the engine always uses them (they cannot be switched off).
+const CH_ALWAYS = ["EMA fast", "EMA slow", "SMA trend", "ADX", "ATR (stop sizing)"];
+
+const chNaN = (n) => new Array(n).fill(NaN);
+function chSma(v, p) { const o = chNaN(v.length); let s = 0; for (let i = 0; i < v.length; i++) { s += v[i]; if (i >= p) s -= v[i - p]; if (i >= p - 1) o[i] = s / p; } return o; }
+function chEma(v, p) {
+  const o = chNaN(v.length), st = v.findIndex(Number.isFinite);
+  if (st < 0 || v.length - st < p) return o;
+  const k = 2 / (p + 1); let seed = 0;
+  for (let i = st; i < st + p; i++) seed += v[i];
+  o[st + p - 1] = seed / p;
+  for (let i = st + p; i < v.length; i++) o[i] = v[i] * k + o[i - 1] * (1 - k);
+  return o;
+}
+function chRsi(c, p) {
+  const o = chNaN(c.length); if (c.length <= p) return o;
+  let g = 0, l = 0;
+  for (let i = 1; i <= p; i++) { const d = c[i] - c[i - 1]; if (d > 0) g += d; else l -= d; }
+  g /= p; l /= p;
+  const f = (g, l) => l === 0 ? (g === 0 ? 50 : 100) : 100 - 100 / (1 + g / l);
+  o[p] = f(g, l);
+  for (let i = p + 1; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * (p - 1) + Math.max(d, 0)) / p; l = (l * (p - 1) + Math.max(-d, 0)) / p; o[i] = f(g, l); }
+  return o;
+}
+function chStoch(c, rsiP) {
+  const r = chRsi(c, rsiP), n = 14, raw = chNaN(c.length);
+  for (let i = 0; i < c.length; i++) {
+    if (i < n - 1 || !Number.isFinite(r[i - n + 1])) continue;
+    const w = r.slice(i - n + 1, i + 1); const hi = Math.max(...w), lo = Math.min(...w);
+    raw[i] = hi === lo ? 50 : ((r[i] - lo) / (hi - lo)) * 100;
+  }
+  const k = chSma(raw.map(x => Number.isFinite(x) ? x : 0), 3).map((x, i) => Number.isFinite(raw[i - 2]) ? x : NaN);
+  const d = chSma(k.map(x => Number.isFinite(x) ? x : 0), 3).map((x, i) => Number.isFinite(k[i - 2]) ? x : NaN);
+  return { k, d };
+}
+function chMacd(c, f, s, sg) {
+  const ef = chEma(c, f), es = chEma(c, s), m = c.map((_, i) => ef[i] - es[i]), sig = chEma(m, sg);
+  return { macd: m, signal: sig, hist: m.map((v, i) => v - sig[i]) };
+}
+function chBoll(c, p, mult) {
+  const mid = chSma(c, p), up = chNaN(c.length), lo = chNaN(c.length);
+  for (let i = p - 1; i < c.length; i++) { let s = 0; for (let j = i - p + 1; j <= i; j++) s += (c[j] - mid[i]) ** 2; const sd = Math.sqrt(s / p); up[i] = mid[i] + mult * sd; lo[i] = mid[i] - mult * sd; }
+  return { up, mid, lo };
+}
+function chVwap(cs) {
+  const o = []; let pv = 0, vol = 0, day = -1;
+  cs.forEach(k => { const d = Math.floor(k.timestamp / 86400000); if (d !== day) { day = d; pv = 0; vol = 0; } pv += (k.high + k.low + k.close) / 3 * k.volume; vol += k.volume; o.push(vol > 0 ? pv / vol : k.close); });
+  return o;
+}
+function chObv(cs) { const o = []; let t = 0; cs.forEach((k, i) => { if (i > 0) t += k.close > cs[i - 1].close ? k.volume : k.close < cs[i - 1].close ? -k.volume : 0; o.push(t); }); return o; }
+function chAdx(cs, p) {
+  const n = cs.length, adx = chNaN(n), pdi = chNaN(n), mdi = chNaN(n); if (n <= p * 2) return { adx, pdi, mdi };
+  const tr = [], pd = [], md = [];
+  for (let i = 1; i < n; i++) {
+    const up = cs[i].high - cs[i - 1].high, dn = cs[i - 1].low - cs[i].low;
+    pd.push(up > dn && up > 0 ? up : 0); md.push(dn > up && dn > 0 ? dn : 0);
+    tr.push(Math.max(cs[i].high - cs[i].low, Math.abs(cs[i].high - cs[i - 1].close), Math.abs(cs[i].low - cs[i - 1].close)));
+  }
+  let a = tr.slice(0, p).reduce((x, y) => x + y, 0), b = pd.slice(0, p).reduce((x, y) => x + y, 0), c = md.slice(0, p).reduce((x, y) => x + y, 0);
+  const dx = [];
+  for (let i = p; i <= tr.length; i++) {
+    if (i > p) { a = a - a / p + tr[i - 1]; b = b - b / p + pd[i - 1]; c = c - c / p + md[i - 1]; }
+    const pi = a ? 100 * b / a : 0, mi = a ? 100 * c / a : 0;
+    pdi[i] = pi; mdi[i] = mi; dx.push([i, pi + mi ? 100 * Math.abs(pi - mi) / (pi + mi) : 0]);
+  }
+  if (dx.length >= p) {
+    let v = dx.slice(0, p).reduce((x, y) => x + y[1], 0) / p; adx[dx[p - 1][0]] = v;
+    for (let j = p; j < dx.length; j++) { v = (v * (p - 1) + dx[j][1]) / p; adx[dx[j][0]] = v; }
+  }
+  return { adx, pdi, mdi };
+}
+// Swing pivots (3 left / 3 right) -> nearest support / resistance levels, same idea as the engine's S/R levels.
+function chPivots(cs, close) {
+  const hi = [], lo = [], L = 3, start = Math.max(L, cs.length - 200);
+  for (let i = start; i < cs.length - L; i++) {
+    let isH = true, isL = true;
+    for (let j = 1; j <= L; j++) { if (cs[i].high <= cs[i - j].high || cs[i].high <= cs[i + j].high) isH = false; if (cs[i].low >= cs[i - j].low || cs[i].low >= cs[i + j].low) isL = false; }
+    if (isH) hi.push(cs[i].high); if (isL) lo.push(cs[i].low);
+  }
+  return { res: hi.filter(x => x > close).sort((a, b) => a - b).slice(0, 3), sup: lo.filter(x => x < close).sort((a, b) => b - a).slice(0, 3) };
+}
+
+const CH_TF_SEC = { "1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1H": 3600, "4H": 14400, "1D": 86400 };
+
+async function signalChartView(preselect) {
+  host.innerHTML = panel("Signal Chart", "Watch only - nothing here can change a signal or a setting", `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <label style="font-size:11px;flex:1;min-width:240px">Signal<select id="scSel" style="${INP};width:100%"></select></label>
+      <button class="btn" id="scRefresh">Refresh</button>
+      <span id="scStatus" style="font-size:11px;opacity:.75"></span>
+    </div>
+    <div id="scInfo" style="margin-top:10px;font-size:12px"></div>
+    <div id="scLegend" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;font-size:11px"></div>
+    <div id="scCharts" style="margin-top:10px"></div>
+    <div id="scNotes" style="margin-top:8px;font-size:11px;opacity:.75"></div>`);
+  const status = (t, bad) => { const el = $("scStatus"); if (el) { el.textContent = t; el.className = bad ? "red" : ""; } };
+
+  let signals = [];
+  try { await loadLwc(); signals = (await api("/signals?limit=200")).signals || []; }
+    catch (e) { status(e.message, true); $("scRefresh").onclick = () => signalChartView(); return; }
+  if (!signals.length) { $("scInfo").textContent = "No signals yet."; return; }
+  $("scSel").innerHTML = signals.map(s => `<option value="${esc(s.id)}">${esc(s.symbol)} ${esc(s.side)} ${esc(s.timeframe)} · score ${esc(s.score)} · ${esc(s.status)} · ${esc(new Date(s.createdAt).toLocaleString())}</option>`).join("");
+  if (preselect && signals.some(s => s.id === preselect)) $("scSel").value = preselect;
+
+  let charts = [];
+  const cfgCache = {};
+  async function configFor(sig) {
+    if (!sig.settingsVersion) return { label: "default config", periods: CH_DEF_PERIODS, toggles: CH_DEF_TOGGLES, known: true };
+    if (!cfgCache[sig.settingsVersion]) {
+      try { const r = await api("/engine/settings/" + encodeURIComponent(sig.settingsVersion)); cfgCache[sig.settingsVersion] = { label: "config v" + sig.settingsVersion, periods: { ...CH_DEF_PERIODS, ...r.version.settings.periods }, toggles: { ...CH_DEF_TOGGLES, ...r.version.settings.toggles }, known: true }; }
+      catch (e) { cfgCache[sig.settingsVersion] = { label: "config v" + sig.settingsVersion + " (could not be read, showing all indicators)", periods: CH_DEF_PERIODS, toggles: CH_DEF_TOGGLES, known: false }; }
+    }
+    return cfgCache[sig.settingsVersion];
+  }
+
+    async function draw(keep) {
+    if (keep === true) {
+      try {
+        const fresh = (await api("/signals?limit=200")).signals || [];
+        if (fresh.length) {
+          const cur = $("scSel").value;
+          signals = fresh;
+          $("scSel").innerHTML = fresh.map(s => `<option value="${esc(s.id)}">${esc(s.symbol)} ${esc(s.side)} ${esc(s.timeframe)} · score ${esc(s.score)} · ${esc(s.status)} · ${esc(new Date(s.createdAt).toLocaleString())}</option>`).join("");
+          $("scSel").value = fresh.some(s => s.id === cur) ? cur : fresh[0].id;
+        }
+      } catch (e) { /* purani list se kaam chalao */ }
+    }
+    const sig = signals.find(s => s.id === $("scSel").value); if (!sig) return;
+        status("Loading…");
+    let cs;
+    try {
+      const r = await api("/candles?symbol=" + encodeURIComponent(sig.symbol) + "&timeframe=" + encodeURIComponent(sig.timeframe) + "&limit=" + Math.min(4000, Math.ceil(20 * 86400 / (CH_TF_SEC[sig.timeframe] || 3600))));
+      cs = (r.data || []).filter(k => [k.timestamp, k.open, k.high, k.low, k.close, k.volume].every(Number.isFinite)).sort((a, b) => a.timestamp - b.timestamp);
+    } catch (e) { status(e.message, true); return; }
+    if (cs.length < 60) { status("Not enough candles to draw indicators (" + cs.length + ").", true); return; }
+        const cfg = await configFor(sig), P = cfg.periods, T = cfg.toggles;
+    let prevRange = null;
+    if (keep === true && charts[0] && host.dataset.sigId === sig.id) { try { prevRange = charts[0].timeScale().getVisibleRange(); } catch (e) {} }
+    host.dataset.sigId = sig.id;
+    charts.forEach(c => c.remove()); charts = []; $("scCharts").innerHTML = "";
+    const close = cs.map(k => k.close), t = cs.map(k => Math.floor(k.timestamp / 1000));
+    const css = getComputedStyle(document.documentElement);
+    const txt = css.getPropertyValue("--text").trim() || "#ccc", grid = css.getPropertyValue("--line").trim() || "#333";
+    const mk = (h) => {
+      const el = document.createElement("div"); el.style.cssText = "margin-top:6px;border:1px solid " + grid + ";border-radius:6px;overflow:hidden"; $("scCharts").appendChild(el);
+      const label = document.createElement("div"); label.style.cssText = "position:absolute;z-index:3;left:8px;top:4px;font-size:11px;opacity:.8;pointer-events:none"; el.style.position = "relative"; el.appendChild(label);
+      const c = LightweightCharts.createChart(el, { height: h, autoSize: false, width: el.clientWidth || 800, layout: { background: { color: "transparent" }, textColor: txt }, grid: { vertLines: { color: grid }, horzLines: { color: grid } }, rightPriceScale: { borderColor: grid }, timeScale: { borderColor: grid, timeVisible: true, secondsVisible: false }, crosshair: { mode: 0 } });
+      charts.push(c); return { c, label };
+    };
+    const line = (c, vals, color, w, extra) => { const s = c.addLineSeries({ color, lineWidth: w || 1, priceLineVisible: false, lastValueVisible: false, ...(extra || {}) }); s.setData(vals.map((v, i) => Number.isFinite(v) ? { time: t[i], value: v } : null).filter(Boolean)); return s; };
+
+    // main price chart
+    const main = mk(400); main.label.textContent = sig.symbol + " " + sig.timeframe;
+    const lvAll = [sig.entry, sig.stop, ...(sig.targets || [])].filter(Number.isFinite);
+    const lastC = close[close.length - 1], prec = lastC >= 1000 ? 2 : lastC >= 100 ? 3 : lastC >= 1 ? 4 : lastC >= 0.1 ? 5 : lastC >= 0.01 ? 6 : 8;
+    const candle = main.c.addCandlestickSeries({
+      upColor: "#21e39a", downColor: "#ff5368", borderVisible: false, wickUpColor: "#21e39a", wickDownColor: "#ff5368",
+      priceFormat: { type: "price", precision: prec, minMove: Math.pow(10, -prec) },
+      autoscaleInfoProvider: (orig) => { const r = orig(); if (r && lvAll.length) { r.priceRange.minValue = Math.min(r.priceRange.minValue, ...lvAll); r.priceRange.maxValue = Math.max(r.priceRange.maxValue, ...lvAll); } return r; }
+    });
+    candle.setData(cs.map((k, i) => ({ time: t[i], open: k.open, high: k.high, low: k.low, close: k.close })));
+    
+    if (T.vwap) line(main.c, chVwap(cs), "#2cc7ff", 1, { lineStyle: 2 });
+    if (T.bollinger) { const b = chBoll(close, P.bbPeriod, P.bbMult); line(main.c, b.up, "#7d8aa0", 1); line(main.c, b.mid, "#7d8aa0", 1, { lineStyle: 2 }); line(main.c, b.lo, "#7d8aa0", 1); }
+    const lvl = (price, color, title, style) => candle.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
+    if (T.pivots) { const pv = chPivots(cs, close[close.length - 1]); pv.res.forEach((p, i) => lvl(p, "#ff8a98", "R" + (i + 1), 3)); pv.sup.forEach((p, i) => lvl(p, "#7bf0c0", "S" + (i + 1), 3)); }
+    // the signal itself (read from the stored signal, never recalculated)
+    lvl(sig.entry, "#27bfff", "Entry", 0); lvl(sig.stop, "#ff5368", "Stop", 0);
+    (sig.targets || []).forEach((p, i) => lvl(p, "#21e39a", "TP" + (i + 1), 0));
+    const bar = Math.floor(new Date(sig.createdAt).getTime() / 1000), step = CH_TF_SEC[sig.timeframe] || 3600;
+    const idx = t.findIndex((x, i) => bar >= x && (i === t.length - 1 || bar < t[i + 1]));
+    const inRange = bar >= t[0] && bar < t[t.length - 1] + step && idx >= 0;
+    if (inRange) candle.setMarkers([{ time: t[idx], position: sig.side === "LONG" ? "belowBar" : "aboveBar", color: sig.side === "LONG" ? "#21e39a" : "#ff5368", shape: sig.side === "LONG" ? "arrowUp" : "arrowDown", text: sig.side + " " + sig.score }]);
+
+        // SMC zones + Liquidation clusters (stored signal data se draw hota hai)
+    const sm = sig.smc || {}, lq = sig.liquidation || {};
+    const band = (lo, hi, rgb, title) => {
+      if (!Number.isFinite(lo) || !Number.isFinite(hi)) return;
+      const from = Math.max(0, cs.length - 150);
+      const bs = main.c.addBaselineSeries({
+        baseValue: { type: "price", price: lo },
+        topLineColor: "rgba(0,0,0,0)", bottomLineColor: "rgba(0,0,0,0)",
+        topFillColor1: "rgba(" + rgb + ",.28)", topFillColor2: "rgba(" + rgb + ",.28)",
+        bottomFillColor1: "rgba(0,0,0,0)", bottomFillColor2: "rgba(0,0,0,0)",
+        lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false
+      });
+      bs.setData(t.slice(from).map(x => ({ time: x, value: hi })));
+      [lo, hi].forEach(p => candle.createPriceLine({ price: p, color: "rgba(" + rgb + ",.9)", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: p === hi ? title : "" }));
+    };
+    if (T.smc && sm.available) {
+      if (sm.orderBlock) band(sm.orderBlock.low, sm.orderBlock.high, sm.orderBlock.side === "bullish" ? "33,227,154" : "255,83,104", "OB " + (sm.orderBlock.side === "bullish" ? "↑" : "↓"));
+      if (sm.fvg) band(sm.fvg.low, sm.fvg.high, "44,199,255", "FVG");
+      if (sm.sweep && Number.isFinite(sm.sweep.level)) lvl(sm.sweep.level, "#f1a933", "Sweep", 2);
+      if (sm.lastBreak && Number.isFinite(sm.lastBreak.level)) lvl(sm.lastBreak.level, "#8a79ff", sm.lastBreak.type, 1);
+    }
+    if (T.liquidation && lq.available) {
+      if (Number.isFinite(lq.clusterLong)) lvl(lq.clusterLong, "#ff8a3d", "Liq Long", 2);
+      if (Number.isFinite(lq.clusterShort)) lvl(lq.clusterShort, "#c86bff", "Liq Short", 2);
+    }
+
+    // indicator panels (only the ones this configuration uses)
+    const panels = [];
+    if (T.rsi) { const p = mk(120); p.label.textContent = "RSI " + P.rsi; line(p.c, chRsi(close, P.rsi), "#f1a933", 1).createPriceLine({ price: 70, color: grid, lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }); panels.push(p); }
+    if (T.stochRsi) { const p = mk(120), s = chStoch(close, P.rsi); p.label.textContent = "Stochastic RSI"; line(p.c, s.k, "#2cc7ff", 1); line(p.c, s.d, "#ff8a98", 1); panels.push(p); }
+    if (T.macd) { const p = mk(130), m = chMacd(close, P.macdFast, P.macdSlow, P.macdSignal); p.label.textContent = "MACD " + P.macdFast + "/" + P.macdSlow + "/" + P.macdSignal;
+      const h = p.c.addHistogramSeries({ priceLineVisible: false, lastValueVisible: false }); h.setData(m.hist.map((v, i) => Number.isFinite(v) ? { time: t[i], value: v, color: v >= 0 ? "#21e39a88" : "#ff536888" } : null).filter(Boolean));
+      line(p.c, m.macd, "#2cc7ff", 1); line(p.c, m.signal, "#f1a933", 1); panels.push(p); }
+    
+    if (T.obv) { const p = mk(110); p.label.textContent = "OBV"; line(p.c, chObv(cs), "#8a79ff", 1); panels.push(p); }
+
+    // keep every chart on the same time range
+    let syncing = false;
+    charts.forEach(src => src.timeScale().subscribeVisibleLogicalRangeChange(r => { if (syncing || !r) return; syncing = true; charts.forEach(o => { if (o !== src) o.timeScale().setVisibleLogicalRange(r); }); syncing = false; }));
+        charts.forEach(c => c.timeScale().fitContent());
+    {
+      const n = cs.length, from = Math.max(n - 300, Math.min(n - 100, (inRange ? idx : n) - 30));
+      const dz = () => main.c.timeScale().setVisibleLogicalRange({ from, to: n + 6 });
+      if (prevRange) { try { main.c.timeScale().setVisibleRange(prevRange); } catch (e) { dz(); } } else dz();
+    }
+    // info + legend
+    const pc = (v) => v == null ? "-" : fmtP(v);
+    $("scInfo").innerHTML = `<b class="${sig.side === "LONG" ? "green" : "red"}">${esc(sig.side)}</b> ${esc(sig.symbol)} ${esc(sig.timeframe)} · score ${esc(sig.score)}/100 · <span class="status ${["ACTIVE", "TP1_HIT", "TP2_HIT"].includes(sig.status) ? "active" : "neutral"}">${esc(sig.status)}</span><br>` +
+      `Entry ${esc(pc(sig.entry))} · Stop ${esc(pc(sig.stop))} · Targets ${esc((sig.targets || []).map(fmtP).join(", "))}<br>` +
+      `<span style="opacity:.75">Made with ${esc(cfg.label)}${sig.strategyVersion ? " · " + esc(sig.strategyVersion) : ""} · ${esc(new Date(sig.createdAt).toLocaleString())}</span>`;
+        // only the indicators that are ON in this configuration are listed; OFF ones are hidden to avoid clutter
+    const chip = (name, note) => `<span style="padding:3px 8px;border-radius:999px;border:1px solid ${grid}" title="${esc(note)}">${esc(name)}</span>`;
+    const drawn = [["RSI", "rsi"], ["MACD", "macd"], ["Stochastic RSI", "stochRsi"], ["OBV", "obv"], ["VWAP", "vwap"], ["Bollinger Bands", "bollinger"], ["Swing pivots (S/R)", "pivots"], ["SMC zones", "smc"], ["Liquidation clusters", "liquidation"]].filter(([, k]) => T[k]);
+    const dataOnly = [["Derivatives", "derivatives"],["Order book", "orderBook"]].filter(([, k]) => T[k]);
+    $("scLegend").innerHTML = drawn.map(([n]) => chip(n, "Selected and drawn")).join("") + dataOnly.map(([n]) => chip(n + " (data only)", "Selected, but it is not a price series so nothing is drawn")).join("") || "No indicators selected";
+        const notes = ["Only the indicators selected in this signal's configuration are shown. Their lines are recalculated here from the candles with that configuration's periods. Entry, stop and targets are the stored values.",
+      "Derivatives, order book, SMC zones and liquidation clusters are not price series, so they appear as \"data only\" chips.",
+      "Support / resistance lines are the nearest swing pivots (3 bars each side) in the last 200 candles."];
+    if (!cfg.known) notes.push("The configuration could not be read, so all indicators are drawn with default periods.");
+    if (!inRange) notes.push("This signal is older than the 500 candles loaded, so no arrow is drawn.");
+    $("scNotes").innerHTML = notes.map(n => "• " + esc(n)).join("<br>");
+    status("Updated " + new Date().toLocaleTimeString());
+  }
+
+  $("scSel").onchange = () => draw(); $("scRefresh").onclick = () => draw(true);
+  window.addEventListener("resize", () => charts.forEach(c => { const el = c.chartElement ? c.chartElement().parentElement : null; if (el) c.applyOptions({ width: el.clientWidth }); }));
+  await draw();
+  clearInterval(viewTimer);
+  viewTimer = setInterval(() => { if (host.dataset.view === "Signal Chart") draw(true); else clearInterval(viewTimer); }, 30000);
+  }
+  
+const VIEW_MAP = {
+"Signal Chart": signalChartView,
+"Engine Config": engineConfigView,
+"Scan Health": scanView, "Score Breakdown": scoreView,
+  "Market Data": marketView, "Indicators": indicatorsView,
+  "Risk Engine": riskView, "Calculations": riskView,
+  "Performance": performanceView, "Backtesting": backtestView, "Backtests": backtestView,
+  "Watchlists": watchView, "Alerts": alertsView, "Users": usersView,
+  "Database": databaseView, "System": scanView,
+  "Signal History": signalHistoryView, "Audit Logs": auditView, "API & Keys": apiKeysView, "Settings": settingsView
+};
+
+async function signalHistoryView() {
+  host.innerHTML = panel("Signal History", "Loading…", "");
+  const OPEN = ["ACTIVE", "TP1_HIT", "TP2_HIT"];
+  const p = v => (v == null ? "-" : fmtP(v));
+  try {
+    const d = await api("/signals?limit=2000");
+    const rows = d.signals.map(s => `<tr>
+      <td>${esc(s.symbol)}${s.strategyVersion ? `<br><span style="opacity:.6;font-size:10px">${esc(s.strategyVersion)} · ${s.settingsVersion ? "cfg v" + esc(s.settingsVersion) : "default cfg"}</span>` : ""}</td>
+      <td class="${s.side === "LONG" ? "green" : s.side === "SHORT" ? "red" : ""}">${esc(s.side)}</td>
+      <td>${esc(s.timeframe)}</td>
+      <td>${esc(s.score)}/100</td>
+      <td>${esc(p(s.entry))}</td>
+      <td>${esc(p(s.stop))}</td>
+      <td>${esc((s.targets || []).map(fmtP).join(", "))}</td>
+      <td><span class="status ${OPEN.includes(s.status) ? "active" : "neutral"}">${esc(s.status)}</span></td>
+      <td>${new Date(s.createdAt).toLocaleString()}</td>
+      <td>${s.kept ? '<span class="status pending">★ KEPT</span>' : ""}</td>
+      <td style="white-space:nowrap">
+        <button class="btn" data-keep="${esc(s.id)}" data-kept="${s.kept ? 1 : 0}">${s.kept ? "Unkeep" : "Keep"}</button>
+        <button class="btn" data-del="${esc(s.id)}" ${s.kept ? "disabled" : ""}>Delete</button>
+      </td></tr>`).join("");
+
+    host.innerHTML = `<div class="panel"><div class="ph"><b>Signal History</b>
+      <span>${d.count} signals · ${d.signals.filter(s => s.kept).length} kept
+      <button class="btn" id="purgeBtn" style="margin-left:8px">Delete all not kept (closed only)</button></span></div>
+      <div class="pb" style="overflow:auto"><table class="table">
+      <thead><tr><th>Symbol</th><th>Side</th><th>TF</th><th>Score</th><th>Entry</th><th>Stop</th><th>Targets</th><th>Status</th><th>Created</th><th>Kept</th><th>Action</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="11">No signals yet</td></tr>'}</tbody></table></div></div>`;
+
+    host.querySelectorAll("[data-keep]").forEach(b => b.addEventListener("click", async () => {
+      b.disabled = true;
+      try {
+        await api("/signals/" + encodeURIComponent(b.dataset.keep) + "/keep", {
+          method: "PATCH", body: JSON.stringify({ kept: b.dataset.kept !== "1" })
+        });
+        signalHistoryView();
+      } catch (e) { alert(e.message); b.disabled = false; }
+    }));
+
+    host.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("Delete this signal permanently?")) return;
+      b.disabled = true;
+      try {
+        await api("/signals/" + encodeURIComponent(b.dataset.del), { method: "DELETE" });
+        signalHistoryView();
+      } catch (e) { alert(e.message); b.disabled = false; }
+    }));
+
+    $("purgeBtn").addEventListener("click", async () => {
+      if (!confirm("Delete ALL closed signals that are not kept? Open signals are skipped.")) return;
+      try {
+        const r = await api("/signals/purge", { method: "POST" });
+        alert(r.deleted + " signals deleted");
+        signalHistoryView();
+      } catch (e) { alert(e.message); }
+    });
+  } catch (e) {
+    host.innerHTML = `<div class="panel"><div class="pb red">${esc(e.message)}</div></div>`;
+  }
+}
+
+function placeholderView(name) {
+  host.dataset.view = name;
+  clearInterval(viewTimer);
+  const fn = VIEW_MAP[name];
+  if (fn) fn();
+  else host.innerHTML = panel(name, "", "Is section ka backend API abhi bana nahi hai.");
+}
+
+const FALLBACK_SYMBOLS = "BTC ETH XRP BNB SOL DOGE ADA TRX LINK AVAX SUI XLM BCH HBAR LTC TON DOT UNI AAVE NEAR PEPE ICP ETC APT ONDO POL ARB OP FIL ATOM ALGO VET INJ RENDER TAO FET SEI CRV TIA JUP WLD ENA PENDLE STX IMX GRT SAND MANA THETA QNT FLOW XTZ EOS NEO KAVA SHIB BONK WIF FLOKI LDO MKR RUNE AXS GALA CHZ APE DYDX COMP SNX 1INCH ZEC DASH IOTA EGLD KSM ZIL ENJ BAT ANKR CELO ROSE MINA CFX GMX WOO JASMY PYTH STRK DYM ORDI SUSHI YFI LRC ZRX OM TRUMP PENGU VIRTUAL ARKM AR".split(" ").map(c => c + "USDT");
+let trackedSymbols = null;
+
+async function getTrackedSymbols() {
+  if (trackedSymbols) return trackedSymbols;
+  try {
+    const d = await api("/engine/status");
+    if (Array.isArray(d.symbols) && d.symbols.length) { trackedSymbols = d.symbols; return trackedSymbols; }
+  } catch (e) {}
+  return FALLBACK_SYMBOLS;
+}
+
+async function fetchTickerMap(symbols) {
+  const base = "https://data-api.binance.vision/api/v3/ticker/24hr";
+  let r = await fetch(base + "?symbols=" + encodeURIComponent(JSON.stringify(symbols)));
+  if (!r.ok) r = await fetch(base); // ek bhi invalid symbol ho to poori call fail hoti hai, isliye sab lekar filter karte hain
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const map = {};
+  (await r.json()).forEach(x => { map[x.symbol] = x; });
+  return map;
+}
+
+async function loadLive() {
+  const feed = $("liveFeed");
+  const cards = document.querySelectorAll(".cards .card");
+  const info = $("mdqInfo");
+  const t0 = performance.now();
+  try {
+    const symbols = await getTrackedSymbols();
+    const map = await fetchTickerMap(symbols);
+    const ms = Math.round(performance.now() - t0);
+    let okCount = 0;
+    const rows = symbols.map(sym => {
+      const x = map[sym];
+      const name = esc(sym.replace("USDT", "/USDT"));
+      if (!x) return `<tr><td>${name}</td><td>-</td><td>-</td><td><span class="status danger">NO DATA</span></td></tr>`;
+      const price = parseFloat(x.lastPrice), ch = parseFloat(x.priceChangePercent);
+      if (!(price > 0)) return `<tr><td>${name}</td><td>-</td><td>-</td><td><span class="status danger">NO PRICE</span></td></tr>`;
+      const stale = Date.now() - Number(x.closeTime) > 5 * 60 * 1000;
+      if (!stale) okCount++;
+      return `<tr><td>${name}</td>
+        <td>$${fmtP(x.lastPrice)}</td>
+        <td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td>
+        <td><span class="status ${stale ? "pending" : "active"}">${stale ? "STALE" : "OK"}</span></td></tr>`;
+    });
+    feed.innerHTML = rows.join("");
+    if (info) info.textContent = `${okCount}/${symbols.length} OK · ${ms}ms · ${new Date().toLocaleTimeString()}`;
+    cards[1].querySelector(".value").textContent = okCount + "/" + symbols.length;
+    cards[1].querySelector(".sub").textContent = "Binance responding · " + ms + "ms";
+  } catch (e) {
+    feed.innerHTML = `<tr><td colspan="4" class="red">Binance feed error: ${esc(e.message)}</td></tr>`;
+    if (info) info.textContent = "Binance unreachable";
+    cards[1].querySelector(".value").textContent = "0/" + (trackedSymbols ? trackedSymbols.length : FALLBACK_SYMBOLS.length);
+    cards[1].querySelector(".sub").textContent = "Binance unreachable";
+  }
+}
+
+async function loadApiHealth() {
+  const row = document.querySelector(".health .healthrow");
+  const t0 = performance.now();
+  let ok = false;
+  try {
+    const r = await fetch(API + "/health");
+    ok = r.ok;
+  } catch (e) {}
+  const ms = Math.round(performance.now() - t0);
+  row.querySelector("small").textContent = ok ? "Latency " + ms + "ms" : "Not reachable";
+  const b = row.querySelector("b");
+  b.textContent = ok ? "ONLINE" : "OFFLINE";
+  b.className = ok ? "green" : "red";
+}
+
+// auto-refresh every 10s while the Dashboard is visible
+setInterval(() => {
+  if (host.style.display === "none" && sessionStorage.getItem("cg_admin_logged_in") === "true") loadLive();
+}, 10000);
+
+// ---------- Alert Queue / Audit Activity / Database Overview (real data) ----------
+const toMs = (v) => { if (typeof v === "number") return v; const t = Date.parse(v); return Number.isFinite(t) ? t : null; };
+const agoText = (ms) => {
+  const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+  if (s < 60) return s + "s ago";
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60);
+  return h < 24 ? h + "h ago" : Math.floor(h / 24) + "d ago";
+};
+const logTime = (ms) => {
+  const d = new Date(ms);
+  if (d.toDateString() === new Date().toDateString()) return d.toLocaleTimeString("en-GB");
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) + " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+};
+
+function signalEvents(signals) {
+  const ev = [];
+  for (const s of signals) {
+    const sym = s.symbol || "";
+    const created = toMs(s.createdAt);
+    if (created) ev.push({ t: created, name: "NEW SIGNAL", code: "signal.created", level: "INFO", sym, extra: "side=" + s.side + " score=" + s.score });
+    const h = s.hits || {};
+    [["tp1", "TP1 HIT"], ["tp2", "TP2 HIT"], ["tp3", "TP3 HIT"], ["sl", "SL HIT"]].forEach(([k, label]) => {
+      if (typeof h[k] === "number") ev.push({ t: h[k], name: label, code: "signal." + k + "_hit", level: k === "sl" ? "WARN" : "INFO", sym, extra: "" });
+    });
+    if ((s.status === "EXPIRED" || s.status === "CANCELLED") && typeof s.outcomeAt === "number") {
+      ev.push({ t: s.outcomeAt, name: s.status, code: "signal." + s.status.toLowerCase(), level: "INFO", sym, extra: "" });
+    }
+  }
+  return ev.sort((a, b) => b.t - a.t);
+}
+
+async function loadOpsPanels() {
+  const alertBody = $("alertBody"), auditBody = $("auditBody"), dbBody = $("dbBody");
+  if (!alertBody || !auditBody || !dbBody) return;
+  const [sigR, statR, setR, dbR] = await Promise.allSettled([
+    api("/signals?limit=300"), api("/engine/status"), api("/engine/settings"), api("/admin/overview")
+  ]);
+
+  // Alert Queue = latest signal events (new signal, TP hit, SL hit, expired)
+  if (sigR.status === "fulfilled") {
+    const ev = signalEvents(sigR.value.signals || []);
+    const day = ev.filter(e => Date.now() - e.t < 864e5).length;
+    $("alertInfo").textContent = day + " in last 24h";
+    alertBody.innerHTML = ev.length
+      ? ev.slice(0, 5).map(e => `<tr><td class="${e.name === "SL HIT" ? "red" : /^TP/.test(e.name) ? "green" : ""}">${esc(e.name)}</td><td>${esc(e.sym.replace("USDT", "/USDT"))}</td><td>${agoText(e.t)}</td></tr>`).join("")
+      : '<tr><td colspan="3" style="opacity:.7">No signal events yet</td></tr>';
+  } else {
+    $("alertInfo").textContent = "Error";
+    alertBody.innerHTML = `<tr><td colspan="3" class="red">${esc(sigR.reason.message)}</td></tr>`;
+  }
+
+  // Recent Audit Activity = signal events + last scan + settings versions
+  const logs = [];
+  if (sigR.status === "fulfilled") {
+    signalEvents(sigR.value.signals || []).slice(0, 12).forEach(e => logs.push({ t: e.t, level: e.level, text: e.code + " symbol=" + e.sym + (e.extra ? " " + e.extra : "") }));
+  }
+  if (statR.status === "fulfilled" && statR.value.lastRun) {
+    const r = statR.value.lastRun, t = toMs(r.finishedAt);
+    if (t) logs.push({ t, level: r.errors > 0 ? (r.errors >= r.scanned ? "ERROR" : "WARN") : "INFO", text: "scan.completed tf=" + r.timeframe + " scanned=" + r.scanned + " emitted=" + r.emitted + " errors=" + r.errors + (r.settingsVersion ? " settings=v" + r.settingsVersion : "") });
+  }
+  if (setR.status === "fulfilled") {
+    (setR.value.versions || []).slice(0, 10).forEach(v => {
+      const c = toMs(v.createdAt), a = toMs(v.activatedAt);
+      if (c) logs.push({ t: c, level: "INFO", text: "settings.version.saved v=" + v.version + " by=" + v.createdBy });
+      if (a) logs.push({ t: a, level: "INFO", text: "settings.version.activated v=" + v.version + " by=" + (v.activatedBy || "?") });
+    });
+  }
+  logs.sort((a, b) => b.t - a.t);
+  const cls = { INFO: "ok", WARN: "warn", ERROR: "err" };
+  auditBody.innerHTML = logs.length
+    ? logs.slice(0, 8).map(l => `<div><span class="${cls[l.level] || "ok"}">${logTime(l.t)} ${l.level}</span> ${esc(l.text)}</div>`).join("")
+    : "<div>No activity yet</div>";
+
+  // Database Overview = real document counts + MongoDB ping
+  if (dbR.status === "fulfilled") {
+    $("dbInfo").textContent = "MongoDB ping " + dbR.value.pingMs + "ms";
+    dbBody.innerHTML = dbR.value.collections.map(c => `<tr><td>${esc(c.name)}</td><td>${c.count === null ? "-" : Number(c.count).toLocaleString("en-US")}</td><td class="${c.ok ? "green" : "red"}">${c.ok ? "Healthy" : "Error"}</td></tr>`).join("");
+  } else {
+    $("dbInfo").textContent = "Error";
+    dbBody.innerHTML = `<tr><td colspan="3" class="red">${esc(dbR.reason.message)}</td></tr>`;
+  }
+}
+
+setInterval(() => {
+  if (host.style.display === "none" && sessionStorage.getItem("cg_admin_logged_in") === "true") loadOpsPanels();
+}, 30000);
+
+async function loadDashboard() {
+  loadLive();
+  loadApiHealth();
+  loadOpsPanels();
+  try {
+    const d = await api("/signals?limit=100");
+    const active = d.signals.filter(s => s.status === "ACTIVE");
+    document.querySelector(".cards .card .value").textContent = active.length;
+    const tb = document.querySelector(".grid2 .table tbody");
+    if (d.signals.length) tb.innerHTML = d.signals.slice(0, 6).map(s => `<tr>
+      <td>${esc(s.symbol)}</td><td class="${s.side === "LONG" ? "green" : "red"}">${esc(s.side)}</td>
+      <td>${esc(s.score)}/100</td>
+      <td><span class="status ${s.status === "ACTIVE" ? "active" : "neutral"}">${esc(s.status)}</span>${s.outcomeClosed && ["TP1_HIT", "TP2_HIT"].includes(s.status) && !(s.hits && s.hits.sl) ? `<br><small style="opacity:.8;font-size:8px">Exit${s.outcomeAt ? " · " + new Date(s.outcomeAt).toLocaleString() : ""}${s.exit != null ? " @ " + esc(s.exit) : ""}</small>` : ""}</td>
+      <td>${new Date(s.createdAt).toLocaleTimeString()}</td></tr>`).join("");
+  } catch (e) { console.error(e); }
+}
+
+function show(name) {
+  setActive(name);
+  side.classList.remove("open");
+  try { history.replaceState(null, "", "#" + encodeURIComponent(name)); } catch (e) {}  // refresh par yahi page wapas khulega
+  const dash = name === "Dashboard";
+  dashParts.forEach(el => el.style.display = dash ? "" : "none");
+  host.style.display = dash ? "none" : "";
+  if (dash) loadDashboard();
+    else if (["Signal Engine", "Signal Events", "Signals"].includes(name)) signalsView();
+  else if (name === "Signal History") signalHistoryView();
+  else placeholderView(name);
+}
+
+document.querySelectorAll(".nav, .toplinks a").forEach(a =>
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    const name = a.textContent.replace(/^[^A-Za-z]+/, "").replace(/\d+$/, "").trim();
+    show(name);
+  }));
+
+$("createBtn").addEventListener("click", () => { $("sigMsg").textContent = ""; $("modal").style.display = "flex"; });
+$("cancelBtn").addEventListener("click", () => $("modal").style.display = "none");
+document.querySelector(".user").style.cursor = "pointer";
+document.querySelector(".user").title = "Click to logout";
+document.querySelector(".user").addEventListener("click", () => confirm("Logout?") && logout());
+
+$("sigForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("sigMsg");
+  msg.className = ""; msg.textContent = "Saving…";
+  try {
+    await api("/signals", {
+      method: "POST",
+      body: JSON.stringify({
+        symbol: $("f_symbol").value,
+        side: $("f_side").value,
+        timeframe: $("f_tf").value,
+        score: Number($("f_score").value),
+        entry: Number($("f_entry").value),
+        stop: Number($("f_stop").value),
+        targets: $("f_targets").value.split(",").map(Number).filter(Boolean),
+        rationale: $("f_note").value
+      })
+    });
+    $("modal").style.display = "none";
+    e.target.reset();
+    show("Dashboard");
+  } catch (err) {
+    msg.className = "red"; msg.textContent = err.message;
+  }
+});
+
+if (sessionStorage.getItem("cg_admin_logged_in") === "true") {
+  const saved = decodeURIComponent(location.hash.slice(1));
+  const valid = [...document.querySelectorAll(".nav, .toplinks a")]
+    .some(a => a.textContent.replace(/^[^A-Za-z]+/, "").replace(/\d+$/, "").trim() === saved);
+  if (saved && saved !== "Dashboard" && valid) show(saved);   // last khula page restore
+  else loadDashboard();
+}
+</script>
+</body>
+</html>
