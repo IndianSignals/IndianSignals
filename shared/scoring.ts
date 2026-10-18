@@ -1,0 +1,521 @@
+import type { Candle, Liquidation } from "./market.js";
+import { calcSmc, describeSmc, scoreSmc } from "./smc.js";
+import { calcLiquidation, describeLiquidation, scoreLiquidation } from "./liquidation.js";
+import { calcAdvanced, calcCandleConfirm, calcFib, calcIndicators } from "./indicators.js";
+import type { FibPlan } from "./indicators.js";
+import { disabledIndicators, resolveEngineSettings } from "./engineConfig.js";
+import type { EngineSettingsInput } from "./engineConfig.js";
+
+export type ScoreSide = "LONG" | "SHORT" | "NEUTRAL";
+
+// Same shape as FinalSignal["score"] in server/models/signal.ts
+export interface SetupScore {
+  total: number; marketContext: number; trendMTF: number; structure: number; liquiditySR: number;
+  volumeMomentum: number; derivativesOrderbook: number; newsFundamentals: number; riskExecution: number;
+  smcLiquidity?: number;   // SMC + liquidation bonus/penalty (about -7..+8), already included in total
+}
+
+export const SCORE_MAX: SetupScore = {
+  total: 100, marketContext: 10, trendMTF: 20, structure: 15, liquiditySR: 10,
+  volumeMomentum: 15, derivativesOrderbook: 10, newsFundamentals: 5, riskExecution: 15,
+};
+
+export interface DerivativesInput { fundingRate: number | null; oiChangePct: number | null; longShortRatio: number | null; bookImbalance: number | null; topTraderRatio?: number | null; takerBuySellRatio?: number | null; asOf?: number | null; source?: string | null; }
+export interface NewsInput { sentiment: number; highImpactSoon: boolean; }
+/** Hard filters. Any failed gate = criticalFailure = NO_TRADE. Defaults are all OFF here; signalBuilder turns them on. */
+/** off = ignored, soft = score bonus/penalty only, strict = also a hard gate (NO_TRADE when it fails). */
+export type SignalMode = "off" | "soft" | "strict";
+export interface SetupGates { adxMin: number; htfFilter: boolean; requireCandle: boolean; candleVolMin: number; requireFib: boolean; smc?: SignalMode; liq?: SignalMode; core4?: boolean; core?: string; }
+export interface ScoreInput {
+  candles: Candle[];
+  confirmation?: Candle[] | null;
+  change24hPct?: number | null;
+  derivatives?: Partial<DerivativesInput> | null;
+  news?: NewsInput | null;
+  htf?: Candle[] | null;          // daily candles for the higher-timeframe filter
+  gates?: Partial<SetupGates> | null;
+    liquidations?: Liquidation[] | null;   // recent liquidation events (optional)
+  settings?: EngineSettingsInput | null; // indicator periods and on/off switches (defaults = classic behaviour)
+  now?: number;                          // evaluation time (ms). Pass it for deterministic/historical runs; defaults to Date.now()
+}
+export interface ScoreResult {
+  side: ScoreSide; score: SetupScore;
+  confirmations: string[]; conflicts: string[]; warnings: string[]; unavailable: string[];
+  criticalFailure: string | null;
+  fib?: FibPlan | null;
+  smc?: Record<string, unknown> | null;          // SMC details for dashboards
+  liquidation?: Record<string, unknown> | null;  // liquidation details for dashboards
+  disabled?: string[];     // indicators switched off in settings (full engine only)
+  activeMax?: number;      // points the score is normalised against (100 when nothing is missing or off)
+}
+
+const zeroScore = (): SetupScore => ({
+  total: 0, marketContext: 0, trendMTF: 0, structure: 0, liquiditySR: 0,
+  volumeMomentum: 0, derivativesOrderbook: 0, newsFundamentals: 0, riskExecution: 0,
+});
+const clamp = (v: number, max: number): number => Math.max(0, Math.min(max, v));
+const num = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const hiOf = (a: Candle[]): number => Math.max(...a.map((x) => x.high));
+const loOf = (a: Candle[]): number => Math.min(...a.map((x) => x.low));
+
+/** CORE4 mode: only EMA trend (30) + RSI (20) + SMC (30) + Liquidation (20). Every other indicator/gate is ignored. */
+function scoreCore4(input: ScoreInput, ind: NonNullable<ReturnType<typeof calcIndicators>>, atr: number, close: number): ScoreResult {
+  const g = input.gates ?? {};
+  const side: ScoreSide = ind.ema20 > ind.ema50 ? "LONG" : ind.ema20 < ind.ema50 ? "SHORT" : "NEUTRAL";
+  if (side === "NEUTRAL") return early("NEUTRAL", null, ["No clear directional bias"]);
+  const s: 1 | -1 = side === "LONG" ? 1 : -1;
+  const conf: string[] = [], conflicts: string[] = [], warnings: string[] = [];
+  let critical: string | null = null;
+
+  // 1) EMA trend (max 30)
+  let ema = 15;
+  conf.push("EMA20/EMA50 aligned with the setup");
+  if ((close - ind.ema50) * s > 0) ema += 10; else conflicts.push("Price is on the wrong side of EMA50");
+  if (Math.abs(ind.ema20 - ind.ema50) / atr >= 0.5) ema += 5;
+  const stretch = Math.abs(close - ind.ema20) / atr;
+  if (stretch > 2) critical = "Price is overextended from EMA20 (chasing risk)";
+  else if (stretch > 1.5) warnings.push(`Price is ${stretch.toFixed(1)} ATR away from EMA20`);
+
+  // 2) RSI (max 20)
+  let rsi = 0;
+  const r = s > 0 ? ind.rsi.value : 100 - ind.rsi.value;
+  if (r >= 50 && r <= 70) { rsi = 20; conf.push(`RSI ${ind.rsi.value.toFixed(0)} supports the ${side}`); }
+  else if ((r >= 40 && r < 50) || (r > 70 && r <= 75)) rsi = 10;
+  else if (r > 75) critical = critical ?? `RSI ${ind.rsi.value.toFixed(0)} is overextended for a ${side}`;
+
+  // 3) SMC (max 30) and 4) Liquidation (max 20); points are mapped to a 0..max scale, neutral = middle
+  const smcMode = g.smc ?? "soft", liqMode = g.liq ?? "soft";
+  let smcPart = 0, liqPart = 0, extra = 0, maxTotal = 50;
+  let smcOut: Record<string, unknown> | null = { available: false, mode: smcMode };
+  let liqOut: Record<string, unknown> | null = { available: false, mode: liqMode };
+  if (smcMode !== "off") {
+    maxTotal += 30;
+    let pts = 0;
+    const smc = calcSmc(input.candles, atr);
+    if (smc) {
+      const ss = scoreSmc(smc, s, close, atr);
+      pts = ss.pts; conf.push(...ss.confirmations); conflicts.push(...ss.conflicts);
+      smcOut = describeSmc(smc, smcMode, ss.pts, s, close, atr);
+      if (smcMode === "strict") {
+        if (ss.againstRecentBreak) critical = critical ?? "SMC: a recent structure break is against the setup";
+        else if (!ss.hasConfluence) critical = critical ?? "SMC: no order block, sweep, FVG or structure break confirms the setup";
+      }
+    }
+    smcPart = ((pts + 4) / 9) * 30;
+    extra += pts;
+  }
+  if (liqMode !== "off") {
+    maxTotal += 20;
+    let pts = 0;
+    const lr = calcLiquidation(input.liquidations, atr, input.now ?? Date.now());
+    if (lr) {
+      const lsc = scoreLiquidation(lr, s, close, atr);
+      pts = lsc.pts; conf.push(...lsc.confirmations); conflicts.push(...lsc.conflicts);
+      liqOut = describeLiquidation(lr, liqMode, lsc.pts);
+      if (liqMode === "strict" && lsc.againstCascade) critical = critical ?? "Liquidation cascade is still active against the setup";
+    }
+    liqPart = ((pts + 3) / 6) * 20;
+    extra += pts;
+  }
+
+  const total = Math.min(100, Math.max(0, Math.round(((ema + rsi + smcPart + liqPart) * 100) / maxTotal)));
+  const score: SetupScore = {
+    total, marketContext: 0, trendMTF: ema, structure: Math.round(smcPart), liquiditySR: Math.round(liqPart),
+    volumeMomentum: rsi, derivativesOrderbook: 0, newsFundamentals: 0, riskExecution: 0, smcLiquidity: extra,
+  };
+  return { side, score, confirmations: conf, conflicts, warnings, unavailable: [], criticalFailure: critical, fib: null, smc: smcOut, liquidation: liqOut };
+}
+
+/** CORE mode with a selectable indicator set, e.g. CORE_INDICATORS=smc,liq (any of ema, rsi, smc, liq). */
+function scoreCoreSel(input: ScoreInput, ind: NonNullable<ReturnType<typeof calcIndicators>>, atr: number, close: number): ScoreResult {
+  const g = input.gates ?? {};
+  const sel = new Set((g.core ?? "ema,rsi,smc,liq").toLowerCase().split(",").map((x) => x.trim()));
+  const useEma = sel.has("ema"), useRsi = sel.has("rsi");
+  const smcMode: SignalMode = sel.has("smc") ? (g.smc && g.smc !== "off" ? g.smc : "soft") : "off";
+  const liqMode: SignalMode = sel.has("liq") ? (g.liq && g.liq !== "off" ? g.liq : "soft") : "off";
+  const smc = smcMode !== "off" ? calcSmc(input.candles, atr) : null;
+  const lr = liqMode !== "off" ? calcLiquidation(input.liquidations, atr, input.now ?? Date.now()) : null;
+
+  // Direction: EMA20/50 if EMA is selected, otherwise whichever side SMC + Liquidation favour more
+  let dir = 0;
+  if (useEma) dir = ind.ema20 > ind.ema50 ? 1 : ind.ema20 < ind.ema50 ? -1 : 0;
+  else {
+    const net = (d: 1 | -1) => (smc ? scoreSmc(smc, d, close, atr).pts : 0) + (lr ? scoreLiquidation(lr, d, close, atr).pts : 0);
+    const l = net(1), sh = net(-1);
+    dir = l > sh ? 1 : sh > l ? -1 : 0;
+  }
+  if (dir === 0) return early("NEUTRAL", null, ["No clear directional bias"]);
+  const side: ScoreSide = dir > 0 ? "LONG" : "SHORT";
+  const s: 1 | -1 = dir > 0 ? 1 : -1;
+  const conf: string[] = [], conflicts: string[] = [], warnings: string[] = [];
+  let critical: string | null = null;
+  let ema = 0, rsi = 0, smcPart = 0, liqPart = 0, extra = 0, maxTotal = 0;
+
+  if (useEma) {
+    maxTotal += 30; ema = 15;
+    conf.push("EMA20/EMA50 aligned with the setup");
+    if ((close - ind.ema50) * s > 0) ema += 10; else conflicts.push("Price is on the wrong side of EMA50");
+    if (Math.abs(ind.ema20 - ind.ema50) / atr >= 0.5) ema += 5;
+    const stretch = Math.abs(close - ind.ema20) / atr;
+    if (stretch > 2) critical = "Price is overextended from EMA20 (chasing risk)";
+    else if (stretch > 1.5) warnings.push(`Price is ${stretch.toFixed(1)} ATR away from EMA20`);
+  }
+  if (useRsi) {
+    maxTotal += 20;
+    const r = s > 0 ? ind.rsi.value : 100 - ind.rsi.value;
+    if (r >= 50 && r <= 70) { rsi = 20; conf.push(`RSI ${ind.rsi.value.toFixed(0)} supports the ${side}`); }
+    else if ((r >= 40 && r < 50) || (r > 70 && r <= 75)) rsi = 10;
+    else if (r > 75) critical = critical ?? `RSI ${ind.rsi.value.toFixed(0)} is overextended for a ${side}`;
+  }
+  let smcOut: Record<string, unknown> | null = null;
+  let liqOut: Record<string, unknown> | null = null;
+  if (smcMode !== "off") {
+    maxTotal += 30;
+    smcOut = { available: false, mode: smcMode };
+    let pts = 0;
+    if (smc) {
+      const ss = scoreSmc(smc, s, close, atr);
+      pts = ss.pts; conf.push(...ss.confirmations); conflicts.push(...ss.conflicts);
+      smcOut = describeSmc(smc, smcMode, ss.pts, s, close, atr);
+      if (smcMode === "strict") {
+        if (ss.againstRecentBreak) critical = critical ?? "SMC: a recent structure break is against the setup";
+        else if (!ss.hasConfluence) critical = critical ?? "SMC: no order block, sweep, FVG or structure break confirms the setup";
+      }
+    }
+    smcPart = ((pts + 4) / 9) * 30;
+    extra += pts;
+  }
+  if (liqMode !== "off") {
+    maxTotal += 20;
+    liqOut = { available: false, mode: liqMode };
+    let pts = 0;
+    if (lr) {
+      const lsc = scoreLiquidation(lr, s, close, atr);
+      pts = lsc.pts; conf.push(...lsc.confirmations); conflicts.push(...lsc.conflicts);
+      liqOut = describeLiquidation(lr, liqMode, lsc.pts);
+      if (liqMode === "strict" && lsc.againstCascade) critical = critical ?? "Liquidation cascade is still active against the setup";
+    }
+    liqPart = ((pts + 3) / 6) * 20;
+    extra += pts;
+  }
+  if (maxTotal === 0) return early("NEUTRAL", null, ["CORE_INDICATORS has no valid indicator (use ema, rsi, smc, liq)"]);
+
+  const total = Math.min(100, Math.max(0, Math.round(((ema + rsi + smcPart + liqPart) * 100) / maxTotal)));
+  const score: SetupScore = {
+    total, marketContext: 0, trendMTF: ema, structure: Math.round(smcPart), liquiditySR: Math.round(liqPart),
+    volumeMomentum: rsi, derivativesOrderbook: 0, newsFundamentals: 0, riskExecution: 0, smcLiquidity: extra,
+  };
+  return { side, score, confirmations: conf, conflicts, warnings, unavailable: [], criticalFailure: critical, fib: null, smc: smcOut, liquidation: liqOut };
+}
+
+function early(side: ScoreSide, criticalFailure: string | null, warnings: string[] = []): ScoreResult {
+  return { side, score: zeroScore(), confirmations: [], conflicts: [], warnings, unavailable: [], criticalFailure };
+}
+
+/**
+ * 100-point Setup Score. Strength measure only - not accuracy or win probability.
+ * Missing optional data (confirmation TF, derivatives, news) scores 0 for that part
+ * and is listed in `unavailable`. A criticalFailure must force NO_TRADE in Step 4.
+ */
+export function scoreSetup(input: ScoreInput): ScoreResult {
+  const { candles } = input;
+  const cfg = resolveEngineSettings(input.settings);
+  const tg = cfg.toggles;
+  const ind = calcIndicators(candles, cfg.periods);
+  const adv = calcAdvanced(candles, cfg.periods);
+  const k = candles[candles.length - 1];
+  if (!ind || !adv || !k) return early("NEUTRAL", "Insufficient or invalid candle data");
+  const atr = ind.atr.value;
+  if (!Number.isFinite(atr) || atr <= 0) return early("NEUTRAL", "ATR unavailable");
+    const close = k.close;
+if (input.gates?.core4) return scoreCoreSel(input, ind, atr, close);
+
+  // ---- direction: 5 votes ----
+  const v = (b: boolean): number => (b ? 1 : -1);
+  const votes =
+    v(ind.ema20 > ind.ema50) + v(close > ind.ema50) + (tg.macd ? v(ind.macd.histogram > 0) : 0) +
+    (adv.adx.bias === "bullish" ? 1 : adv.adx.bias === "bearish" ? -1 : 0) +
+    (!tg.vwap ? 0 : ind.vwap.relationship === "above" ? 1 : ind.vwap.relationship === "below" ? -1 : 0);
+  // Fib pullback mode: direction = trend structure, because MACD / DI / VWAP flip during a pullback.
+  const trendVotes = v(ind.ema20 > ind.ema50) + v(close > ind.ema50) + (ind.sma200 === null ? 0 : v(close > ind.sma200));
+  const side: ScoreSide = input.gates?.requireFib
+    ? (trendVotes >= 1 ? "LONG" : trendVotes <= -1 ? "SHORT" : "NEUTRAL")
+    : (votes >= 2 ? "LONG" : votes <= -2 ? "SHORT" : "NEUTRAL");
+  if (side === "NEUTRAL") return early("NEUTRAL", null, ["No clear directional bias"]);
+  const s = side === "LONG" ? 1 : -1;
+  const want = { dir: s > 0 ? "up" : "down", bias: s > 0 ? "bullish" : "bearish", opp: s > 0 ? "bearish" : "bullish" } as const;
+
+  const conf: string[] = [], conflicts: string[] = [], warnings: string[] = [], unavailable: string[] = [];
+  let critical: string | null = null;
+  const n = candles.length;
+  const closeAgo = (b: number): number => candles[n - 1 - b]?.close ?? close;
+
+  // ---- hard gates (accuracy filters) ----
+  const g: SetupGates = { adxMin: 0, htfFilter: false, requireCandle: false, candleVolMin: 1, requireFib: false, ...(input.gates ?? {}) };
+  let fib: FibPlan | null = null;
+
+  // Gate 1: ADX regime. Ranging market (low ADX) = no trade. (+DI/-DI is not checked: it flips during a pullback.)
+  if (g.adxMin > 0) {
+    if (!(adv.adx.adx >= g.adxMin)) critical = critical ?? `ADX ${adv.adx.adx.toFixed(0)} is below ${g.adxMin}: market is ranging`;
+  }
+
+  // Gate 2: higher timeframes (confirmation TF + daily) must agree: EMA20>EMA50 and price on the right side of EMA50.
+  if (g.htfFilter) {
+    const htfCheck = (arr: Candle[] | null | undefined, label: string): void => {
+      const hi = arr ? calcIndicators(arr, cfg.periods) : null;
+      const hl = arr?.[arr.length - 1];
+      if (!hi || !hl) return;
+      if ((hi.ema20 - hi.ema50) * s <= 0 || (hl.close - hi.ema50) * s <= 0) critical = critical ?? `${label} trend is against the ${side}`;
+    };
+    htfCheck(input.confirmation, "Confirmation timeframe");
+    htfCheck(input.htf, "Daily");
+  }
+
+  // Gate 3: candle confirmation (engulfing or pin-bar rejection, with volume).
+  if (g.requireCandle) {
+    const cc = calcCandleConfirm(candles, s);
+    if (!cc.pattern) critical = critical ?? "No engulfing or pin-bar confirmation candle";
+    else if (cc.volRatio < g.candleVolMin) critical = critical ?? `Confirmation candle volume is only ${cc.volRatio.toFixed(1)}x average`;
+    else conf.push(`${cc.pattern === "engulfing" ? "Engulfing" : "Pin-bar rejection"} candle with ${cc.volRatio.toFixed(1)}x volume`);
+  }
+
+  // Gate 4: Fibonacci pullback. Price must be inside the 50-61.8% pocket of the last impulse.
+  if (g.requireFib) {
+    fib = calcFib(candles, s);
+    if (!fib) critical = critical ?? "No clean impulse swing for a Fibonacci pullback entry";
+    else if (!fib.inPocket) critical = critical ?? `Price is at ${(fib.retrace * 100).toFixed(0)}% retrace, outside the 50-61.8% Fibonacci pocket`;
+    else conf.push(`Price in the Fibonacci golden pocket (${(fib.retrace * 100).toFixed(0)}% retrace)`);
+  }
+
+  const { nearestSupport: ns, nearestResistance: nr } = adv.levels;
+  const ahead = s > 0 ? nr : ns;
+  const behind = s > 0 ? ns : nr;
+
+  // ---- 1. Market context (10) ----
+  let mc = 0;
+  const adxPts = adv.adx.strength === "very-strong" ? 4 : adv.adx.strength === "strong" ? 3 : adv.adx.strength === "weak" ? 1 : 0;
+  if (adv.adx.bias === want.bias) {
+    mc += adxPts;
+    if (adxPts >= 3) conf.push(`ADX ${adv.adx.adx.toFixed(0)}: strong trend with ${side} bias`);
+  } else if (adxPts >= 3) conflicts.push("Strong ADX trend is against the setup");
+  const atrPct = (atr / close) * 100;
+  if (atrPct >= 0.3 && atrPct <= 6) mc += 3;
+  else { mc += 1; warnings.push(`ATR is ${atrPct.toFixed(2)}% of price: ${atrPct < 0.3 ? "very quiet" : "very volatile"} market`); }
+  const ch = input.change24hPct;
+  if (!num(ch)) unavailable.push("change24h");
+  else if (ch * s > 0.5) mc += 3;
+  else if (ch * s >= -0.5) mc += 1;
+  else conflicts.push("24h move is against the setup");
+
+  // ---- 2. Trend + multi-timeframe (20) ----
+  let tr = 0;
+  let confMacdLost = 0;   // points the confirmation-TF MACD would have added
+  if ((ind.ema20 - ind.ema50) * s > 0) { tr += 4; conf.push("EMA20/EMA50 aligned with the setup"); }
+  else conflicts.push("EMA20/EMA50 against the setup");
+  if ((close - ind.ema50) * s > 0) tr += 3;
+  if (ind.sma200 === null) tr += 1;
+  else if ((close - ind.sma200) * s > 0) { tr += 3; conf.push("Price on the right side of SMA200"); }
+  else conflicts.push("Price on the wrong side of SMA200");
+  if (tg.bollinger && ind.bollinger.direction === want.dir) tr += 2;
+  const cInd = input.confirmation ? calcIndicators(input.confirmation, cfg.periods) : null;
+  const cLast = input.confirmation?.[input.confirmation.length - 1];
+  if (!cInd || !cLast) unavailable.push("confirmationTF");
+  else {
+    let ct = 0;
+    if ((cInd.ema20 - cInd.ema50) * s > 0) ct += 4;
+    else {
+      conflicts.push("Confirmation timeframe trend disagrees");
+      critical = critical ?? "Higher timeframe trend disagrees with the setup";
+    }
+    if ((cLast.close - cInd.ema50) * s > 0) ct += 2;
+    if (tg.macd && cInd.macd.histogram * s > 0) ct += 2;
+    if (!tg.macd) confMacdLost = 2;
+    if (ct >= 6) conf.push("Confirmation timeframe agrees");
+    tr += ct;
+  }
+
+  // ---- 3. Structure (15) ----
+  let st = 0;
+  const recent = candles.slice(-10), prior = candles.slice(-20, -10);
+  const hh = hiOf(recent) > hiOf(prior), hl = loOf(recent) > loOf(prior);
+  const lh = hiOf(recent) < hiOf(prior), ll = loOf(recent) < loOf(prior);
+  const goodSwing = (s > 0 ? [hh, hl] : [lh, ll]).filter(Boolean).length;
+  st += goodSwing * 3;
+  if (goodSwing === 2) conf.push(s > 0 ? "Higher highs and higher lows" : "Lower highs and lower lows");
+  const base = candles.slice(-21, -1);
+  if (s > 0 ? close > hiOf(base) : close < loOf(base)) { st += 4; conf.push("Break of 20-bar structure"); }
+  const bb = ind.bollinger;
+  const ext = bb.context === "upper-band" ? 1 : bb.context === "lower-band" ? -1 : 0;
+  if (!tg.bollinger) { /* Bollinger switched off: no structure points from the bands */ }
+  else if (bb.context === "inside") st += bb.direction === want.dir ? 3 : 2;
+  else if (bb.context === "breakout") { if ((close > bb.upper ? 1 : -1) * s > 0) st += 3; else warnings.push("Bollinger breakout against the setup"); }
+  else if (ext * s < 0) st += 2;
+  else { st += 1; warnings.push("Price is at the band in the setup direction (chasing risk)"); }
+    let penalty = 0;
+    const stretch = Math.abs(close - ind.ema20) / atr;
+  if (stretch <= 1.5) st += 2;
+  else if (stretch > 2) critical = critical ?? "Price is overextended from EMA20 (chasing risk)";
+  else if (stretch > 1.8) penalty += 4;
+  if (stretch > 1.5) warnings.push(`Price is ${stretch.toFixed(1)} ATR away from EMA20`);
+
+  // ---- 4. Liquidity / support-resistance (10) ----
+  let lq = 0;
+    if (!tg.pivots) { /* pivots off: no S/R points */ }
+  else if (!ahead) { lq += 5; conf.push("No nearby opposing level ahead"); }
+  else {
+    const room = Math.abs(ahead.price - close) / atr;
+    lq += room >= 3 ? 5 : room >= 2 ? 3 : room >= 1 ? 1 : 0;
+    if (room < 1) warnings.push("Opposing level is less than 1 ATR away");
+    else if (room >= 3) conf.push(`${room.toFixed(1)} ATR of room to the next level`);
+  }
+    if (tg.pivots && behind) {
+    const d = Math.abs(close - behind.price) / atr;
+    lq += d <= 1.5 ? 3 : d <= 3 ? 2 : 0;
+    if (behind.touches >= 2) lq += 2;
+  }
+
+  // ---- 5. Volume + momentum (15) ----
+  let vm = 0;
+  const r = s > 0 ? ind.rsi.value : 100 - ind.rsi.value;
+  if (!tg.rsi) { /* RSI switched off: no points and no RSI overextension gate */ }
+  else if (r >= 50 && r <= 70) vm += 4;
+  else if ((r >= 40 && r < 50) || (r > 70 && r <= 75)) vm += 2;
+  else if (r > 72) {
+    warnings.push(`RSI ${ind.rsi.value.toFixed(0)} is stretched for a ${side}`);
+    critical = critical ?? `RSI ${ind.rsi.value.toFixed(0)} is overextended for a ${side}`;
+  }
+  if (tg.macd) {
+    if (ind.macd.histogram * s > 0) vm += ind.macd.histogramState === "expanding" ? 4 : 2;
+    else conflicts.push("MACD histogram against the setup");
+    if (ind.macd.crossover === want.bias) conf.push("Fresh MACD crossover in the setup direction");
+  }
+  const kAbove = adv.stochRsi.k > adv.stochRsi.d;
+  const stochExt = s > 0 ? adv.stochRsi.zone === "overbought" : adv.stochRsi.zone === "oversold";
+  if (tg.stochRsi && (s > 0 ? kAbove : !kAbove)) vm += stochExt ? 1 : 2;
+  if (tg.obv) {
+    if (adv.obv.slope === want.dir) vm += 2;
+    if (adv.obv.divergence === want.opp) conflicts.push(`OBV ${adv.obv.divergence} divergence against the setup`);
+    else vm += 1;
+  }
+  const vols = candles.slice(-21, -1).map((x) => x.volume);
+  const avgV = vols.reduce((a, b) => a + b, 0) / vols.length;
+  const vr = avgV > 0 ? k.volume / avgV : 0;
+  vm += vr >= 1.2 ? 2 : vr >= 0.8 ? 1 : 0;
+  if (vr >= 1.5) conf.push(`Volume ${vr.toFixed(1)}x the 20-bar average`);
+
+  // ---- 6. Derivatives + order book (10) ----
+  let dd = 0;
+  if (tg.derivatives) {
+  const dv = input.derivatives ?? null;
+  const f = dv?.fundingRate;
+  if (num(f)) {
+    const c = f * s;
+    dd += c <= 0.0001 ? 3 : c <= 0.0003 ? 2 : 0;
+    if (c > 0.0003) warnings.push("Funding is crowded on the setup side");
+  } else unavailable.push("fundingRate");
+  const oi = dv?.oiChangePct;
+  if (num(oi)) {
+    const moveAligned = (close - closeAgo(14)) * s > 0;
+    if (oi > 0 && moveAligned) { dd += 2; conf.push("Open interest rising with the move"); }
+    else if (oi < 0 && moveAligned) dd += 1;
+  } else unavailable.push("openInterest");
+  const ls = dv?.longShortRatio;
+  if (num(ls) && ls > 0) {
+    const crowd = s > 0 ? ls : 1 / ls;
+    dd += crowd <= 1.5 ? 2 : crowd <= 2.5 ? 1 : 0;
+        if (crowd > 2.5) warnings.push("Positioning is crowded on the setup side");
+    if (crowd > 3) penalty += 3;
+  } else unavailable.push("longShortRatio");
+  const bi = dv?.bookImbalance;
+  if (!tg.orderBook) { /* order book switched off */ } else if (num(bi)) { const a = bi * s; dd += a >= 0.2 ? 3 : a >= 0.05 ? 2 : a >= -0.05 ? 1 : 0; }
+else unavailable.push("orderBook");
+  const tt = dv?.topTraderRatio;
+  if (num(tt) && tt > 0) {
+    const a = s > 0 ? tt : 1 / tt;
+    if (a >= 1.1) { dd += 1; conf.push("Top traders positioned with the setup"); }
+    else if (a <= 0.9) { dd -= 1; warnings.push("Top traders positioned against the setup"); }
+  }
+  const tk = dv?.takerBuySellRatio;
+  if (num(tk) && tk > 0) {
+    const a = s > 0 ? tk : 1 / tk;
+    if (a >= 1.1) { dd += 1; conf.push("Aggressive taker flow supports the setup"); }
+    else if (a <= 0.9) { dd -= 1; warnings.push("Taker flow is against the setup"); }
+  }
+
+  }   // end derivatives (switched off = no points, nothing listed as unavailable)
+
+  // ---- 7. News + fundamentals (5) ----
+  let nf = 0;
+  const nw = input.news;
+  if (!nw) unavailable.push("news");
+  else if (nw.highImpactSoon) critical = "High-impact news event imminent";
+  else {
+    const a = nw.sentiment * s;
+    nf = a >= 0.3 ? 5 : a >= 0.1 ? 4 : a >= -0.1 ? 3 : a >= -0.3 ? 1 : 0;
+    if (a < -0.3) conflicts.push("News sentiment against the setup");
+  }
+
+  // ---- 8. Risk + execution (15) ----
+  let rk = 0;
+  const stopDist = 2 * atr;
+    const rr = tg.pivots && ahead ? Math.abs(ahead.price - close) / stopDist : null;
+  if (tg.pivots) rk += rr === null ? 4 : rr >= 2 ? 6 : rr >= 1.5 ? 4 : rr >= 1 ? 2 : 0;
+  if (rr !== null && rr < 1) warnings.push(`Only ${rr.toFixed(1)}R of room to the next level`);
+  const stopPct = (stopDist / close) * 100;
+  rk += stopPct <= 3 ? 3 : stopPct <= 5 ? 2 : 0;
+  if (tg.pivots) rk += behind && Math.abs(close - behind.price) <= 3 * atr ? 3 : 1;
+  const range = k.high - k.low;
+  if (range > 4 * atr) critical = critical ?? "Extreme volatility spike on the last candle";
+  if (range <= 2.5 * atr) rk += 3; else warnings.push("Last candle is over-extended");
+
+  // ---- 9. SMC + liquidation confluence (score bonus/penalty; optional hard gates) ----
+  let extraPts = 0;
+  let smcOut: Record<string, unknown> | null = null, liqOut: Record<string, unknown> | null = null;
+    const smcMode = tg.smc ? (g.smc ?? "off") : "off", liqMode = tg.liquidation ? (g.liq ?? "off") : "off";
+  smcOut = { available: false, mode: smcMode };
+  liqOut = { available: false, mode: liqMode };
+  if (smcMode !== "off") {
+    const smc = calcSmc(candles, atr);
+    if (smc) {
+      const ss = scoreSmc(smc, s, close, atr);
+      extraPts += ss.pts; conf.push(...ss.confirmations); conflicts.push(...ss.conflicts);
+      smcOut = describeSmc(smc, smcMode, ss.pts, s, close, atr);
+      if (smcMode === "strict") {
+        if (ss.againstRecentBreak) critical = critical ?? "SMC: a recent structure break is against the setup";
+        else if (!ss.hasConfluence) critical = critical ?? "SMC: no order block, sweep, FVG or structure break confirms the setup";
+      }
+    }
+  }
+  if (liqMode !== "off") {
+    const lr = calcLiquidation(input.liquidations, atr, input.now ?? Date.now());
+    if (lr) {
+      const lsc = scoreLiquidation(lr, s, close, atr);
+      extraPts += lsc.pts; conf.push(...lsc.confirmations); conflicts.push(...lsc.conflicts);
+      liqOut = describeLiquidation(lr, liqMode, lsc.pts);
+      if (liqMode === "strict" && lsc.againstCascade) critical = critical ?? "Liquidation cascade is still active against the setup";
+    }
+  }
+
+  const score: SetupScore = {
+    total: 0,
+    marketContext: clamp(mc, SCORE_MAX.marketContext), trendMTF: clamp(tr, SCORE_MAX.trendMTF),
+    structure: clamp(st, SCORE_MAX.structure), liquiditySR: clamp(lq, SCORE_MAX.liquiditySR),
+    volumeMomentum: clamp(vm, SCORE_MAX.volumeMomentum), derivativesOrderbook: clamp(dd, SCORE_MAX.derivativesOrderbook),
+    newsFundamentals: clamp(nf, SCORE_MAX.newsFundamentals), riskExecution: clamp(rk, SCORE_MAX.riskExecution),
+  };
+  const rawTotal =
+    score.marketContext + score.trendMTF + score.structure + score.liquiditySR +
+    score.volumeMomentum + score.derivativesOrderbook + score.newsFundamentals + score.riskExecution;
+  const lostMax =
+    (unavailable.includes("fundingRate") ? 3 : 0) + (unavailable.includes("openInterest") ? 2 : 0) +
+    (unavailable.includes("longShortRatio") ? 2 : 0) + (unavailable.includes("orderBook") ? 3 : 0) +
+    (unavailable.includes("news") ? 5 : 0);
+  // Points that switched-off indicators could have added. Removed from the base so the score stays on a 0-100 scale.
+  const toggleLost =
+    (tg.rsi ? 0 : 4) + (tg.macd ? 0 : 4) + (tg.stochRsi ? 0 : 2) + (tg.obv ? 0 : 3) + (tg.bollinger ? 0 : 5) +
+        (tg.derivatives ? (tg.orderBook ? 0 : 3) : 10) + (tg.pivots ? 0 : 19) + confMacdLost;
+  const activeMax = 100 - lostMax - toggleLost;
+    score.total = Math.min(100, Math.max(0, Math.round(((rawTotal - penalty) * 100) / activeMax) + extraPts));
+  score.smcLiquidity = extraPts;
+  return { side, score, confirmations: conf, conflicts, warnings, unavailable, criticalFailure: critical, fib, smc: smcOut, liquidation: liqOut, disabled: disabledIndicators(tg), activeMax };
+                            }
