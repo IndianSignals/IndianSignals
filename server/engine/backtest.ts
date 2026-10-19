@@ -39,7 +39,7 @@ export interface BacktestOptions {
   costPct: number;
   /** An entered trade is closed at market after this many candles (live tracker expires at 96). */
   maxHoldBars: number;
-  /** Skip alt signals that go against the BTC trend, like the live scanner. */
+  /** Skip stock signals that go against the NIFTY trend, like the live scanner (the name btcFilter is kept for the API). */
   btcFilter: boolean;
   /** Max simultaneously open trades in one direction (0 = no limit), like the live scanner. */
   maxOpenPerDirection: number;
