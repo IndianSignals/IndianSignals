@@ -313,7 +313,7 @@ export class AngelMarketData implements MarketData {
 }
 
 let shared: AngelMarketData | null = null;
-/** Same name and shape as the old OKX factory, so only the import path changes. One shared instance = one login + one rate-limit gate. */
-export function createMarketData(_cfg?: MarketDataConfig, _patient = false): AngelMarketData {
+/** One shared instance = one login + one rate-limit gate. */
+export function createMarketData(): AngelMarketData {
   return (shared ??= new AngelMarketData());
 }
