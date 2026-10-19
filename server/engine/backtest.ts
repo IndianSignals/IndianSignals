@@ -2,6 +2,7 @@ import type { Candle, Timeframe } from "../../shared/market.js";
 import { buildSignal, DEFAULT_CONFIG } from "./signalBuilder.js";
 import type { BuilderConfig } from "./signalBuilder.js";
 import { EXECUTION_TF } from "./marketData.js";
+import { BENCHMARK_SYMBOL, indexFilterMode } from "../../shared/indianMarket.js";
 import {
   TF_MS, WINDOW, biasAt, biasSeries, change24hPct, confirmationWindow, windowAt,
 } from "./backtestData.js";
