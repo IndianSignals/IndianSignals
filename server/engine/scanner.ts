@@ -1,4 +1,4 @@
-import type { Candle, Liquidation, Timeframe } from "../../shared/market.js";
+import type { Candle, Timeframe } from "../../shared/market.js";
 import type { NewsInput } from "../../shared/scoring.js";
 import type { EngineSettingsInput } from "../../shared/engineConfig.js";
 import type { FinalSignal } from "../models/signal.js";
