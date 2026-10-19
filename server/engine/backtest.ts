@@ -25,7 +25,7 @@ import type { Bias, SymbolHistory } from "./backtestData.js";
  *  - fees + slippage are charged once per round trip as a percent of the entry price
  *
  * Not modelled: derivatives / order-book / news score parts (no historical data), intrabar
- * ordering below the chosen timeframe, partial fills, funding.
+ * ordering below the chosen timeframe, partial fills, circuit limits, gaps over the open.
  */
 
 export type ExitReason = "SL" | "TRAIL" | "TP3" | "TIMEOUT" | "END";
