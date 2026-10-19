@@ -210,7 +210,7 @@ async function runSymbol(
 
     const decisionTime = cur.timestamp + tfMs;
     const sig = buildSignal({
-      symbol: h.symbol, exchange: "okx", marketType: "swap",
+            symbol: h.symbol, exchange: "angelone", marketType: "cash",
       timeframe: { primary: tf, confirmation: h.confTimeframe ?? "none", execution: EXECUTION_TF[tf] },
       candles: windowAt(P, i),
       confirmation: h.confTimeframe ? confirmationWindow(h.confirmation, confMs, decisionTime) : null,
