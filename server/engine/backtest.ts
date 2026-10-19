@@ -48,9 +48,7 @@ export interface BacktestOptions {
   /** "fixed" (default) = the stop never moves. "staged" = like the live tracker: stop to entry after TP1, to TP1 after TP2. */
   stopMode?: "fixed" | "staged";
   /** Staged mode only: percent trailing distance behind the best price once TP1 is hit (live default TRAIL_PCT = 1.5). 0 = off. */
-  trailPct?: number;
-  /** ASSUMPTION, not data: funding paid by a LONG per 8h, percent of notional. Charged for the holding time, never credited. 0 = not modelled. */
-  fundingPctPer8h?: number;
+    trailPct?: number;
 }
 
 export const DEFAULT_BACKTEST_OPTIONS = {
