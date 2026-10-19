@@ -286,7 +286,7 @@ export class AngelMarketData implements MarketData {
     return { fundingRate: null, oiChangePct: null, longShortRatio: null, bookImbalance, asOf: Date.now(), source: "angelone" };
   }
 
-  marketTypeOf(): "spot" { return "spot"; }
+    marketTypeOf(): "cash" { return "cash"; }
 
   async getMarketSnapshot(symbol: string, tf: Timeframe): Promise<MarketSnapshot> {
     const [ticker, derivatives, orderBook] = await Promise.allSettled([
