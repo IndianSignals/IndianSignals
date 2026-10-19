@@ -303,9 +303,7 @@ function parseQuery(q: Request["query"], scan: ScanConfig): Parsed {
   if (hold === null) return { ok: false, error: "hold must be 1-500" };
   if (cluster === null) return { ok: false, error: "cluster must be 0-50" };
     const trail = num(one(q["trail"]), 0, 0, 10);
-  const funding = num(one(q["funding"]), 0, 0, 1);
-  if (trail === null) return { ok: false, error: "trail must be 0-10 (percent)" };
-  if (funding === null) return { ok: false, error: "funding must be 0-1 (percent per 8h)" };
+    if (trail === null) return { ok: false, error: "trail must be 0-10 (percent)" };
     const profRaw = (one(q["profile"]) ?? "A").toUpperCase();
   if (!["A", "B", "C"].includes(profRaw)) return { ok: false, error: "profile must be A, B or C" };
   const profile = resolveProfile(profRaw);
