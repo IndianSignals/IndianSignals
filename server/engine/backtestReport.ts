@@ -377,10 +377,9 @@ export function createBacktestRouter(scan: ScanConfig, settingsService?: Setting
     running = true;
     try {
       const now = Date.now();
-      const cfg = DEFAULT_HISTORY_CONFIG;
-      const failed: string[] = [];
+            const failed: string[] = [];
       const loaded = await mapPool(p.symbols, 3, async (sym): Promise<SymbolHistory | null> => {
-        try { return await loadSymbolHistory(sym, p.opts.timeframe, p.opts.testBars, now, cfg); }
+        try { return await loadSymbolHistory(sym, p.opts.timeframe, p.opts.testBars, now); }
         catch (e) { console.error("backtest load failed:", e instanceof Error ? e.message : e); failed.push(sym); return null; }
       });
       const histories = loaded.filter((h): h is SymbolHistory => h !== null && h.primary.length > 0);
