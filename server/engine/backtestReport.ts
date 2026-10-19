@@ -320,8 +320,8 @@ function parseQuery(q: Request["query"], scan: ScanConfig): Parsed {
     ok: true, symbols, days, settingsRef, json: one(q["format"]) === "json",
     opts: {
       timeframe: tf, testBars: barsForDays(days, tf), minScore, costPct: cost, maxHoldBars: Math.trunc(hold),
-      btcFilter: one(q["btc"]) !== "0", maxOpenPerDirection: Math.trunc(cluster),
-      stopMode: one(q["stop"]) === "staged" ? "staged" : "fixed", trailPct: trail, fundingPctPer8h: funding, config: profile.config,
+            btcFilter: (one(q["index"]) ?? one(q["btc"])) !== "0", maxOpenPerDirection: Math.trunc(cluster),
+      stopMode: one(q["stop"]) === "staged" ? "staged" : "fixed", trailPct: trail, config: profile.config,
     },
   };
 }
