@@ -250,9 +250,9 @@ export function formatReport(res: BacktestResult, rep: Report, failed: string[],
     if (!ctx.liveKnown) L.push("  engine settings: the server could not tell which settings are live");
     else if (ctx.version === ctx.liveVersion) L.push(`  engine settings: same as live (${ctx.liveVersion === undefined ? "built-in defaults" : "v" + ctx.liveVersion})`);
     else L.push(`  engine settings: this run used ${ctx.label}; live is running ${ctx.liveVersion === undefined ? "built-in defaults" : "v" + ctx.liveVersion} (add settings=active to match live)`);
-    L.push("  BTC trend filter uses the default EMA 20/50 in both the backtest and the live scanner");
+        L.push("  NIFTY trend filter uses the default EMA 20/50 in both the backtest and the live scanner");
   }
-  L.push("  not replayed: derivatives, liquidations, order book, news, daily HTF filter, exit-if-weak rule, live-price entry check");
+  L.push("  not replayed: order book, news, daily HTF filter, exit-if-weak rule, live-price entry check");
   L.push("  fills: next-candle open inside the entry zone; the live tracker counts any touch of the zone");
   L.push("Past results do not guarantee future results.");
   return L.join("\n");
