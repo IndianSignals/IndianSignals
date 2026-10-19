@@ -1,75 +1,39 @@
 import { Router } from "express";
+import { createMarketData } from "../engine/angelMarketData.js";
+import { SYMBOL_RE } from "../config/env.js";
 
-/**
- * Live prices for the Recent Signals cards.
- * The page used to call OKX straight from the phone. Some networks (for example a few Indian ISPs)
- * block okx.com, so every card showed "—". Now the server fetches the prices and the page reads them here.
- */
+/** Live last-traded prices (INR) for the Recent Signals cards. The server calls Angel One; the page reads them here. */
 
-const OKX_TICKERS = "https://www.okx.com/api/v5/market/tickers";
 const TTL_MS = 3000;
-const MAX_SYMBOLS = 100;
+const MAX_SYMBOLS = 50;
 
 type PriceMap = Record<string, number>;
-
-let cache: { at: number; data: PriceMap } | null = null;
-let inflight: Promise<PriceMap> | null = null;
-
-async function pull(type: "SWAP" | "SPOT"): Promise<PriceMap> {
-  const res = await fetch(`${OKX_TICKERS}?instType=${type}`, {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!res.ok) throw new Error(`OKX ${type} HTTP ${res.status}`);
-
-  const body = (await res.json()) as { data?: { instId?: string; last?: string }[] };
-  const out: PriceMap = {};
-  for (const r of body.data ?? []) {
-    const m = /^(.+)-USDT(-SWAP)?$/.exec(r.instId ?? "");
-    const p = Number(r.last);
-    if (m && Number.isFinite(p) && p > 0) out[`${m[1]}USDT`] = p;
-  }
-  return out;
-}
-
-async function load(): Promise<PriceMap> {
-  const [swap, spot] = await Promise.allSettled([pull("SWAP"), pull("SPOT")]);
-  if (swap.status === "rejected" && spot.status === "rejected") throw new Error("OKX unavailable");
-  return {
-    ...(spot.status === "fulfilled" ? spot.value : {}),
-    ...(swap.status === "fulfilled" ? swap.value : {}), // futures price wins, same as before
-  };
-}
+const cache = new Map<string, { at: number; data: PriceMap }>();
 
 const router = Router();
 
 router.get("/prices", async (req, res) => {
-  const wanted = String(req.query.symbols ?? "")
-    .toUpperCase()
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => /^[A-Z0-9]{3,20}$/.test(s))
-    .slice(0, MAX_SYMBOLS);
-
-  const pick = (all: PriceMap): PriceMap => {
-    if (wanted.length === 0) return all;
-    const out: PriceMap = {};
-    for (const s of wanted) if (all[s] !== undefined) out[s] = all[s];
-    return out;
-  };
-
+  const wanted = [...new Set(String(req.query.symbols ?? "").toUpperCase().split(",").map((s) => s.trim()).filter((s) => SYMBOL_RE.test(s)))].slice(0, MAX_SYMBOLS);
+  if (wanted.length === 0) {
+    res.status(400).json({ error: { code: "invalid_query", message: "Pass ?symbols=RELIANCE,TCS" } });
+    return;
+  }
+  const key = wanted.join(",");
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < TTL_MS) {
+    res.json({ data: hit.data, meta: { sourceExchange: "angelone", timestamp: hit.at } });
+    return;
+  }
   try {
-    if (!cache || Date.now() - cache.at > TTL_MS) {
-      inflight ??= load().finally(() => {
-        inflight = null;
-      });
-      cache = { at: Date.now(), data: await inflight };
-    }
-    res.json({ data: pick(cache.data), meta: { sourceExchange: "okx", timestamp: cache.at } });
+    const data = await createMarketData().lastPrices(wanted);
+    if (Object.keys(data).length === 0) throw new Error("no prices returned");
+    cache.set(key, { at: Date.now(), data });
+    if (cache.size > 100) cache.clear();
+    res.json({ data, meta: { sourceExchange: "angelone", timestamp: Date.now() } });
   } catch (err) {
     console.error("prices error:", err);
-    if (cache) {
-      res.json({ data: pick(cache.data), meta: { sourceExchange: "okx", timestamp: cache.at, stale: true } });
+    if (hit) {
+      res.json({ data: hit.data, meta: { sourceExchange: "angelone", timestamp: hit.at, stale: true } });
       return;
     }
     res.status(502).json({ error: { code: "upstream_error", message: "Price provider unavailable" } });
