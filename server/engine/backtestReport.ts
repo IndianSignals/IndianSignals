@@ -387,10 +387,10 @@ export function createBacktestRouter(scan: ScanConfig, settingsService?: Setting
 
       let btc: Candle[] | null = null;
       if (p.opts.btcFilter) {
-        btc = histories.find((h) => h.symbol === "BTCUSDT")?.primary ?? null;
+                btc = histories.find((h) => h.symbol === BENCHMARK_SYMBOL)?.primary ?? null;
         if (!btc) {
-          try { btc = await fetchHistory("BTCUSDT", p.opts.timeframe, p.opts.testBars + WARMUP, now, cfg); }
-          catch (e) { console.error("backtest btc load failed:", e instanceof Error ? e.message : e); }
+          try { btc = await fetchHistory(BENCHMARK_SYMBOL, p.opts.timeframe, p.opts.testBars + WARMUP, now); }
+          catch (e) { console.error("backtest NIFTY load failed:", e instanceof Error ? e.message : e); }
         }
       }
 
