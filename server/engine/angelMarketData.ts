@@ -259,7 +259,7 @@ export class AngelMarketData implements MarketData {
   async getTicker24h(symbol: string): Promise<Ticker24h> {
     const q = await this.quote(symbol);
     const ltp = toNum(q.ltp);
-    // Volume is INR value traded today (shares x last price). The MIN_VOLUME_24H_USD env name is kept but means INR here.
+        // Volume is INR value traded today (shares x last price). MIN_VOLUME_24H_USD keeps its old name but means INR here.
     return { change24hPct: toNum(q.percentChange ?? 0), volume24h: toNum(q.tradeVolume ?? 0) * ltp };
   }
 
