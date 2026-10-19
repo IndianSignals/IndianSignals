@@ -29,7 +29,7 @@ const clampInt = (raw: string | undefined, fallback: number, min: number, max: n
 };
 
 export function loadScanConfig(env: NodeJS.ProcessEnv = process.env): ScanConfig {
-  const symbols = (env.SCAN_SYMBOLS || "BTCUSDT,ETHUSDT,XRPUSDT,BNBUSDT,SOLUSDT,DOGEUSDT,ADAUSDT,TRXUSDT,LINKUSDT,AVAXUSDT,SUIUSDT,XLMUSDT,BCHUSDT,HBARUSDT,LTCUSDT,TONUSDT,DOTUSDT,UNIUSDT,AAVEUSDT,NEARUSDT")
+  const symbols = (env.SCAN_SYMBOLS || "RELIANCE,TCS,HDFCBANK,INFY,ICICIBANK,SBIN,BHARTIARTL,ITC,LT,KOTAKBANK,AXISBANK,HINDUNILVR,BAJFINANCE,MARUTI,SUNPHARMA,TATAMOTORS,TITAN,WIPRO,ONGC,NTPC")
     .split(",")
     .map((s) => s.trim().toUpperCase())
     .filter(Boolean);
