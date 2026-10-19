@@ -19,7 +19,7 @@ import type { SettingsService } from "./settingsStore.js";
  * Backtest - part 3 of 3: statistics, text report and the /engine/backtest route.
  *
  *   /engine/backtest?key=BACKTEST_KEY&days=30&tf=1H&minScore=75
- * Optional: symbols=BTCUSDT,ETHUSDT  cost=0.1  hold=96  btc=1  cluster=3  format=json
+ * Optional: symbols=RELIANCE,TCS  cost=0.1  hold=96  index=1  cluster=3  format=json  (btc=1 still works as the old name)
  */
 
 export interface Summary {
