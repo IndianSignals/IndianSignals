@@ -46,8 +46,8 @@ router.get("/market/snapshot", async (req, res) => {
 
     res.json({
       data,
-      meta: {
-        sourceExchange: "okx",
+            meta: {
+        sourceExchange: "angelone",
         symbol: parsed.data.symbol,
         timeframe: parsed.data.timeframe,
         timestamp: Date.now(),
