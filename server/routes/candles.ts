@@ -89,8 +89,8 @@ router.get("/candles", async (req, res) => {
     }
     const body: ProviderResponse<Candle[]> = {
       data,
-      meta: {
-        sourceExchange: "okx",
+            meta: {
+        sourceExchange: "angelone",
         symbol,
         timestamp: Date.now(),
         timeframe: timeframe as Timeframe,
