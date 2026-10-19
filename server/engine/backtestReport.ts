@@ -216,8 +216,8 @@ export function formatReport(res: BacktestResult, rep: Report, failed: string[],
   const L: string[] = [];
   L.push("BACKTEST REPORT");
   L.push(`Period    ${day(res.fromTime)} -> ${day(res.toTime)}  (${o.timeframe})`);
-  L.push(`Coins     ${res.symbols.length}${failed.length ? `  (failed: ${failed.join(",")})` : ""}`);
-  L.push(`Settings  version ${o.config?.strategyVersion ?? "core4-v1"} | minScore ${o.minScore} | cost ${o.costPct}% | hold ${o.maxHoldBars} bars | btcFilter ${o.btcFilter ? "on" : "off"} | cluster ${o.maxOpenPerDirection || "off"} | stop ${o.stopMode ?? "fixed"}${(o.trailPct ?? 0) > 0 ? ` trail ${o.trailPct}%` : ""} | funding ${(o.fundingPctPer8h ?? 0) > 0 ? `${o.fundingPctPer8h}%/8h (assumed)` : "off"}`);
+  L.push(`Symbols   ${res.symbols.length}${failed.length ? `  (failed: ${failed.join(",")})` : ""}`);
+  L.push(`Settings  version ${o.config?.strategyVersion ?? "core4-v1"} | minScore ${o.minScore} | cost ${o.costPct}% | hold ${o.maxHoldBars} bars | indexFilter ${o.btcFilter ? "on" : "off"} | cluster ${o.maxOpenPerDirection || "off"} | stop ${o.stopMode ?? "fixed"}${(o.trailPct ?? 0) > 0 ? ` trail ${o.trailPct}%` : ""}`);
   if (ctx) L.push(`Engine    settings: ${ctx.label}`);
   L.push("");
   const s = rep.overall;
