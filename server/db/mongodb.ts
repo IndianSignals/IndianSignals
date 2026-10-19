@@ -1,33 +1,21 @@
 import { MongoClient, Db } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
-
-if (!uri) {
-  throw new Error("MONGODB_URI is missing");
-}
-
-const client = new MongoClient(uri);
-
+let client: MongoClient | null = null;
 let db: Db | null = null;
 
-export async function connectMongoDB() {
+/** The URI is read when connecting, not at import time, so modules that only import this file do not crash without MongoDB. */
+export async function connectMongoDB(): Promise<Db> {
   if (db) return db;
-
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error("MONGODB_URI is missing");
+  client = new MongoClient(uri);
   await client.connect();
-
-  db = client.db(
-    process.env.MONGODB_DB || "coingabbar"
-  );
-
+  db = client.db(process.env.MONGODB_DB || "indiansignals");
   console.log("[mongodb] connected");
-
   return db;
 }
 
-export function getMongoDB() {
-  if (!db) {
-    throw new Error("MongoDB is not connected");
-  }
-
+export function getMongoDB(): Db {
+  if (!db) throw new Error("MongoDB is not connected");
   return db;
 }
