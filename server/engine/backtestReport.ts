@@ -236,7 +236,7 @@ export function formatReport(res: BacktestResult, rep: Report, failed: string[],
     L.push(""); L.push("BY SCORE"); L.push(head);
     for (const x of rep.byScore) L.push(row(x.label, x.s));
     L.push(""); L.push("BY COIN (best first)"); L.push(head);
-    for (const x of rep.bySymbol) L.push(row(x.label.replace("USDT", ""), x.s));
+        for (const x of rep.bySymbol) L.push(row(x.label, x.s));
   }
   const k = res.skips;
   L.push("");
