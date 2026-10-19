@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import type { Candle, Timeframe } from "../../shared/market.js";
 import { isMarketOpen as sharedIsMarketOpen, istParts as sharedIstParts } from "../../shared/indianMarket.js";
 import type { DerivativesInput } from "../../shared/scoring.js";
-import type { MarketData, MarketDataConfig, MarketSnapshot, OrderBookSnapshot, Ticker24h } from "./marketData.js";
+import type { MarketData, MarketSnapshot, OrderBookSnapshot, Ticker24h } from "./marketData.js";
 
 /**
  * Angel One SmartAPI market data (NSE).
