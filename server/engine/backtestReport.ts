@@ -240,7 +240,7 @@ export function formatReport(res: BacktestResult, rep: Report, failed: string[],
   }
   const k = res.skips;
   L.push("");
-  L.push(`FILTERED: signals ${k.signals} | btc ${k.btcFilter} | no-entry ${k.noEntry} | bad-stop ${k.badStop} | cluster ${k.cluster} | open-at-end ${k.openAtEnd}`);
+  L.push(`FILTERED: signals ${k.signals} | index ${k.btcFilter} | no-entry ${k.noEntry} | bad-stop ${k.badStop} | cluster ${k.cluster} | open-at-end ${k.openAtEnd}`);
   L.push(`Decisions evaluated: ${res.decisions}`);
   L.push("");
     L.push("PARITY WITH THE LIVE ENGINE");
