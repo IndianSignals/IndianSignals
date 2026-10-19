@@ -234,8 +234,7 @@ async function runSymbol(
 
     const sim = simulateTrade(side, next.open, stop, [tp1, tp2, tp3], cfg.exitWeights, P, i + 1, opts.maxHoldBars, opts.costPct, {
       staged: opts.stopMode === "staged",
-      trailPct: opts.trailPct ?? 0,
-      fundingPctPerBar: ((opts.fundingPctPer8h ?? 0) * tfMs) / 28_800_000,
+            trailPct: opts.trailPct ?? 0,
     });
     if (!sim) { skips.badStop++; continue; }
     if (sim.reason === "END") { skips.openAtEnd++; break; }
