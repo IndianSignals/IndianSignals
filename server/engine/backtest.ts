@@ -181,8 +181,7 @@ export function simulateTrade(
   let grossR = 0;
   for (let k = 0; k < 3; k++) grossR += (weights[k] ?? 0) * rOf(k < hits ? (targets[k] ?? exitPrice) : exitPrice);
   const bars = exitIdx - from + 1;
-  const fundingPct = Math.max(0, (mgmt.fundingPctPerBar ?? 0) * bars * side);
-  const netR = grossR - (((costPct + fundingPct) / 100) * fill) / risk;
+    const netR = grossR - ((costPct / 100) * fill) / risk;
   return { exitIdx, exitPrice, hits: hits as 0 | 1 | 2 | 3, reason, grossR, netR, bars };
 }
 
