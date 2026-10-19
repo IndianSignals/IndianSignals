@@ -267,8 +267,8 @@ export function applyClusterLimit(trades: BacktestTrade[], max: number): { kept:
 }
 
 /**
- * Runs the backtest on already-loaded histories (see backtestData.ts). `btc` is the BTCUSDT primary
- * series on the same timeframe, used by the BTC filter; pass null to disable that filter.
+ * Runs the backtest on already-loaded histories (see backtestData.ts). `btc` is the NIFTY primary
+ * series on the same timeframe, used by the index filter; pass null to disable that filter.
  */
 export async function runBacktest(
   histories: SymbolHistory[], btc: Candle[] | null, opts: BacktestOptions, hooks: BacktestHooks = {},
