@@ -22,8 +22,8 @@ const presets = new PresetService(new MongoPresetRepo(db));
 const engine = new EngineService(
     {
     market: createMarketData(),
-    store,
-    exchange: "okx",
+        store,
+    exchange: "angelone",
     activeSettings: async () => {
       const a = await settings.getActive();
       return a ? { version: a.version, settings: a.settings, requiredData: a.preset?.requiredData ?? [] } : null;
