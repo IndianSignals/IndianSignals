@@ -122,9 +122,7 @@ export interface TradeSim {
 export interface TradeMgmt {
   /** Move the stop like the live tracker: entry after TP1, TP1 after TP2 (+ optional percent trail). */
   staged?: boolean;
-  trailPct?: number;
-  /** Funding charged per holding bar, percent of notional paid by a LONG (a SHORT is never credited). */
-  fundingPctPerBar?: number;
+    trailPct?: number;
 }
 
 /**
