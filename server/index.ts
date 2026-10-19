@@ -20,8 +20,8 @@ const settings = new SettingsService(settingsRepo);
 const presets = new PresetService(new MongoPresetRepo(db));
 
 const engine = new EngineService(
-  {
-     market: createMarketData(undefined, true),
+    {
+    market: createMarketData(),
     store,
     exchange: "okx",
     activeSettings: async () => {
