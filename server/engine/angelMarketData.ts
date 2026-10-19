@@ -41,18 +41,8 @@ const toNum = (v: unknown): number => {
 };
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-/* ---------- market hours (IST) ---------- */
-const istParts = (ms: number): { dow: number; minutes: number; ymd: string } => {
-  const d = new Date(ms + IST_MS);
-  return { dow: d.getUTCDay(), minutes: d.getUTCHours() * 60 + d.getUTCMinutes(), ymd: d.toISOString().slice(0, 10) };
-};
-export function isMarketOpen(now: number = Date.now(), env: NodeJS.ProcessEnv = process.env): boolean {
-  const { dow, minutes, ymd } = istParts(now);
-  if (dow === 0 || dow === 6) return false;
-  const holidays = (env.NSE_HOLIDAYS ?? "").split(",").map((s) => s.trim());
-  if (holidays.includes(ymd)) return false;
-  return minutes >= 9 * 60 + 15 && minutes < 15 * 60 + 30;
-}
+export const isMarketOpen = (now: number = Date.now(), env: NodeJS.ProcessEnv = process.env): boolean => sharedIsMarketOpen(now, env);
+const istParts = sharedIstParts;
 
 /* ---------- TOTP (RFC 6238), no dependency ---------- */
 function base32Decode(s: string): Buffer {
