@@ -28,3 +28,28 @@ export function isMarketOpen(now: number = Date.now(), env: Env = {}): boolean {
 
 export const formatINR = (n: number): string => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n);
 export const roundToTick = (price: number, tick = 0.05): number => Math.round(Math.round(price / tick) * tick * 100) / 100;
+
+/** Benchmark index for the trend filter (the old BTC role). Stocks trade only with its trend. */
+export const BENCHMARK_SYMBOL = "NIFTY";
+
+/** INDEX_FILTER = strict | true | soft | false. The old name BTC_FILTER is still read as a fallback. */
+export const indexFilterMode = (env: Env = {}): string => (env.INDEX_FILTER ?? env.BTC_FILTER ?? "strict").toLowerCase();
+
+/**
+ * Milliseconds of NSE trading time between two instants. Lets "is the last candle stale?" ignore nights,
+ * weekends and holidays (Monday 09:20 sees Friday's last candle, which is fresh in trading time).
+ * Gaps longer than 14 days return the raw difference.
+ */
+export function tradingMsBetween(from: number, to: number, env: Env = {}): number {
+  if (!(to > from)) return 0;
+  if (to - from > 14 * 86_400_000) return to - from;
+  const DAY = 86_400_000;
+  const dayStart = (ms: number): number => Math.floor((ms + IST_OFFSET_MS) / DAY) * DAY - IST_OFFSET_MS;
+  let total = 0;
+  for (let d = dayStart(from); d < to; d += DAY) {
+    if (!isTradingDay(d + 3_600_000, env)) continue;
+    const open = d + MARKET_OPEN_MIN * 60_000, close = d + MARKET_CLOSE_MIN * 60_000;
+    total += Math.max(0, Math.min(to, close) - Math.max(from, open));
+  }
+  return total;
+}
