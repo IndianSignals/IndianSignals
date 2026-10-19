@@ -14,7 +14,7 @@ const querySchema = z.object({
 
 const market = createMarketData();
 
-// tiny cache so refreshes don't hammer Binance
+// tiny cache so refreshes don't hammer Angel One
 const cache = new Map<string, { at: number; data: Candle[] }>();
 const TTL_MS = 15000;
 
