@@ -868,8 +868,7 @@ const want = new Set(signals.map((s) => nseSymbol(s.symbol)).filter(Boolean));
       const body = (await r.json()) as { data?: Record<string, number> };
       for (const [k, v] of Object.entries(body.data ?? {})) {
         if (Number.isFinite(v) && v > 0) {
-          livePrices[k] = v;
-          fresh.add(k);
+                    livePrices[k] = v;
         }
       }
     }
