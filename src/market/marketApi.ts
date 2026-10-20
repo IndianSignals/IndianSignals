@@ -47,7 +47,7 @@ export async function fetchMarketSnapshot(
   timeframe: Timeframe,
   signal: AbortSignal,
 ): Promise<MarketSnapshotResponse> {
-  const url = new URL(`${API_BASE}/market/snapshot`);
+    const url = new URL(`${API_BASE}/market/snapshot`, window.location.origin);
   url.searchParams.set("symbol", symbol);
   url.searchParams.set("timeframe", timeframe);
 
@@ -116,7 +116,7 @@ export async function fetchCandles(symbol: string, timeframe: Timeframe, limit: 
 }
 
 async function fetchCandlesBackend(symbol: string, timeframe: Timeframe, limit: number, signal: AbortSignal): Promise<Candle[]> {
-  const url = new URL(`${API_BASE}/candles`);
+    const url = new URL(`${API_BASE}/candles`, window.location.origin);
   url.searchParams.set("symbol", symbol);
   url.searchParams.set("timeframe", timeframe);
   url.searchParams.set("limit", String(limit));
