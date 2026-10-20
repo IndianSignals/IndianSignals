@@ -158,7 +158,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 10px", padding: "8px 10px 2px", minWidth: 0 }}>
         <strong style={{ fontSize: 15, letterSpacing: 0.2 }}>{label}</strong>
         <span style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: chgColor }}>
-          {lastPrice === null ? "—" : fmtPx(lastPrice)}
+          {lastPrice === null ? "—" : `${isIndex ? "" : "₹"}${fmtPx(lastPrice)}`}
         </span>
         {chgPts !== null && chgPct !== null && (
           <span
