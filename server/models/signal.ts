@@ -1,4 +1,5 @@
 
+import type { FnoPlan } from "../../shared/fno.js";
 export interface FinalSignal {
  id:string; symbol:string; exchange:string; marketType:string; direction:"LONG"|"SHORT"|"WAIT"|"NO_TRADE"; status:string;
  entered?:boolean; outcome?:{status:string;exit:number;closed:boolean;trailStop?:number;tg?:string;at:string;hits?:{tp1?:number;tp2?:number;tp3?:number;sl?:number}};
