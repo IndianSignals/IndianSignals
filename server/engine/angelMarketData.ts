@@ -293,6 +293,36 @@ export class AngelMarketData implements MarketData {
     this.masterLoaded = true;
   }
 
+  /* ---------- F&O signals: futures + call/put (weekly and monthly) ---------- */
+  private fnoByName = new Map<string, FnoContract[]>();
+  private masterAt = 0;
+
+  /** Last traded price of NFO contracts (one LTP quote call for up to 50 tokens). */
+  private async nfoLtps(tokens: string[]): Promise<Map<string, number>> {
+    const out = new Map<string, number>();
+    const data = (await this.post("/rest/secure/angelbroking/market/v1/quote/", {
+      mode: "LTP", exchangeTokens: { NFO: tokens.slice(0, 50) },
+    }, "quote", 1100)) as { fetched?: Record<string, unknown>[] } | null;
+    for (const q of data?.fetched ?? []) {
+      const p = Number(q.ltp), t = String(q.symbolToken ?? "");
+      if (t && Number.isFinite(p) && p > 0) out.set(t, p);
+    }
+    return out;
+  }
+
+  /** Futures + call/put ideas for a cash signal. Null for stocks without F&O or when F&O signals are switched off (FNO_SIGNALS=false). */
+  async getFnoPlan(input: FnoSignalInput): Promise<FnoPlan | null> {
+    const cfg = loadFnoConfig();
+    if (!cfg.enabled) return null;
+    if (!this.masterLoaded || Date.now() - this.masterAt > 12 * 3_600_000) await this.loadMaster();
+    const list = this.fnoByName.get(input.symbol.toUpperCase());
+    if (!list || list.length === 0) return null;
+    const sel = selectFnoContracts(list, input.spot, input.direction, cfg, input.now);
+    const tokens = [...(sel.future ? [sel.future.token] : []), ...sel.options.map((o) => o.contract.token)];
+    if (tokens.length === 0) return null;
+    return buildFnoPlan(input, sel, await this.nfoLtps(tokens), cfg);
+  }
+
   /* ---------- candles ---------- */
   private async rawCandles(symbol: string, interval: string, fromMs: number, toMs: number): Promise<Candle[]> {
     const inst = await this.resolve(symbol);
