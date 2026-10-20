@@ -179,8 +179,7 @@ export async function buildForSymbol(symbol: string, tf: Timeframe, s: ScanSetti
     optional(deps.market.getTicker24h(symbol)),
     optional(deps.market.getDerivatives(symbol, tf)),
     optional(deps.news ? deps.news(symbol) : null),
-    optional(htfOn ? htfCandles(deps, symbol, now) : null),
-    optional(liqOn ? liquidationEvents(deps, symbol, now) : null),
+        optional(htfOn ? htfCandles(deps, symbol, now) : null),
   ]);
   const failed = pr instanceof Error ? pr.message : undefined;
   const built0 = buildSignal({
