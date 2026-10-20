@@ -99,7 +99,7 @@ async function benchmarkBias(deps: EngineDeps, tf: Timeframe, s: ScanSettings, n
   }
 }
 
-/** Downgrades a LONG/SHORT to WAIT when entering right now is not sensible (BTC against it, or price left the entry zone). */
+/** Downgrades a LONG/SHORT to WAIT when entering right now is not sensible (NIFTY against it, or price left the entry zone). */
 async function guardEntry(input: FinalSignal, tf: Timeframe, deps: EngineDeps, now: number, btc: 1 | -1 | 0, minScore: number): Promise<FinalSignal> {
   if (input.direction !== "LONG" && input.direction !== "SHORT") return input;
   let signal = input;
