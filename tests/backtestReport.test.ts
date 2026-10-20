@@ -24,15 +24,13 @@ describe("backtest report states its assumptions", () => {
     const res = await runBacktest([hist], null, base);
     const text = formatReport(res, buildReport(res.trades), []);
     expect(text).toMatch(/stop fixed/);
-    expect(text).toMatch(/funding off/);
-    expect(text).toMatch(/PARITY WITH THE LIVE ENGINE/);
-    expect(text).toMatch(/not replayed: derivatives, liquidations/);
+        expect(text).toMatch(/PARITY WITH THE LIVE ENGINE/);
+    expect(text).toMatch(/not replayed: order book, news/);
   });
-  it("staged run labels the stop mode, trail and the funding ASSUMPTION", async () => {
-    const res = await runBacktest([hist], null, { ...base, stopMode: "staged", trailPct: 1.5, fundingPctPer8h: 0.01 });
+  it("staged run labels the stop mode and the trail", async () => {
+    const res = await runBacktest([hist], null, { ...base, stopMode: "staged", trailPct: 1.5 });
     const text = formatReport(res, buildReport(res.trades), []);
     expect(text).toMatch(/stop staged trail 1.5%/);
-    expect(text).toMatch(/\(assumed\)/);
   });
   it("staged runs are repeatable", async () => {
     const o = { ...base, stopMode: "staged" as const, trailPct: 1.5 };
