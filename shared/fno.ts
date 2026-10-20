@@ -224,6 +224,6 @@ export function fnoTelegram(p: FnoPlan): string {
       : `${l.right === "CE" ? "🟩" : "🟥"} <b>BUY ${l.right}</b> ${l.strike} · ${l.expiryKind} · exp ${l.expiry} (${l.daysToExpiry}d)`;
     return `${title}\nLot ${l.lotSize} · LTP ${rs(l.ltp)}\nEntry ${rs(l.entry)} · SL ${rs(l.stopLoss)}\nTP1 ${rs(l.tp1)} · TP2 ${rs(l.tp2)} · TP3 ${rs(l.tp3)}\n${l.kind === "OPTION" ? "Cost" : "Value"}/lot ${rs0(l.costPerLot)} · Risk/lot ${rs0(l.riskPerLot)}${l.note ? `\n<i>${l.note}</i>` : ""}`;
   });
-  const warn = p.warnings.length ? `\n\n⚠️ ${p.warnings.join("\n⚠️ ")}` : "";
+  const warn = p.warnings.length ? `\n\n⚠️ ${p.warnings.map(esc).join("\n⚠️ ")}` : "";
   return `${head}\n\n${body.join("\n\n")}${warn}`;
 }
