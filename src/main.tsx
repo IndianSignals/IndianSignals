@@ -1363,8 +1363,7 @@ function createMiniChart(signal: DashboardSignal): MiniChart {
 
     chart.timeScale().applyOptions({ fixLeftEdge: true, fixRightEdge: true });
     const levels: number[] = [];
-  const ref = Number(signal.entry) || 1;
-  const precision = Math.min(8, Math.max(2, Math.ceil(-Math.log10(ref)) + 3));
+  const precision = 2; // NSE tick is ₹0.05
 
   const series = chart.addSeries(CandlestickSeries, {
     priceFormat: { type: "price", precision, minMove: Math.pow(10, -precision) },
