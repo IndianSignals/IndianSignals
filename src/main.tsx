@@ -872,42 +872,8 @@ const want = new Set(signals.map((s) => nseSymbol(s.symbol)).filter(Boolean));
         }
       }
     }
-  } catch {
-    // fall back to OKX directly below
-  }
-  if ([...want].every((s) => fresh.has(s))) return;
-
-  const pull = async (type: "SWAP" | "SPOT"): Promise<Record<string, number>> => {
-    const out: Record<string, number> = {};
-    try {
-      const res = await fetch(`https://www.okx.com/api/v5/market/tickers?instType=${type}`, {
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) return out;
-      const body = (await res.json()) as { data?: { instId?: string; last?: string }[] };
-      for (const r of body.data ?? []) {
-        const m = /^(.+)-USDT(-SWAP)?$/.exec(r.instId ?? "");
-        const p = Number(r.last);
-        if (m && Number.isFinite(p) && p > 0) out[`${m[1]}USDT`] = p;
-      }
-    } catch {
-      // keep the last known prices
-    }
-    return out;
-  };
-
-    const cap = (p: Promise<Record<string, number>>): Promise<Record<string, number>> =>
-    Promise.race([
-      p,
-      new Promise<Record<string, number>>((resolve) =>
-        window.setTimeout(() => resolve({}), 8000),
-      ),
-    ]);
-  const swap = await cap(pull("SWAP"));
-  const spot = [...want].some((s) => swap[s] === undefined) ? await cap(pull("SPOT")) : {};
-  for (const s of want) {
-    const p = swap[s] ?? spot[s];
-    if (p !== undefined) livePrices[s] = p;
+} catch {
+    // keep the last known prices
   }
 }
 
