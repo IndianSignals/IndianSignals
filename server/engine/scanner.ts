@@ -344,7 +344,7 @@ export class EngineService {
   startTracker(intervalMs = 60_000): void {
     if (this.trackTimer) return;
     void this.track();
-    this.trackTimer = setInterval(() => { void this.track(); }, intervalMs);
+        this.trackTimer = setInterval(() => { if (isMarketOpen(this.now, process.env)) void this.track(); }, intervalMs);
     this.trackTimer.unref();
   }
 
