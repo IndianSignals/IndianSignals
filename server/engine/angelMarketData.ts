@@ -303,10 +303,15 @@ export class AngelMarketData implements MarketData {
   }
 
   /** Last traded prices for the dashboard cards (one quote call per symbol, cached 2 s). */
-  async lastPrices(symbols: string[]): Promise<Record<string, number>> {
+    async lastPrices(symbols: string[]): Promise<Record<string, number>> {
     const out: Record<string, number> = {};
     for (const s of symbols) {
-      try { const p = Number((await this.quote(s)).ltp); if (Number.isFinite(p) && p > 0) out[s] = p; } catch { /* skip */ }
+      try {
+        const p = Number((await this.quote(s)).ltp);
+        if (Number.isFinite(p) && p > 0) out[s] = p;
+      } catch (err) {
+        console.error(`lastPrices ${s}:`, err instanceof Error ? err.message : err);
+      }
     }
     return out;
   }
