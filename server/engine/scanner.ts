@@ -217,7 +217,7 @@ if (open.length > 0) return "duplicate";
   );
   if (sameSide.length >= MAX_OPEN_PER_DIRECTION) return "not_emitted";
   await store.insertSignal(signal);
-  void tgSend(`🆕 <b>NEW SIGNAL</b>\n\n${tgPair(signal)}\n⭐ Score: <b>${signal.score.total}/100</b>\n\n📍 Entry: ${usd(signal.entry.min)} – ${usd(signal.entry.max)}\n🛑 SL: ${usd(signal.stopLoss.price)}\n🎯 TP1: ${usd(signal.takeProfit.tp1)}\n🎯 TP2: ${usd(signal.takeProfit.tp2)}\n🎯 TP3: ${usd(signal.takeProfit.tp3)}\n\n⚠️ Not financial advice. Use proper risk management.`);
+  void tgSend(`🆕 <b>NEW SIGNAL</b>\n\n${tgPair(signal)}\n⭐ Score: <b>${signal.score.total}/100</b>\n\n📍 Entry: ${inr(signal.entry.min)} – ${inr(signal.entry.max)}\n🛑 SL: ${inr(signal.stopLoss.price)}\n🎯 TP1: ${inr(signal.takeProfit.tp1)}\n🎯 TP2: ${inr(signal.takeProfit.tp2)}\n🎯 TP3: ${inr(signal.takeProfit.tp3)}\n\n⚠️ Not financial advice. Use proper risk management.`);
   return "emitted";
 }
 
