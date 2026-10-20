@@ -314,7 +314,10 @@ export class EngineService {
     this.timer = setTimeout(() => {
       this.timer = null;
       void (async () => {
-        try { await this.runScan(); } catch (e) { this.log.error(`[scan] scheduled run failed: ${errMsg(e)}`); }
+                // Scheduled scans only run while NSE is open; the admin "scan now" button still works any time.
+        if (isMarketOpen(this.now, process.env)) {
+          try { await this.runScan(); } catch (e) { this.log.error(`[scan] scheduled run failed: ${errMsg(e)}`); }
+        }
         if (this.intervalMs > 0) this.schedule(this.intervalMs);
       })();
     }, delay);
