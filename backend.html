@@ -598,7 +598,7 @@ async function indicatorsView() {
           if (done % 10 === 0 && !stale()) { render(); $("iinfo").textContent = `Updating ${done}/${state.symbols.length}...`; }
         }
       };
-      await Promise.all(Array.from({ length: 8 }, worker));  // 8 parallel requests, Binance rate-limit safe
+            await Promise.all(Array.from({ length: 8 }, worker));  // 8 parallel requests, Angel One rate-limit safe
       if (stale()) return;
       render();
       const ms = Math.round(performance.now() - t0);
