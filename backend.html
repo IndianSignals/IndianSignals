@@ -478,14 +478,33 @@ const panel = (title, right, body, live) =>
   `<div class="panel"${live ? ` data-live="${live}"` : ""}><div class="ph"><b>${esc(title)}</b><span>${right || ""}</span></div><div class="pb" style="overflow:auto">${body}</div></div>`;
 
 async function tickers(symbols) {
-  const r = await fetch(BIN + "/ticker/24hr?symbols=" + encodeURIComponent(JSON.stringify(symbols)));
-  if (!r.ok) throw new Error("Binance HTTP " + r.status);
-  return r.json();
+  return Promise.all(symbols.map(async (sym) => {
+    try {
+      const [priceRes, candleRes] = await Promise.all([
+        api("/prices?symbols=" + encodeURIComponent(sym)),
+        api("/candles?symbol=" + encodeURIComponent(sym) + "&timeframe=1D&limit=2")
+      ]);
+      const price = priceRes.data ? priceRes.data[sym] : null;
+      const candles = candleRes.data || [];
+      const last = candles[candles.length - 1], prev = candles[candles.length - 2];
+      const changePct = (last && prev && prev.close) ? ((last.close - prev.close) / prev.close) * 100 : 0;
+      return {
+        symbol: sym,
+        lastPrice: price ?? (last ? last.close : 0),
+        priceChangePercent: changePct,
+        highPrice: last ? last.high : 0,
+        lowPrice: last ? last.low : 0,
+        quoteVolume: last ? last.volume : 0
+      };
+    } catch (e) {
+      return { symbol: sym, lastPrice: 0, priceChangePercent: 0, highPrice: 0, lowPrice: 0, quoteVolume: 0, err: e.message };
+    }
+  }));
 }
 async function klines(sym, tf, n = 300) {
-  const r = await fetch(`${BIN}/klines?symbol=${sym}&interval=${tf}&limit=${n}`);
-  if (!r.ok) throw new Error("Binance HTTP " + r.status);
-  return (await r.json()).map(k => ({ c: +k[4] }));
+  const timeframe = TF_MAP[tf] || tf;
+  const d = await api(`/candles?symbol=${encodeURIComponent(sym)}&timeframe=${encodeURIComponent(timeframe)}&limit=${n}`);
+  return (d.data || []).map(k => ({ c: k.close }));
 }
 const ema = (a, p) => { const k = 2 / (p + 1); let e = a[0]; return a.map(v => (e = v * k + e * (1 - k))); };
 const rsi = (c, p = 14) => {
