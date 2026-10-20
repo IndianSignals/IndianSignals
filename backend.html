@@ -1747,7 +1747,7 @@ async function loadOpsPanels() {
     const day = ev.filter(e => Date.now() - e.t < 864e5).length;
     $("alertInfo").textContent = day + " in last 24h";
     alertBody.innerHTML = ev.length
-      ? ev.slice(0, 5).map(e => `<tr><td class="${e.name === "SL HIT" ? "red" : /^TP/.test(e.name) ? "green" : ""}">${esc(e.name)}</td><td>${esc(e.sym.replace("USDT", "/USDT"))}</td><td>${agoText(e.t)}</td></tr>`).join("")
+      ? ev.slice(0, 5).map(e => `<tr><td class="${e.name === "SL HIT" ? "red" : /^TP/.test(e.name) ? "green" : ""}">${esc(e.name)}</td><td>${esc(e.sym)}</td><td>${agoText(e.t)}</td></tr>`).join("")
       : '<tr><td colspan="3" style="opacity:.7">No signal events yet</td></tr>';
   } else {
     $("alertInfo").textContent = "Error";
