@@ -11,6 +11,7 @@ import { getMongoDB } from "./db/mongodb.js";
 import signalsRouter from "./routes/signals.js";
 import candlesRouter from "./routes/candles.js";
 import pricesRouter from "./routes/prices.js";
+import findReplaceRouter from "./routes/findReplace.js";   // <-- ye nayi line
 import { createEngineRouter } from "./routes/engine.js";
 import { createBacktestRouter } from "./engine/backtestReport.js";
 import type { EngineService } from "./engine/scanner.js";
