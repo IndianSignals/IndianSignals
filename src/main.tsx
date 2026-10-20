@@ -845,15 +845,10 @@ async function loadDashboardSignals(): Promise<DashboardSignal[]> {
 /* ---------- Live price + Change % (vs entry) ---------- */
 const livePrices: Record<string, number> = {};
 
-const okxSymbol = (raw: unknown): string => {
-  const s = String(raw ?? "")
+const nseSymbol = (raw: unknown): string =>
+  String(raw ?? "")
     .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "");
-
-  if (!s) return "";
-
-  return /(USDT|USDC|BUSD|FDUSD)$/.test(s) ? s : `${s}USDT`;
-};
+    .replace(/[^A-Z0-9&-]/g, "");
 
 
 
