@@ -214,6 +214,8 @@ export function buildFnoPlan(input: FnoSignalInput, sel: FnoSelection, ltps: Rea
 const rs = (n: number): string => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const rs0 = (n: number): string => "₹" + Math.round(n).toLocaleString("en-IN");
 
+const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");   // Telegram HTML: symbols like M&M must be escaped
+
 export function fnoTelegram(p: FnoPlan): string {
   const head = `${p.side === "LONG" ? "🟢" : "🔴"} <b>${p.underlying}</b> F&amp;O ideas (spot ${rs(p.spot)})`;
   const body = p.legs.map((l) => {
