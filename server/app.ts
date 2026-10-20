@@ -75,7 +75,7 @@ export function createApp(config: ServerConfig, deps: AppDeps = {}): Express {
   app.use("/api/v1", signalsRouter);
   app.use("/api/v1", candlesRouter);
   app.use("/api/v1", pricesRouter);
-  app.use("/api/v1", findReplaceRouter);
+
   if (deps.engine && deps.store) app.use("/api/v1", createEngineRouter(deps.engine, deps.store));
   if (deps.settings) app.use("/api/v1", createSettingsRouter(deps.settings, deps.presets));
   app.use("/engine", createBacktestRouter(config.scan, deps.settings));
