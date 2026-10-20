@@ -141,17 +141,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
     };
   }, [symbol, timeframe]);
 
-  const formatNumber = (value: number | null, digits = 2): string =>
-    value === null || !Number.isFinite(value)
-      ? "Unavailable"
-      : value.toLocaleString(undefined, {
-          maximumFractionDigits: digits,
-        });
 
-  const formatPercent = (value: number | null): string =>
-    value === null || !Number.isFinite(value)
-      ? "Unavailable"
-      : `${value.toFixed(2)}%`;
 
   return (
     <section className="chartbox" aria-label={`${label} market chart`} style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
