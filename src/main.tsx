@@ -1814,9 +1814,7 @@ function renderRecentSignals(signals: DashboardSignal[]): void {
             ? "down"
             : "";
 
-      const symbol = (signal.symbol ?? "")
-        .replace(/USDT$/i, "/USDT")
-        .replace(/USDC$/i, "/USDC");
+      const symbol = String(signal.symbol ?? "").toUpperCase();
 
       const targets = Array.isArray(signal.targets)
         ? signal.targets
