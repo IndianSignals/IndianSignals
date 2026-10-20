@@ -277,7 +277,8 @@ export function buildSignal(input: BuildSignalInput, opts: BuildOptions = {}): F
   const atr = ind?.atr.value ?? NaN;
 
   const tfMs = TF_MS[input.timeframe.primary];
-  const age = last ? now - last.timestamp : Infinity;
+    // NSE cash: count only trading time, so Friday's last candle is not "stale" on Monday morning.
+  const age = last ? (input.marketType === "cash" ? tradingMsBetween(last.timestamp, now, process.env) : now - last.timestamp) : Infinity;
   const stale = last !== undefined && age > cfg.staleAfterCandles * tfMs;
 
   let decision = decide(scored, close, atr, adv ? { ns: adv.levels.nearestSupport, nr: adv.levels.nearestResistance } : null, cfg);
