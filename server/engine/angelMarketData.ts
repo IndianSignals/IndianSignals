@@ -331,7 +331,9 @@ export class AngelMarketData implements MarketData {
         const p = Number((await this.quote(s)).ltp);
         if (Number.isFinite(p) && p > 0) out[s] = p;
       } catch (err) {
-        console.error(`lastPrices ${s}:`, err instanceof Error ? err.message : err);
+        const pe = err instanceof ProviderError ? err : new ProviderError("UPSTREAM", "ERR", err instanceof Error ? err.message : "unknown error");
+        errors.push(pe);
+        console.error(`lastPrices ${s}: ${pe.category} ${pe.code}: ${pe.message}`);
       }
     }
     return out;
