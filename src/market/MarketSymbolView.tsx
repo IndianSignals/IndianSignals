@@ -174,7 +174,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
         )}
         {liveStatus !== "off" && (
           <span role="status" style={{ marginLeft: "auto", fontSize: 11, color: liveStatus === "live" ? c.positive.base : c.text.muted }}>
-            {liveStatus === "live" ? "● Live" : liveStatus === "connecting" ? "Connecting…" : "Reconnecting…"}
+            {liveStatus === "live" ? "● Live" : liveStatus === "closed" ? "Market closed" : liveStatus === "connecting" ? "Connecting…" : "Reconnecting…"}
           </span>
         )}
         {status === "error" && (
