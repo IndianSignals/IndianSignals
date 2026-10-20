@@ -244,7 +244,7 @@ export class EngineService {
         await trackOutcomes({ market: this.deps.market, store: this.deps.store, now: this.deps.now, log: this.log });
       } catch (e) { this.log.error(`[scan] outcome tracking failed: ${errMsg(e)}`); }
       const active = this.deps.activeSettings ? await this.deps.activeSettings() : null;
-      const btc = await btcBias(this.deps, tf, this.settings, this.now);
+            const btc = await benchmarkBias(this.deps, tf, this.settings, this.now);
       const results = await pool(symbols, this.settings.concurrency, async (symbol): Promise<SymbolResult> => {
         const now = this.now;
         try {
