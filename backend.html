@@ -585,7 +585,7 @@ async function indicatorsView() {
     state.busy = true;
     const t0 = performance.now();
     try {
-      state.symbols = await getTrackedSymbols();          // server SCAN_SYMBOLS (top 100 tracked), fallback list agar API na mile
+            state.symbols = await getTrackedSymbols();          // server SCAN_SYMBOLS (NSE symbols), fallback list agar API na mile
       let i = 0, done = 0, fail = 0;
       const stale = () => id !== state.runId || !$("vb");
       const worker = async () => {
