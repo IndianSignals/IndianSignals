@@ -119,9 +119,9 @@ async function guardEntry(input: FinalSignal, tf: Timeframe, deps: EngineDeps, n
     signal = {
       ...signal,
       score: { ...signal.score, total },
-      reasoning: { ...signal.reasoning, warnings: [...signal.reasoning.warnings, `BTC trend is against this ${signal.direction} (score -${penalty})`] },
+            reasoning: { ...signal.reasoning, warnings: [...signal.reasoning.warnings, `NIFTY trend is against this ${signal.direction} (score -${penalty})`] },
     };
-    if (total < minScore) reason = `Score ${total} fell below ${minScore} after the BTC-against penalty`;
+    if (total < minScore) reason = `Score ${total} fell below ${minScore} after the NIFTY-against penalty`;
   }
   if (reason === null) {
     try {
