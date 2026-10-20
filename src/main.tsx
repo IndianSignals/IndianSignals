@@ -1859,7 +1859,7 @@ function renderRecentSignals(signals: DashboardSignal[]): void {
           </td>
 
           <td>
-            <strong>${dashboardEscape(dashboardPrice(livePrices[okxSymbol(signal.symbol)]))}</strong>
+            <strong>${dashboardEscape(dashboardPrice(livePrices[nseSymbol(signal.symbol)]))}</strong>
           </td>
 
           <td class="${sideClass}">
