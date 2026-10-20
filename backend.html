@@ -1617,7 +1617,8 @@ function placeholderView(name) {
   else host.innerHTML = panel(name, "", "Is section ka backend API abhi bana nahi hai.");
 }
 
-const FALLBACK_SYMBOLS = "BTC ETH XRP BNB SOL DOGE ADA TRX LINK AVAX SUI XLM BCH HBAR LTC TON DOT UNI AAVE NEAR PEPE ICP ETC APT ONDO POL ARB OP FIL ATOM ALGO VET INJ RENDER TAO FET SEI CRV TIA JUP WLD ENA PENDLE STX IMX GRT SAND MANA THETA QNT FLOW XTZ EOS NEO KAVA SHIB BONK WIF FLOKI LDO MKR RUNE AXS GALA CHZ APE DYDX COMP SNX 1INCH ZEC DASH IOTA EGLD KSM ZIL ENJ BAT ANKR CELO ROSE MINA CFX GMX WOO JASMY PYTH STRK DYM ORDI SUSHI YFI LRC ZRX OM TRUMP PENGU VIRTUAL ARKM AR".split(" ").map(c => c + "USDT");
+
+const FALLBACK_SYMBOLS = "RELIANCE TCS HDFCBANK INFY ICICIBANK SBIN BHARTIARTL ITC LT KOTAKBANK AXISBANK HINDUNILVR BAJFINANCE MARUTI SUNPHARMA TATAMOTORS TITAN WIPRO ONGC NTPC".split(" ");
 let trackedSymbols = null;
 
 async function getTrackedSymbols() {
@@ -1629,14 +1630,9 @@ async function getTrackedSymbols() {
   return FALLBACK_SYMBOLS;
 }
 
-async function fetchTickerMap(symbols) {
-  const base = "https://data-api.binance.vision/api/v3/ticker/24hr";
-  let r = await fetch(base + "?symbols=" + encodeURIComponent(JSON.stringify(symbols)));
-  if (!r.ok) r = await fetch(base); // ek bhi invalid symbol ho to poori call fail hoti hai, isliye sab lekar filter karte hain
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  const map = {};
-  (await r.json()).forEach(x => { map[x.symbol] = x; });
-  return map;
+async function fetchPriceMap(symbols) {
+  const d = await api("/prices?symbols=" + encodeURIComponent(symbols.join(",")));
+  return { data: d.data || {}, stale: !!(d.meta && d.meta.stale), timestamp: (d.meta && d.meta.timestamp) || Date.now() };
 }
 
 async function loadLive() {
@@ -1646,31 +1642,27 @@ async function loadLive() {
   const t0 = performance.now();
   try {
     const symbols = await getTrackedSymbols();
-    const map = await fetchTickerMap(symbols);
+    const { data: map, stale: feedStale, timestamp } = await fetchPriceMap(symbols);
     const ms = Math.round(performance.now() - t0);
+    const fresh = Date.now() - timestamp < 5 * 60 * 1000 && !feedStale;
     let okCount = 0;
     const rows = symbols.map(sym => {
-      const x = map[sym];
-      const name = esc(sym.replace("USDT", "/USDT"));
-      if (!x) return `<tr><td>${name}</td><td>-</td><td>-</td><td><span class="status danger">NO DATA</span></td></tr>`;
-      const price = parseFloat(x.lastPrice), ch = parseFloat(x.priceChangePercent);
-      if (!(price > 0)) return `<tr><td>${name}</td><td>-</td><td>-</td><td><span class="status danger">NO PRICE</span></td></tr>`;
-      const stale = Date.now() - Number(x.closeTime) > 5 * 60 * 1000;
-      if (!stale) okCount++;
-      return `<tr><td>${name}</td>
-        <td>$${fmtP(x.lastPrice)}</td>
-        <td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td>
-        <td><span class="status ${stale ? "pending" : "active"}">${stale ? "STALE" : "OK"}</span></td></tr>`;
+      const price = map[sym];
+      if (!(price > 0)) return `<tr><td>${esc(sym)}</td><td>-</td><td><span class="status danger">NO PRICE</span></td></tr>`;
+      if (fresh) okCount++;
+      return `<tr><td>${esc(sym)}</td>
+        <td>₹${fmtP(price)}</td>
+        <td><span class="status ${fresh ? "active" : "pending"}">${fresh ? "OK" : "STALE"}</span></td></tr>`;
     });
     feed.innerHTML = rows.join("");
     if (info) info.textContent = `${okCount}/${symbols.length} OK · ${ms}ms · ${new Date().toLocaleTimeString()}`;
     cards[1].querySelector(".value").textContent = okCount + "/" + symbols.length;
-    cards[1].querySelector(".sub").textContent = "Binance responding · " + ms + "ms";
+    cards[1].querySelector(".sub").textContent = "Angel One responding · " + ms + "ms";
   } catch (e) {
-    feed.innerHTML = `<tr><td colspan="4" class="red">Binance feed error: ${esc(e.message)}</td></tr>`;
-    if (info) info.textContent = "Binance unreachable";
+    feed.innerHTML = `<tr><td colspan="3" class="red">Price feed error: ${esc(e.message)}</td></tr>`;
+    if (info) info.textContent = "Price feed unreachable";
     cards[1].querySelector(".value").textContent = "0/" + (trackedSymbols ? trackedSymbols.length : FALLBACK_SYMBOLS.length);
-    cards[1].querySelector(".sub").textContent = "Binance unreachable";
+    cards[1].querySelector(".sub").textContent = "Price feed unreachable";
   }
 }
 
