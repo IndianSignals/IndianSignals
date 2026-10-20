@@ -880,7 +880,7 @@ const want = new Set(signals.map((s) => nseSymbol(s.symbol)).filter(Boolean));
 /** % move from entry. LONG: price up = +. SHORT: price down = +. */
 const changePct = (signal: DashboardSignal): number | null => {
   const entry = dashboardNumber(signal.entry);
-  const price = livePrices[okxSymbol(signal.symbol)];
+const price = livePrices[nseSymbol(signal.symbol)];
 
   if (entry === null || entry <= 0 || price === undefined) {
     return null;
