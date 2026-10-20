@@ -204,10 +204,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
 
           
 
-          <div className="data-card" style={snapshot.derivatives.topTraderRatio == null ? { display: "none" } : undefined}>
-            <label>Top Traders L/S</label>
-            <strong>{formatNumber(snapshot.derivatives.topTraderRatio ?? null, 2)}</strong>
-          </div>
+          
 
           <div className="data-card" style={snapshot.derivatives.takerBuySellRatio == null ? { display: "none" } : undefined}>
             <label>Taker Buy/Sell</label>
