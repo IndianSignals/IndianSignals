@@ -1621,8 +1621,10 @@ async function fetchMiniCandles(symbol: string, tf: string): Promise<MiniCandle[
 
 async function refreshMiniChart(m: MiniChart, signal: DashboardSignal): Promise<void> {
   if (m.busy) return;
-  // already loaded: refresh open signals every 15 s, finished ones every 60 s (fewer OKX calls)
+  // already loaded: refresh open signals every 15 s, finished ones every 60 s (fewer Angel One calls);
+  // while the NSE market is closed nothing new can print, so a loaded chart is left alone
   const done = isClosedSignal(signal) || signal.status === "EXPIRED" || signal.status === "CANCELLED";
+  if (m.lastFetch > 0 && !isMarketOpen()) return;
   if (m.lastFetch > 0 && Date.now() - m.lastFetch < (done ? 60000 : 15000)) return;
   if (m.busy) return;
   m.busy = true;
