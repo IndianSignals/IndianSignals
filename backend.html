@@ -613,7 +613,7 @@ async function indicatorsView() {
 function riskView() {
   const f = (id, label, v) => `<label style="display:block;margin:6px 0">${label}<input id="${id}" type="number" step="any" value="${v}" style="width:100%;${INP}"></label>`;
   host.innerHTML = panel("Risk Engine", "Position size calculator",
-    `<div style="max-width:420px">${f("r_bal", "Account balance (USDT)", 1000)}${f("r_pct", "Risk per trade (%)", 1)}${f("r_ent", "Entry price", 100)}${f("r_stp", "Stop loss", 95)}${f("r_tgt", "Target", 110)}<div id="r_out" style="margin-top:12px"></div></div>`);
+    `<div style="max-width:420px">${f("r_bal", "Account balance (₹)", 1000)}${f("r_pct", "Risk per trade (%)", 1)}${f("r_ent", "Entry price", 100)}${f("r_stp", "Stop loss", 95)}${f("r_tgt", "Target", 110)}<div id="r_out" style="margin-top:12px"></div></div>`);
   const calc = () => {
     const [b, p, e, s, t] = ["r_bal", "r_pct", "r_ent", "r_stp", "r_tgt"].map(i => +$(i).value);
     const risk = b * p / 100, d = Math.abs(e - s);
