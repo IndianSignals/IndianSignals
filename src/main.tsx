@@ -740,14 +740,9 @@ const dashboardPrice = (value: unknown): string => {
 
   if (n === null) return "—";
 
-  const digits =
-    Math.abs(n) >= 1000 ? 2 :
-    Math.abs(n) >= 1 ? 4 :
-    Math.abs(n) >= 0.01 ? 6 : 8;
-
-  return n.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: digits,
+  return "₹" + n.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 };
 
