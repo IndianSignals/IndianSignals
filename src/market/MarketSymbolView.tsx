@@ -27,9 +27,14 @@ const tfBtn = (active: boolean): CSSProperties => ({
   border: `1px solid ${active ? c.accent.primary : c.border.default}`,
 });
 
-/** Price text: 2 decimals from 100 up, up to 4 decimals from 1 up, up to 6 decimals below 1. */
-const fmtPx = (n: number): string =>
-  n.toLocaleString("en-US", { minimumFractionDigits: n >= 100 ? 2 : 0, maximumFractionDigits: n >= 100 ? 2 : n >= 1 ? 4 : 6 });
+/** NSE prices: Indian digit grouping, always 2 decimals (tick = 0.05). */
+const fmtPx = (n: number): string => n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Traded value in INR as lakh / crore, e.g. "₹1,245.60 Cr". */
+const fmtValue = (n: number): string =>
+  n >= 1e7 ? `₹${(n / 1e7).toLocaleString("en-IN", { maximumFractionDigits: 2 })} Cr`
+  : n >= 1e5 ? `₹${(n / 1e5).toLocaleString("en-IN", { maximumFractionDigits: 2 })} L`
+  : `₹${Math.round(n).toLocaleString("en-IN")}`;
 
 /**
  * 24h open price from the public Binance ticker (no key), refreshed every 15s.
