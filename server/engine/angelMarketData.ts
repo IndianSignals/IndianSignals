@@ -193,6 +193,71 @@ export class AngelMarketData implements MarketData {
  throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", "Angel One request failed after retries (rate limit or session)");
   }
 
+  /* ---------- F&O: PCR + OI build-up (Angel One derivatives market-data APIs) ---------- */
+  private fnoCache: { at: number; pcr: Map<string, number>; buildup: Map<string, { kind: OiBuildup; oiChangePct: number | null }> } | null = null;
+  private fnoInflight: Promise<void> | null = null;
+
+  /** GET twin of post(): putCallRatio is a GET endpoint. Same login, pacing and retry rules. */
+  private async getReq(path: string, gapKey: string, gapMs: number): Promise<unknown> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.ensureLogin();
+      await pace(gapKey, gapMs);
+      const res = await this.fetchFn(`${HOST}${path}`, { method: "GET", headers: this.headers(true), signal: AbortSignal.timeout(this.timeoutMs) });
+      const text = await res.text();
+      let body = null as { status?: boolean; success?: boolean; message?: string; data?: unknown } | null;
+      try { body = JSON.parse(text) as typeof body; } catch { body = null; }
+      if (res.status === 401) { await this.ensureLogin(true); continue; }
+      if (res.status === 429 || res.status === 403) { await sleep(1500 * (attempt + 1)); continue; }
+      if (!res.ok || !(body?.status === true || body?.success === true)) throw new ProviderError("UPSTREAM", String(res.status), `Angel One GET ${path}: ${body?.message ?? "request failed"}`);
+      return body?.data;
+    }
+    throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", "Angel One GET failed after retries (rate limit or session)");
+  }
+
+  /** "RELIANCE28OCT25FUT" -> "RELIANCE". Both F&O APIs name rows by derivative contract. */
+  private static underlyingOf(tradingSymbol: unknown): string | null {
+    const m = /^(.+?)\d{2}[A-Z]{3}\d{2}/.exec(String(tradingSymbol ?? "").toUpperCase());
+    return m ? m[1]! : null;
+  }
+
+  /** One refresh = 1 PCR call + 4 OI build-up calls (near expiry). Cached 5 min, so a whole scan shares it. A failed call just leaves its data empty. */
+  private async refreshFno(): Promise<void> {
+    const pcr = new Map<string, number>();
+    const buildup = new Map<string, { kind: OiBuildup; oiChangePct: number | null }>();
+    try {
+      const rows = await this.getReq("/rest/secure/angelbroking/marketData/v1/putCallRatio", "fno", 500);
+      if (Array.isArray(rows)) for (const r of rows as Record<string, unknown>[]) {
+        const u = AngelMarketData.underlyingOf(r.tradingSymbol), v = Number(r.pcr);
+        if (u && Number.isFinite(v) && v > 0 && !pcr.has(u)) pcr.set(u, v);
+      }
+    } catch (err) { console.error(`F&O PCR: ${err instanceof Error ? err.message : "failed"}`); }
+    const kinds: [string, OiBuildup][] = [
+      ["Long Built Up", "long_buildup"], ["Short Built Up", "short_buildup"],
+      ["Short Covering", "short_covering"], ["Long Unwinding", "long_unwinding"],
+    ];
+    for (const [datatype, kind] of kinds) {
+      try {
+        const rows = await this.post("/rest/secure/angelbroking/marketData/v1/OIBuildup", { expirytype: "NEAR", datatype }, "fno", 500);
+        if (Array.isArray(rows)) for (const r of rows as Record<string, unknown>[]) {
+          const u = AngelMarketData.underlyingOf(r.tradingSymbol);
+          if (!u || buildup.has(u)) continue;
+          const oi = Number(r.opnInterest), chg = Number(r.netChangeOpnInterest), prev = oi - chg;
+          buildup.set(u, { kind, oiChangePct: Number.isFinite(oi) && Number.isFinite(chg) && prev > 0 ? (chg / prev) * 100 : null });
+        }
+      } catch (err) { console.error(`F&O OI build-up (${datatype}): ${err instanceof Error ? err.message : "failed"}`); }
+    }
+    this.fnoCache = { at: Date.now(), pcr, buildup };
+  }
+
+  private async fnoFor(symbol: string): Promise<{ pcr: number | null; buildup: { kind: OiBuildup; oiChangePct: number | null } | null }> {
+    if (!this.fnoCache || Date.now() - this.fnoCache.at > 5 * 60_000) {
+      this.fnoInflight ??= this.refreshFno().finally(() => { this.fnoInflight = null; });
+      await this.fnoInflight;
+    }
+    const u = symbol.toUpperCase();
+    return { pcr: this.fnoCache?.pcr.get(u) ?? null, buildup: this.fnoCache?.buildup.get(u) ?? null };
+  }
+
   /* ---------- symbol -> token ---------- */
   private async resolve(symbol: string): Promise<{ exch: string; token: string; tsym: string }> {
     const name = symbol.toUpperCase();
