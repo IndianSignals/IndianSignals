@@ -3,6 +3,7 @@ import { fetchCandles, fetchMarketSnapshot, type MarketSnapshotResponse } from "
 import type { CSSProperties, ReactElement } from "react";
 import type { Timeframe } from "../../shared/market.js";
 import { tokens } from "../../shared/designTokens.js";
+import { isMarketOpen, istParts } from "../../shared/indianMarket.js";
 import { MarketChart } from "../components/MarketChart/index.js";
 import { DEFAULT_INDICATORS, INDICATORS, SUB_PANE_HEIGHT, buildOverlays, subPaneCount } from "../components/MarketChart/indicatorOverlays.js";
 import type { IndicatorKey } from "../components/MarketChart/indicatorOverlays.js";
