@@ -261,7 +261,7 @@ export class AngelMarketData implements MarketData {
     const hit = this.quoteCache.get(symbol);
     if (hit && Date.now() - hit.at < 2000) return hit.q;
     const inst = await this.resolve(symbol);
-    const data = (await this.post("/rest/secure/angelbroking/market/v1/quote", {
+    const data = (await this.post("/rest/secure/angelbroking/market/v1/quote/", {
       mode: "FULL", exchangeTokens: { [inst.exch]: [inst.token] },
     }, "quote", 1100)) as { fetched?: Record<string, unknown>[] } | null;
     const q = data?.fetched?.[0];
