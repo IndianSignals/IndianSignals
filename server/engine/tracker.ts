@@ -57,7 +57,7 @@ export const inr = (n: number | null | undefined): string => {
   return "₹" + Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 export const tgPair = (s: FinalSignal): string =>
-  `${s.direction === "LONG" ? "🟢" : "🔴"} <b>${s.symbol}</b> (NSE) · ${s.direction} · ${s.timeframe.primary}`;
+  `${s.direction === "LONG" ? "🟢" : "🔴"} <b>${s.symbol.replace(/&/g, "&amp;")}</b> (NSE) · ${s.direction} · ${s.timeframe.primary}`;
 // Staged trailing stop: after TP1 the stop moves to entry (breakeven), after TP2 it moves to TP1. Set TRAILING_STOP=false to turn off.
 const TRAILING_ON = (process.env.TRAILING_STOP ?? "true").toLowerCase() !== "false";
 // Pre-TP1 protection: once price covers this fraction of the entry→TP1 distance, SL moves to entry.
