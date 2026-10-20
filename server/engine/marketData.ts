@@ -67,6 +67,8 @@ export interface MarketData {
   getTicker24h(symbol: string): Promise<Ticker24h>;
   /** Each field is null when its endpoint failed or is unavailable. */
   getDerivatives(symbol: string, tf: Timeframe): Promise<DerivativesInput>;
+    /** Optional. Futures + call/put (weekly and monthly) ideas for a cash signal. Null when the stock has no F&O. */
+  getFnoPlan?(input: FnoSignalInput): Promise<FnoPlan | null>;
   /** Combined real-time market-analysis snapshot. */
     getMarketSnapshot(symbol: string, tf: Timeframe): Promise<MarketSnapshot>;
   /** NSE data is always the cash segment. */
