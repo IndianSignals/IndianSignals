@@ -20,7 +20,9 @@ export const SCORE_MAX: SetupScore = {
   volumeMomentum: 15, derivativesOrderbook: 10, newsFundamentals: 5, riskExecution: 15,
 };
 
-export interface DerivativesInput { fundingRate: number | null; oiChangePct: number | null; longShortRatio: number | null; bookImbalance: number | null; topTraderRatio?: number | null; takerBuySellRatio?: number | null; asOf?: number | null; source?: string | null; }
+/** F&O open-interest build-up classes (price move + OI move). */
+export type OiBuildup = "long_buildup" | "short_buildup" | "short_covering" | "long_unwinding";
+export interface DerivativesInput { fundingRate: number | null; oiChangePct: number | null; longShortRatio: number | null; bookImbalance: number | null; topTraderRatio?: number | null; takerBuySellRatio?: number | null; asOf?: number | null; source?: string | null; pcr?: number | null; oiBuildup?: OiBuildup | null; }
 export interface NewsInput { sentiment: number; highImpactSoon: boolean; }
 /** Hard filters. Any failed gate = criticalFailure = NO_TRADE. Defaults are all OFF here; signalBuilder turns them on. */
 /** off = ignored, soft = score bonus/penalty only, strict = also a hard gate (NO_TRADE when it fails). */
