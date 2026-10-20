@@ -37,30 +37,33 @@ const fmtValue = (n: number): string =>
   : `₹${Math.round(n).toLocaleString("en-IN")}`;
 
 /**
- * 24h open price from the public Binance ticker (no key), refreshed every 15s.
- * The header uses it with the live candle close, so the change follows the live price.
+ * Previous-session close, from daily candles (refreshed every 60 s). With the live candle close it gives the
+ * header's "change vs previous close". If today's daily bar exists, or the market is closed, the bar before the
+ * latest one is the reference; during market hours without today's bar the latest bar is yesterday's close.
  */
-function useOpen24h(symbol: string | null): number | null {
-  const [open, setOpen] = useState<number | null>(null);
+function usePrevClose(symbol: string | null): number | null {
+  const [prev, setPrev] = useState<number | null>(null);
   useEffect(() => {
-    setOpen(null);
+    setPrev(null);
     if (!symbol) return;
     const ctrl = new AbortController();
     const load = (): void => {
-      fetch(`https://data-api.binance.vision/api/v3/ticker/24hr?symbol=${encodeURIComponent(symbol)}`, { signal: ctrl.signal })
-        .then((r) => (r.ok ? (r.json() as Promise<unknown>) : Promise.reject(new Error(`HTTP ${r.status}`))))
-        .then((j) => {
-          const o = typeof j === "object" && j !== null ? (j as Record<string, unknown>) : {};
-          const v = Number(o["openPrice"]);
-          if (Number.isFinite(v) && v > 0) setOpen(v);
+      fetchCandles(symbol, "1D", 10, ctrl.signal)
+        .then((rows) => {
+          const { candles } = validateCandles(rows);
+          const last = candles.at(-1);
+          if (!last) return;
+          const hasToday = istParts(last.timestamp).ymd === istParts(Date.now()).ymd;
+          const ref = hasToday || !isMarketOpen(Date.now()) ? candles.at(-2) : last;
+          if (ref && ref.close > 0) setPrev(ref.close);
         })
         .catch(() => { /* keep the last value; the header just hides the change until the next refresh */ });
     };
     load();
-    const id = window.setInterval(load, 15_000);
+    const id = window.setInterval(load, 60_000);
     return () => { ctrl.abort(); window.clearInterval(id); };
   }, [symbol]);
-  return open;
+  return prev;
 }
 
 /** Chart height follows the viewport class without hardcoding a width; the chart itself resizes to its container. */
