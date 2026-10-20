@@ -1,5 +1,6 @@
 import type { Candle, Timeframe } from "../../shared/market.js";
 import type { DerivativesInput } from "../../shared/scoring.js";
+import type { FnoPlan, FnoSignalInput } from "../../shared/fno.js";
 
 /** What the scanner needs from a market-data source. Swap this for another exchange or a mock. */
 export interface Ticker24h { change24hPct: number; volume24h: number }
