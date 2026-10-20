@@ -547,12 +547,12 @@ async function indicatorsView() {
   const state = { data: {}, runId: 0, busy: false, symbols: [] };
 
   host.innerHTML = panel("Indicators",
-    `<input id="iq" placeholder="Search coin" style="${INP};width:110px"> ` +
+        `<input id="iq" placeholder="Search symbol" style="${INP};width:110px"> ` +
     `<select id="itrend" class="btn"><option value="">All trends</option><option>Bullish</option><option>Bearish</option></select> ` +
     `<select id="isort" class="btn"><option value="symbol">Sort: Symbol</option><option value="rsiAsc">RSI low → high</option><option value="rsiDesc">RSI high → low</option><option value="macd">MACD hist</option></select> ` +
     `<select id="itf" class="btn">${TFS.map(t => `<option ${t === "1h" ? "selected" : ""}>${t}</option>`).join("")}</select> ` +
     `<span id="iinfo">Loading...</span>`,
-    `<table class="table">${th(["Symbol", "Price", "RSI 14", "EMA 20", "EMA 50", "MACD hist", "Trend"])}<tbody id="vb"><tr><td colspan="${COLS}">Loading tracked coins...</td></tr></tbody></table>`,
+    `<table class="table">${th(["Symbol", "Price", "RSI 14", "EMA 20", "EMA 50", "MACD hist", "Trend"])}<tbody id="vb"><tr><td colspan="${COLS}">Loading tracked symbols...</td></tr></tbody></table>`,
     "Indicators");
 
   const calc = (c) => {
