@@ -217,7 +217,7 @@ const rs0 = (n: number): string => "₹" + Math.round(n).toLocaleString("en-IN")
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");   // Telegram HTML: symbols like M&M must be escaped
 
 export function fnoTelegram(p: FnoPlan): string {
-  const head = `${p.side === "LONG" ? "🟢" : "🔴"} <b>${p.underlying}</b> F&amp;O ideas (spot ${rs(p.spot)})`;
+  const head = `${p.side === "LONG" ? "🟢" : "🔴"}<b>${esc(p.underlying)}</b> F&amp;O ideas (spot ${rs(p.spot)})`;
   const body = p.legs.map((l) => {
     const title = l.kind === "FUTURE"
       ? `📈 <b>FUTURE ${p.side}</b> · ${l.tradingSymbol}`
