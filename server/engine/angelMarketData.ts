@@ -144,7 +144,7 @@ export class AngelMarketData implements MarketData {
         method: "POST", headers: this.headers(true), body: JSON.stringify(payload), signal: AbortSignal.timeout(this.timeoutMs),
       });
       const text = await res.text();
-      type Reply = { status?: boolean; message?: string; errorcode?: string; data?: unknown };
+      type Reply = { status?: boolean; message?: string; errorcode?: string; errorCode?: string; data?: unknown };
       let body = null as Reply | null;
       try { body = JSON.parse(text) as Reply; } catch { body = null; }
       const msg = `${body?.message ?? ""} ${text.slice(0, 120)}`.toLowerCase();
