@@ -86,7 +86,7 @@ export function evaluateOutcome(s: FinalSignal, candles: Candle[], now: number, 
 
   const createdMs = Date.parse(s.timestamps.createdAt);
   const expiryMs = Date.parse(s.entry.expiry);
-    // OKX returns only the latest 300 candles. Once they no longer reach back to the
+    // The candle window is limited. Once it no longer reaches back to the
   // signal's creation, trust what is already stored instead of re-detecting from scratch.
   const windowShort = (candles[0]?.timestamp ?? Infinity) > createdMs;
   const prev: SignalHits = windowShort ? { ...(s.outcome?.hits ?? {}) } : {};
