@@ -853,7 +853,7 @@ const nseSymbol = (raw: unknown): string =>
 
 
   async function loadLivePrices(signals: DashboardSignal[]): Promise<void> {
-  const want = new Set(signals.map((s) => okxSymbol(s.symbol)).filter(Boolean));
+const want = new Set(signals.map((s) => nseSymbol(s.symbol)).filter(Boolean));
     if (want.size === 0) return;
 
   // 1) Ask our own server first (works on every network).
