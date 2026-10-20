@@ -28,15 +28,23 @@ describe("validateCandles", () => {
 });
 
 describe("normalizeSymbol", () => {
-  it("normalizes common forms to the exchange symbol", () => {
-    for (const s of ["BTC", "btc", "BTC-USDT", "btc/usdt", "BTCUSDT"]) expect(normalizeSymbol(s)).toBe("BTCUSDT");
-    expect(normalizeSymbol("DOGE")).toBe("DOGEUSDT");
-    expect(normalizeSymbol("trx")).toBe("TRXUSDT");
+  it("normalizes common forms to the NSE symbol", () => {
+    for (const s of ["RELIANCE", "reliance", " Reliance ", "RELIANCE.NS", "nse:reliance", "RELIANCE-EQ"]) expect(normalizeSymbol(s)).toBe("RELIANCE");
+    expect(normalizeSymbol("M&M")).toBe("M&M");
+    expect(normalizeSymbol("bajaj-auto")).toBe("BAJAJ-AUTO");
   });
-  it("returns null for non-pairs", () => {
-    for (const s of ["", "USDT", null, undefined, "BT!C"]) expect(normalizeSymbol(s)).toBeNull();
+  it("maps index names to the server symbol", () => {
+    for (const s of ["nifty", "NIFTY 50", "nifty-50", "NIFTY50"]) expect(normalizeSymbol(s)).toBe("NIFTY");
+    for (const s of ["banknifty", "Nifty Bank", "BANK NIFTY"]) expect(normalizeSymbol(s)).toBe("BANKNIFTY");
   });
-  it("formats for display", () => expect(displaySymbol("ETHUSDT")).toBe("ETH/USDT"));
+  it("returns null for non-symbols", () => {
+    for (const s of ["", "   ", null, undefined, "REL!ANCE", "A".repeat(21)]) expect(normalizeSymbol(s)).toBeNull();
+  });
+  it("shows the symbol as is and knows which ones are indices", () => {
+    expect(displaySymbol("TCS")).toBe("TCS");
+    expect(isIndexSymbol("NIFTY")).toBe(true);
+    expect(isIndexSymbol("RELIANCE")).toBe(false);
+  });
   it("recognises only supported timeframes", () => {
     expect(isTimeframe("1H")).toBe(true);
     expect(isTimeframe("1h")).toBe(false);
