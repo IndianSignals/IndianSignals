@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Candle, Liquidation } from "../shared/market.js";
-import { buildSignal, STRATEGY_VERSION } from "../server/engine/signalBuilder.js";
+import { buildSignal, DEFAULT_CONFIG, STRATEGY_VERSION } from "../server/engine/signalBuilder.js";
 import type { BuildSignalInput } from "../server/engine/signalBuilder.js";
 import { confirmationWindow, lastClosedIndex, windowAt } from "../server/engine/backtestData.js";
 import { runBacktest } from "../server/engine/backtest.js";
