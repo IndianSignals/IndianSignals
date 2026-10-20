@@ -183,10 +183,10 @@ export async function buildForSymbol(symbol: string, tf: Timeframe, s: ScanSetti
   ]);
   const failed = pr instanceof Error ? pr.message : undefined;
   const built0 = buildSignal({
-    symbol, exchange: deps.exchange ?? "okx", marketType: deps.market.marketTypeOf?.(symbol) ?? "swap",
+        symbol, exchange: deps.exchange ?? "angelone", marketType: deps.market.marketTypeOf?.(symbol) ?? "cash",
     timeframe: { primary: tf, confirmation: confTf ?? "none", execution: EXECUTION_TF[tf] },
     candles: pr instanceof Error ? [] : pr,
-    confirmation, change24hPct: ticker?.change24hPct ?? null, volume24h: ticker?.volume24h ?? null, htf, liquidations,
+    confirmation, change24hPct: ticker?.change24hPct ?? null, volume24h: ticker?.volume24h ?? null, htf,
     derivatives, news,
 }, { now, config: { ...resolveProfile(process.env.STRATEGY_PROFILE).config, minScore: s.minScore, ...(settings ? { settings } : {}), ...(requiredData?.length ? { requiredData } : {}) } });
   // Record which saved settings version produced this signal (absent = built-in defaults).
