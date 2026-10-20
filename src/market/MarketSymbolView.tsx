@@ -12,6 +12,7 @@ import { displaySymbol, isIndexSymbol } from "./symbol.js";
 import { useMarketCandles } from "./useMarketCandles.js";
 import { useLiveCandles } from "./useLiveCandles.js";
 import { ChartClock } from "./ChartClock.js";
+import { validateCandles } from "./validateCandles.js";
 import { ChartDrawingTools } from "../components/MarketChart/drawings/ChartDrawingTools.js";
 import type { MarketChartApi } from "../components/MarketChart/index.js";
 
