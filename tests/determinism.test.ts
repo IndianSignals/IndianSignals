@@ -33,7 +33,9 @@ describe("determinism", () => {
     const c = series(250, 0.25);
     const now = NOW(c);
     const liquidations: Liquidation[] = [0, 1, 2, 3].map((i) => ({ timestamp: now - HOUR + i * 1000, side: "long", price: (c.at(-1) as Candle).close, quantity: 10 }));
-    const s = buildSignal({ ...base(c), liquidations }, { now, id: "x" });
+        // Liquidation scoring is off by default for NSE; switch it on here to test the pure time logic.
+    const gates = { ...DEFAULT_CONFIG.gates, core: "ema,rsi,smc,liq", liq: "soft" as const };
+    const s = buildSignal({ ...base(c), liquidations }, { now, id: "x", config: { gates } });
     expect((s.liquidation as { available?: boolean }).available).toBe(true);
   });
   it("every signal records the strategy version and scoring mode", () => {
