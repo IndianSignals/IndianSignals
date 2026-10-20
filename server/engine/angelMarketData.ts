@@ -108,7 +108,7 @@ export class AngelMarketData implements MarketData {
       "Content-Type": "application/json", Accept: "application/json",
       "X-UserType": "USER", "X-SourceID": "WEB",
       "X-ClientLocalIP": "127.0.0.1", "X-ClientPublicIP": "127.0.0.1", "X-MACAddress": "00:00:00:00:00:00",
-      "X-PrivateKey": process.env.ANGEL_API_KEY ?? "",
+      "X-PrivateKey": (process.env.ANGEL_API_KEY ?? "").trim(),
     };
     if (auth && this.jwt) h.Authorization = `Bearer ${this.jwt}`;
     return h;
