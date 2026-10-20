@@ -157,6 +157,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
     <section className="chartbox" aria-label={`${label} market chart`} style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 10px", padding: "8px 10px 2px", minWidth: 0 }}>
         <strong style={{ fontSize: 15, letterSpacing: 0.2 }}>{label}</strong>
+        <span style={{ fontSize: 10, fontWeight: 600, color: c.text.muted, border: `1px solid ${c.border.default}`, borderRadius: 4, padding: "1px 5px" }}>NSE</span>
         <span style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: chgColor }}>
           {lastPrice === null ? "—" : `${isIndex ? "" : "₹"}${fmtPx(lastPrice)}`}
         </span>
