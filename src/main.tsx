@@ -1608,30 +1608,15 @@ function drawSignalLines(m: MiniChart, signal: DashboardSignal): void {
 
 type MiniCandle = { timestamp: number; open: number; high: number; low: number; close: number };
 
-/** Candles from our server first; if that fails (OKX limit on the shared server IP), ask OKX directly from the browser. */
+/** Candles from our server (which asks Angel One). No browser-side fallback: the browser holds no keys. */
 async function fetchMiniCandles(symbol: string, tf: string): Promise<MiniCandle[]> {
-  try {
-    const res = await fetch(`${SIGNAL_API}/candles?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(tf)}&limit=150`, {
-      signal: typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(12000) : undefined,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const body = (await res.json()) as { data?: MiniCandle[] };
-    if (body.data && body.data.length) return body.data;
-    throw new Error("empty candles");
-  } catch (err) {
-    const base = symbol.replace(/USDT$/, "");
-    const bar = tf === "1D" ? "1Dutc" : tf;
-    for (const inst of [`${base}-USDT-SWAP`, `${base}-USDT`]) {
-      try {
-        const r = await fetch(`https://www.okx.com/api/v5/market/candles?instId=${inst}&bar=${bar}&limit=150`);
-        if (!r.ok) continue;
-        const j = (await r.json()) as { code?: string; data?: string[][] };
-        if (j.code !== "0" || !j.data || !j.data.length) continue;
-        return j.data.map((x) => ({ timestamp: Number(x[0]), open: Number(x[1]), high: Number(x[2]), low: Number(x[3]), close: Number(x[4]) }));
-      } catch { /* try the next instrument */ }
-    }
-    throw err;
-  }
+  const res = await fetch(`${SIGNAL_API}/candles?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(tf)}&limit=150`, {
+    signal: typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(12000) : undefined,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const body = (await res.json()) as { data?: MiniCandle[] };
+  if (body.data && body.data.length) return body.data;
+  throw new Error("empty candles");
 }
 
 async function refreshMiniChart(m: MiniChart, signal: DashboardSignal): Promise<void> {
