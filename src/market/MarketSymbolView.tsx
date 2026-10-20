@@ -200,10 +200,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
             <strong>{fmtValue(snapshot.ticker.volume24h)}</strong>
           </div>
 
-          <div className="data-card" style={snapshot.derivatives.oiChangePct === null ? { display: "none" } : undefined}>
-            <label>Open Interest</label>
-            <strong>{formatPercent(snapshot.derivatives.oiChangePct)}</strong>
-          </div>
+          
 
           <div className="data-card" style={snapshot.derivatives.longShortRatio === null ? { display: "none" } : undefined}>
             <label>Long / Short</label>
