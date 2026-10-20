@@ -3,6 +3,8 @@ import type { NewsInput } from "../../shared/scoring.js";
 import type { EngineSettingsInput } from "../../shared/engineConfig.js";
 import type { FinalSignal } from "../models/signal.js";
 import { buildSignal, resolveProfile } from "./signalBuilder.js";
+import { fnoInputFromSignal, fnoTelegram } from "../../shared/fno.js";
+import type { FnoPlan } from "../../shared/fno.js";
 import { calcIndicators } from "../../shared/indicators.js";
 import { trackOutcomes, tgSend, tgPair, inr } from "./tracker.js";
 import { BENCHMARK_SYMBOL, indexFilterMode, isMarketOpen } from "../../shared/indianMarket.js";
