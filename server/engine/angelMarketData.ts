@@ -288,6 +288,8 @@ export class AngelMarketData implements MarketData {
         if (!this.tokens.has(n)) this.tokens.set(n, { exch: "NSE", token: r.token });
       }
     }
+    this.fnoByName = fno;
+    this.masterAt = Date.now();
     this.masterLoaded = true;
   }
 
