@@ -206,7 +206,7 @@ export async function buildForSymbol(symbol: string, tf: Timeframe, s: ScanSetti
  *  - WAIT / NO_TRADE never cancel anything (a transient data failure must not wipe a live signal)
  * TP/SL hit tracking is NOT part of this step: ACTIVE means "entry window still open".
  */
-export async function persistSignal(signal: FinalSignal, store: SignalStore, now: number): Promise<ScanOutcome> {
+export async function persistSignal(signal: FinalSignal, store: SignalStore, now: number, fnoPlan?: (s: FinalSignal) => Promise<FnoPlan | null>): Promise<ScanOutcome> {
   await store.saveLatest(signal);
   if (signal.direction !== "LONG" && signal.direction !== "SHORT") return "not_emitted";
   // One signal at a time per pair + timeframe: nothing new until the open one is complete
