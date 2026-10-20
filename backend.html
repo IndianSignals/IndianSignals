@@ -528,13 +528,14 @@ const rowErr = (cols, e) => `<tr><td colspan="${cols}" class="red">${esc(e.messa
 
 async function marketView() {
   host.innerHTML = panel("Market Data", '<span id="vt">Loading...</span>',
-    `<table class="table">${th(["Symbol", "Price", "24h %", "High", "Low", "Volume (M USDT)"])}<tbody id="vb"></tbody></table>`, "Market Data");
+    `<table class="table">${th(["Symbol", "Price", "24h %", "High", "Low", "Volume"])}<tbody id="vb"></tbody></table>`, "Market Data");
   const load = async () => {
     try {
-      const t0 = performance.now(), rows = await tickers(SYMS), ms = Math.round(performance.now() - t0);
+      const symbols = await getTrackedSymbols();
+      const t0 = performance.now(), rows = await tickers(symbols.length ? symbols : SYMS), ms = Math.round(performance.now() - t0);
       if (!$("vb")) return;
-      $("vb").innerHTML = rows.map(x => { const ch = +x.priceChangePercent; return `<tr><td>${esc(x.symbol)}</td><td>$${fmtP(x.lastPrice)}</td><td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td><td>${fmtP(x.highPrice)}</td><td>${fmtP(x.lowPrice)}</td><td>${(x.quoteVolume / 1e6).toFixed(1)}</td></tr>`; }).join("");
-      $("vt").textContent = `Binance LIVE · ${ms}ms · ${new Date().toLocaleTimeString()}`;
+      $("vb").innerHTML = rows.map(x => { const ch = +x.priceChangePercent; return `<tr><td>${esc(x.symbol)}</td><td>₹${fmtP(x.lastPrice)}</td><td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td><td>${fmtP(x.highPrice)}</td><td>${fmtP(x.lowPrice)}</td><td>${x.quoteVolume.toLocaleString("en-IN")}</td></tr>`; }).join("");
+      $("vt").textContent = `Angel One LIVE · ${ms}ms · ${new Date().toLocaleTimeString()}`;
     } catch (e) { if ($("vb")) $("vb").innerHTML = rowErr(6, e); }
   };
   await load(); autoRefresh("Market Data", load);
