@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import type { Timeframe } from "../../shared/market.js";
 import { tokens } from "../../shared/designTokens.js";
-import { PERIOD_MS } from "./useLiveCandles.js";
+import { candleLeftMs } from "./nseTime.js";
 
 const pad = (n: number): string => String(n).padStart(2, "0");
 
