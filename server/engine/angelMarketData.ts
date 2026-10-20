@@ -121,19 +121,41 @@ export class AngelMarketData implements MarketData {
     return h;
   }
 
+    private loginBlockedUntil = 0;
+  private loginLastError: ProviderError | null = null;
+
   private async login(): Promise<void> {
+    // Cooldown: don't hammer Angel with failing logins (causes HTTP 403 / account lock).
+    if (this.loginLastError && Date.now() < this.loginBlockedUntil) throw this.loginLastError;
     const { ANGEL_API_KEY, ANGEL_CLIENT_CODE, ANGEL_PASSWORD, ANGEL_TOTP_SECRET } = process.env;
     if (!ANGEL_API_KEY || !ANGEL_CLIENT_CODE || !ANGEL_PASSWORD || !ANGEL_TOTP_SECRET) {
-      throw new Error("Angel One credentials missing (ANGEL_API_KEY, ANGEL_CLIENT_CODE, ANGEL_PASSWORD, ANGEL_TOTP_SECRET)");
+      throw new ProviderError("AUTH_FAILED", "NO_CREDENTIALS", "Angel One credentials missing (ANGEL_API_KEY, ANGEL_CLIENT_CODE, ANGEL_PASSWORD, ANGEL_TOTP_SECRET)");
     }
-    const res = await this.fetchFn(`${HOST}/rest/auth/angelbroking/user/v1/loginByPassword`, {
-      method: "POST", headers: this.headers(false), signal: AbortSignal.timeout(this.timeoutMs),
-      body: JSON.stringify({ clientcode: ANGEL_CLIENT_CODE, password: ANGEL_PASSWORD, totp: totp(ANGEL_TOTP_SECRET) }),
-    });
-    const body = (await res.json().catch(() => null)) as { status?: boolean; message?: string; data?: { jwtToken?: string } } | null;
-    if (!body?.status || !body.data?.jwtToken) throw new Error(`Angel One login failed: ${body?.message ?? `HTTP ${res.status}`}`);
-    this.jwt = body.data.jwtToken;
-    this.loginAt = Date.now();
+    const secret = cleanSecret(ANGEL_TOTP_SECRET);
+    let lastMsg = "";
+    let totpRejected = false;
+    // Current 30s window first, then +/-1 window in case the server clock is slightly off.
+    for (const drift of [0, -30_000, 30_000]) {
+      const res = await this.fetchFn(`${HOST}/rest/auth/angelbroking/user/v1/loginByPassword`, {
+        method: "POST", headers: this.headers(false), signal: AbortSignal.timeout(this.timeoutMs),
+        body: JSON.stringify({ clientcode: ANGEL_CLIENT_CODE.trim(), password: ANGEL_PASSWORD.trim(), totp: totp(secret, Date.now() + drift) }),
+      });
+      const body = (await res.json().catch(() => null)) as { status?: boolean; message?: string; data?: { jwtToken?: string } } | null;
+      if (body?.status && body.data?.jwtToken) {
+        this.jwt = body.data.jwtToken;
+        this.loginAt = Date.now();
+        this.loginLastError = null;
+        this.loginBlockedUntil = 0;
+        return;
+      }
+      lastMsg = body?.message ?? (res.status === 403 ? "HTTP 403 (IP not whitelisted or temporarily blocked)" : `HTTP ${res.status}`);
+      totpRejected = /totp/i.test(lastMsg);
+      if (!totpRejected) break;
+    }
+    // Wrong secret/client: retry after 5 min. Other failures (403, network): 1 min.
+    this.loginBlockedUntil = Date.now() + (totpRejected ? 300_000 : 60_000);
+    this.loginLastError = new ProviderError("AUTH_FAILED", totpRejected ? "BAD_TOTP" : "LOGIN_FAILED", `Angel One login failed: ${lastMsg}`);
+    throw this.loginLastError;
   }
 
   private async ensureLogin(force = false): Promise<void> {
