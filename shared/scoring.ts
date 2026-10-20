@@ -60,6 +60,54 @@ const num = (v: unknown): v is number => typeof v === "number" && Number.isFinit
 const hiOf = (a: Candle[]): number => Math.max(...a.map((x) => x.high));
 const loOf = (a: Candle[]): number => Math.min(...a.map((x) => x.low));
 
+export interface FnoScore { available: boolean; pts: number; confirmations: string[]; conflicts: string[]; warnings: string[] }
+
+/**
+ * F&O sentiment from PCR + OI build-up. pts is clamped to [-4, +4]; available=false when there is no F&O data
+ * (cash-only stock, API down, backtest), in which case the part must be left out of the score, not counted as 0.
+ * PCR (put OI / call OI): >= 1.2 bullish (put writing = support), <= 0.7 bearish; beyond 1.5 / below 0.5 it is crowded.
+ * OI build-up: long build-up and short covering favour LONG, short build-up and long unwinding favour SHORT.
+ * If only oiChangePct is known, the build-up is derived from the price move over the last 14 candles.
+ */
+export function scoreFno(d: Partial<DerivativesInput> | null | undefined, s: 1 | -1, candles: Candle[]): FnoScore {
+  const confirmations: string[] = [], conflicts: string[] = [], warnings: string[] = [];
+  const n = candles.length;
+  let bu: OiBuildup | null = d?.oiBuildup ?? null;
+  const oi = d?.oiChangePct;
+  if (!bu && num(oi) && oi !== 0 && n > 15) {
+    const up = candles[n - 1]!.close > candles[n - 15]!.close;
+    bu = oi > 0 ? (up ? "long_buildup" : "short_buildup") : (up ? "short_covering" : "long_unwinding");
+  }
+  const pcr = d?.pcr;
+  const hasPcr = num(pcr) && pcr > 0;
+  if (!hasPcr && !bu) return { available: false, pts: 0, confirmations, conflicts, warnings };
+
+  let pts = 0;
+  if (hasPcr) {
+    const p = pcr as number;
+    if (p >= 1.2) {
+      if (s > 0) { pts += p > 1.5 ? 1 : 2; confirmations.push(`PCR ${p.toFixed(2)} supports LONG (put writing)`); if (p > 1.5) warnings.push(`PCR ${p.toFixed(2)} is extreme: crowded bullish, reversal risk`); }
+      else { pts -= 2; conflicts.push(`PCR ${p.toFixed(2)} is bullish, against the SHORT`); }
+    } else if (p <= 0.7) {
+      if (s < 0) { pts += p < 0.5 ? 1 : 2; confirmations.push(`PCR ${p.toFixed(2)} supports SHORT (call writing)`); if (p < 0.5) warnings.push(`PCR ${p.toFixed(2)} is extreme: crowded bearish, bounce risk`); }
+      else { pts -= 2; conflicts.push(`PCR ${p.toFixed(2)} is bearish, against the LONG`); }
+    }
+  }
+  if (bu) {
+    const label = bu.replace("_", " ");
+    const bullStrong = bu === "long_buildup", bearStrong = bu === "short_buildup";
+    if (bullStrong || bearStrong) {
+      if ((bullStrong && s > 0) || (bearStrong && s < 0)) { pts += 2; confirmations.push(`OI ${label}: fresh positions support the setup`); }
+      else { pts -= 2; conflicts.push(`OI ${label} is against the setup`); }
+    } else {
+      const bullWeak = bu === "short_covering";   // price up on falling OI
+      if ((bullWeak && s > 0) || (!bullWeak && s < 0)) { pts += 1; confirmations.push(`OI ${label}: move is mostly covering, not fresh money`); }
+      else { pts -= 1; conflicts.push(`OI ${label} is against the setup`); }
+    }
+  }
+  return { available: true, pts: Math.max(-4, Math.min(4, pts)), confirmations, conflicts, warnings };
+}
+
 /** CORE4 mode: only EMA trend (30) + RSI (20) + SMC (30) + Liquidation (20). Every other indicator/gate is ignored. */
 function scoreCore4(input: ScoreInput, ind: NonNullable<ReturnType<typeof calcIndicators>>, atr: number, close: number): ScoreResult {
   const g = input.gates ?? {};
