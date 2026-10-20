@@ -254,7 +254,7 @@ export class EngineService {
         const now = this.now;
         try {
           const { signal, error } = await buildForSymbol(symbol, tf, this.settings, this.deps, now, btc, active?.settings, active?.version, active?.requiredData);
-          const outcome = await serial(() => persistSignal(signal, this.deps.store, now));
+          const outcome = await serial(() => persistSignal(signal, this.deps.store, now, this.deps.market.getFnoPlan ? async (s) => { const i = fnoInputFromSignal(s, now); return i ? this.deps.market.getFnoPlan!(i) : null; } : undefined));
           await exitIfWeak(signal, this.deps.store, now, this.log).catch((e: unknown) => this.log.error(`[scan] weak-exit check failed: ${errMsg(e)}`));
                     const info = {
             bias: String(signal.structure?.bias ?? ""),
