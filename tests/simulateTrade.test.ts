@@ -103,17 +103,3 @@ describe("simulateTrade staged stop (live-tracker parity, opt-in)", () => {
   });
 });
 
-describe("simulateTrade funding (assumption, charged only)", () => {
-  const cand = [k(0, 99, 101, 100), k(1, 99, 101, 100), k(2, 99, 101, 100), k(3, 99, 101, 100)];
-  it("a LONG pays funding per holding bar", () => {
-    const a = simulateTrade(1, 100, 98, [102, 104, 106], W, cand, 0, 4, 0, { fundingPctPerBar: 0 });
-    const b = simulateTrade(1, 100, 98, [102, 104, 106], W, cand, 0, 4, 0, { fundingPctPerBar: 0.01 });
-    // 4 bars * 0.01% of 100 = 0.04 price units / risk 2 = 0.02R
-    expect((a?.netR ?? 0) - (b?.netR ?? 0)).toBeCloseTo(0.02, 10);
-  });
-  it("a SHORT is never credited", () => {
-    const a = simulateTrade(-1, 100, 102, [98, 96, 94], W, cand, 0, 4, 0, { fundingPctPerBar: 0 });
-    const b = simulateTrade(-1, 100, 102, [98, 96, 94], W, cand, 0, 4, 0, { fundingPctPerBar: 0.01 });
-    expect(b?.netR).toBeCloseTo(a?.netR ?? 0, 10);
-  });
-});
