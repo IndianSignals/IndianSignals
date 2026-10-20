@@ -84,10 +84,10 @@ function serial<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-/** BTC trend on the scan timeframe: 1 = up, -1 = down, 0 = unclear or unavailable. */
-async function btcBias(deps: EngineDeps, tf: Timeframe, s: ScanSettings, now: number): Promise<1 | -1 | 0> {
+/** NIFTY trend on the scan timeframe: 1 = up, -1 = down, 0 = unclear or unavailable. */
+async function benchmarkBias(deps: EngineDeps, tf: Timeframe, s: ScanSettings, now: number): Promise<1 | -1 | 0> {
   try {
-    const c = await deps.market.getCandles("BTCUSDT", tf, s.candleLimit, now);
+    const c = await deps.market.getCandles(BENCHMARK_SYMBOL, tf, s.candleLimit, now);
     const ind = calcIndicators(c);
     const k = c[c.length - 1];
     if (!ind || !k) return 0;
