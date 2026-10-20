@@ -222,6 +222,7 @@ if (open.length > 0) return "duplicate";
   if (fnoPlan) { try { const p = await fnoPlan(signal); if (p) signal.fno = p; } catch { /* leave without F&O */ } }
   await store.insertSignal(signal);
   void tgSend(`🆕 <b>NEW SIGNAL</b>\n\n${tgPair(signal)}\n⭐ Score: <b>${signal.score.total}/100</b>\n\n📍 Entry: ${inr(signal.entry.min)} – ${inr(signal.entry.max)}\n🛑 SL: ${inr(signal.stopLoss.price)}\n🎯 TP1: ${inr(signal.takeProfit.tp1)}\n🎯 TP2: ${inr(signal.takeProfit.tp2)}\n🎯 TP3: ${inr(signal.takeProfit.tp3)}\n\n⚠️ Not financial advice. Use proper risk management.`);
+    if (signal.fno) void tgSend(fnoTelegram(signal.fno));
   return "emitted";
 }
 
