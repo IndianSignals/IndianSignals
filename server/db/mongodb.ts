@@ -1,4 +1,5 @@
 import { MongoClient, Db } from "mongodb";
+import bcrypt from "bcryptjs";
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
