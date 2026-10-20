@@ -121,11 +121,11 @@ export class AngelMarketData implements MarketData {
     return h;
   }
 
-    private loginBlockedUntil = 0;
+  private loginBlockedUntil = 0;
   private loginLastError: ProviderError | null = null;
 
   private async login(): Promise<void> {
-    // Cooldown: don't hammer Angel with failing logins (causes HTTP 403 / account lock).
+    // Cooldown: don't hammer Angel with failing logins (that causes HTTP 403 blocks / account lock).
     if (this.loginLastError && Date.now() < this.loginBlockedUntil) throw this.loginLastError;
     const { ANGEL_API_KEY, ANGEL_CLIENT_CODE, ANGEL_PASSWORD, ANGEL_TOTP_SECRET } = process.env;
     if (!ANGEL_API_KEY || !ANGEL_CLIENT_CODE || !ANGEL_PASSWORD || !ANGEL_TOTP_SECRET) {
@@ -134,7 +134,7 @@ export class AngelMarketData implements MarketData {
     const secret = cleanSecret(ANGEL_TOTP_SECRET);
     let lastMsg = "";
     let totpRejected = false;
-    // Current 30s window first, then +/-1 window in case the server clock is slightly off.
+    // Try current 30 s window first, then +/-1 window in case the server clock is slightly off.
     for (const drift of [0, -30_000, 30_000]) {
       const res = await this.fetchFn(`${HOST}/rest/auth/angelbroking/user/v1/loginByPassword`, {
         method: "POST", headers: this.headers(false), signal: AbortSignal.timeout(this.timeoutMs),
@@ -152,7 +152,7 @@ export class AngelMarketData implements MarketData {
       totpRejected = /totp/i.test(lastMsg);
       if (!totpRejected) break;
     }
-    // Wrong secret/client: retry after 5 min. Other failures (403, network): 1 min.
+    // Wrong secret/client: retry only after 5 min. Other failures (403, network): 1 min.
     this.loginBlockedUntil = Date.now() + (totpRejected ? 300_000 : 60_000);
     this.loginLastError = new ProviderError("AUTH_FAILED", totpRejected ? "BAD_TOTP" : "LOGIN_FAILED", `Angel One login failed: ${lastMsg}`);
     throw this.loginLastError;
@@ -353,16 +353,58 @@ export class AngelMarketData implements MarketData {
     return out;
   }
 
+  /** One Angel quote call for many symbols (up to 50 tokens per request). */
+  private async quoteMany(symbols: string[]): Promise<Map<string, Record<string, unknown>>> {
+    const out = new Map<string, Record<string, unknown>>();
+    const todo: { s: string; exch: string; token: string }[] = [];
+    for (const s of symbols) {
+      const hit = this.quoteCache.get(s);
+      if (hit && Date.now() - hit.at < 2000) { out.set(s, hit.q); continue; }
+      try {
+        const inst = await this.resolve(s);
+        todo.push({ s, exch: inst.exch, token: inst.token });
+      } catch { /* the per-symbol fallback reports this error */ }
+    }
+    for (let i = 0; i < todo.length; i += 50) {
+      const chunk = todo.slice(i, i + 50);
+      const exchangeTokens: Record<string, string[]> = {};
+      for (const t of chunk) (exchangeTokens[t.exch] ??= []).push(t.token);
+      const data = (await this.post("/rest/secure/angelbroking/market/v1/quote/", {
+        mode: "FULL", exchangeTokens,
+      }, "quote", 1100)) as { fetched?: Record<string, unknown>[] } | null;
+      for (const q of data?.fetched ?? []) {
+        const tok = String(q.symbolToken ?? "");
+        for (const t of chunk) {
+          if (t.token === tok) { out.set(t.s, q); this.quoteCache.set(t.s, { at: Date.now(), q }); }
+        }
+      }
+    }
+    return out;
+  }
+
   private async lastPricesRaw(symbols: string[], errors: ProviderError[]): Promise<Record<string, number>> {
     const out: Record<string, number> = {};
-    for (const s of symbols) {
+    let pending = symbols;
+    try {
+      const found = await this.quoteMany(symbols);
+      pending = [];
+      for (const s of symbols) {
+        const p = Number(found.get(s)?.ltp);
+        if (Number.isFinite(p) && p > 0) out[s] = p; else pending.push(s);
+      }
+    } catch (err) {
+      const pe = err instanceof ProviderError ? err : new ProviderError("UPSTREAM", "ERR", err instanceof Error ? err.message : "unknown error");
+      if (pe.category === "AUTH_FAILED") { errors.push(pe); console.error(`lastPrices: ${pe.category} ${pe.code}: ${pe.message}`); return out; }
+      pending = symbols; // batch failed: fall back to one call per symbol
+    }
+    for (const s of pending) {
       try {
         const p = Number((await this.quote(s)).ltp);
         if (Number.isFinite(p) && p > 0) out[s] = p;
       } catch (err) {
         const pe = err instanceof ProviderError ? err : new ProviderError("UPSTREAM", "ERR", err instanceof Error ? err.message : "unknown error");
         errors.push(pe);
-                console.error(`lastPrices ${s}: ${pe.category} ${pe.code}: ${pe.message}`);
+        console.error(`lastPrices ${s}: ${pe.category} ${pe.code}: ${pe.message}`);
         if (pe.category === "AUTH_FAILED") break; // login broken: skip remaining symbols
       }
     }
