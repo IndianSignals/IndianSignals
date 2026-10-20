@@ -199,7 +199,7 @@ function scoreCoreSel(input: ScoreInput, ind: NonNullable<ReturnType<typeof calc
   const s: 1 | -1 = dir > 0 ? 1 : -1;
   const conf: string[] = [], conflicts: string[] = [], warnings: string[] = [];
   let critical: string | null = null;
-  let ema = 0, rsi = 0, smcPart = 0, liqPart = 0, extra = 0, maxTotal = 0;
+  let ema = 0, rsi = 0, smcPart = 0, liqPart = 0, fnoPart = 0, extra = 0, maxTotal = 0;
 
   if (useEma) {
     maxTotal += 30; ema = 15;
