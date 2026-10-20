@@ -6,15 +6,10 @@ import { candleLeftMs } from "./nseTime.js";
 
 const pad = (n: number): string => String(n).padStart(2, "0");
 
-/** Device-local wall clock, e.g. 00:18:22. */
-export const fmtClock = (ms: number): string => {
-  const d = new Date(ms);
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-};
+const IST_CLOCK = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
 
-/** Time left in the current candle. Binance candles are epoch-aligned (UTC), so no candle data is needed. */
-export const candleLeftMs = (now: number, tf: Timeframe): number => PERIOD_MS[tf] - (now % PERIOD_MS[tf]);
-
+/** NSE wall clock (IST), e.g. 09:41:07 - the same on every device, whatever its time zone. */
+export const fmtClock = (ms: number): string => IST_CLOCK.format(new Date(ms));
 export const fmtLeft = (ms: number): string => {
   const s = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
