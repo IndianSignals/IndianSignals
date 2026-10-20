@@ -248,12 +248,21 @@ function scoreCoreSel(input: ScoreInput, ind: NonNullable<ReturnType<typeof calc
     liqPart = ((pts + 3) / 6) * 20;
     extra += pts;
   }
-  if (maxTotal === 0) return early("NEUTRAL", null, ["CORE_INDICATORS has no valid indicator (use ema, rsi, smc, liq)"]);
+    // F&O (PCR + OI build-up), max 20. Counted only when real F&O data exists, so cash-only stocks and backtests keep their old score.
+  if (useFno && dir !== 0) {
+    const fs = scoreFno(input.derivatives, s, input.candles);
+    if (fs.available) {
+      maxTotal += 20;
+      fnoPart = ((fs.pts + 4) / 8) * 20;
+      conf.push(...fs.confirmations); conflicts.push(...fs.conflicts); warnings.push(...fs.warnings);
+    }
+  }
+  if (maxTotal === 0) return early("NEUTRAL", null, ["CORE_INDICATORS has no valid indicator (use ema, rsi, smc, liq, fno)"]);
 
-  const total = Math.min(100, Math.max(0, Math.round(((ema + rsi + smcPart + liqPart) * 100) / maxTotal)));
+  const total = Math.min(100, Math.max(0, Math.round(((ema + rsi + smcPart + liqPart + fnoPart) * 100) / maxTotal)));
   const score: SetupScore = {
     total, marketContext: 0, trendMTF: ema, structure: Math.round(smcPart), liquiditySR: Math.round(liqPart),
-    volumeMomentum: rsi, derivativesOrderbook: 0, newsFundamentals: 0, riskExecution: 0, smcLiquidity: extra,
+    volumeMomentum: rsi, derivativesOrderbook: Math.round(fnoPart), newsFundamentals: 0, riskExecution: 0, smcLiquidity: extra,
   };
   return { side, score, confirmations: conf, conflicts, warnings, unavailable: [], criticalFailure: critical, fib: null, smc: smcOut, liquidation: liqOut };
 }
