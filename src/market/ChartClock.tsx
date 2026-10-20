@@ -27,8 +27,13 @@ export function ChartClock({ timeframe }: { timeframe: Timeframe }): ReactElemen
   }, []);
   return (
     <span style={box} role="timer" aria-label="Current time and time left in this candle">
-      <span title="Your local time">🕒 {fmtClock(now)}</span>
-      <span title={`Time left until this ${timeframe} candle closes`}>⏳ {fmtLeft(candleLeftMs(now, timeframe))}</span>
+      <span title="Indian Standard Time (NSE)">🕒 {fmtClock(now)} IST</span>
+      {(() => {
+        const left = candleLeftMs(now, timeframe);
+        return left === null
+          ? <span title="NSE cash market: Mon-Fri 09:15-15:30 IST">🔒 Market closed</span>
+          : <span title={`Time left until this ${timeframe} candle closes`}>⏳ {fmtLeft(left)}</span>;
+      })()}
     </span>
   );
 }
