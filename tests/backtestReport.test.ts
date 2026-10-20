@@ -20,7 +20,7 @@ const hist: SymbolHistory = { symbol: "ETHUSDT", timeframe: "1H", confTimeframe:
 const base = { timeframe: "1H" as const, testBars: 400, minScore: 50, costPct: 0.1, maxHoldBars: 48, btcFilter: false, maxOpenPerDirection: 0 };
 
 describe("backtest report states its assumptions", () => {
-  it("default run: fixed stop, funding off, and what is not replayed", async () => {
+    it("default run: fixed stop and what is not replayed", async () => {
     const res = await runBacktest([hist], null, base);
     const text = formatReport(res, buildReport(res.trades), []);
     expect(text).toMatch(/stop fixed/);
