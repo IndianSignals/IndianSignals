@@ -18,6 +18,9 @@ import type { EngineService } from "./engine/scanner.js";
 import type { SignalStore } from "./engine/store.js";
 import { createSettingsRouter } from "./routes/settings.js";
 import type { SettingsService } from "./engine/settingsStore.js";
+import path from "node:path";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { PresetService } from "./engine/presetStore.js";
 
 export interface AppDeps {
