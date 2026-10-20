@@ -20,3 +20,28 @@ export function getMongoDB(): Db {
   if (!db) throw new Error("MongoDB is not connected");
   return db;
 }
+
+/** Creates the admin login from ADMIN_EMAIL / ADMIN_PASSWORD if it does not exist yet. Never overwrites an existing user. */
+export async function ensureAdminUser(database: Db): Promise<void> {
+  const users = database.collection("users");
+  try {
+    await users.createIndex({ email: 1 }, { unique: true });
+  } catch (e) {
+    console.warn("[auth] users index not created:", e);
+  }
+  const email = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
+  const password = process.env.ADMIN_PASSWORD || "";
+  if (!email || !password) return;
+  if (password.length < 8) {
+    console.warn("[auth] ADMIN_PASSWORD must be at least 8 chars, admin not created");
+    return;
+  }
+  if (await users.findOne({ email })) return;
+  await users.insertOne({
+    email,
+    passwordHash: await bcrypt.hash(password, 12),
+    role: "admin",
+    createdAt: new Date(),
+  });
+  console.log(`[auth] admin user created: ${email}`);
+}
