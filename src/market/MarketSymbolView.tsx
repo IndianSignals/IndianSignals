@@ -162,7 +162,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
         </span>
         {chgPts !== null && chgPct !== null && (
           <span
-            title="Change over the last 24 hours"
+            title="Change vs previous close"
             style={{
               fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: chgColor,
               background: up ? c.positive.subtle : c.negative.subtle, borderRadius: 999, padding: "2px 8px",
