@@ -362,7 +362,8 @@ export class AngelMarketData implements MarketData {
       } catch (err) {
         const pe = err instanceof ProviderError ? err : new ProviderError("UPSTREAM", "ERR", err instanceof Error ? err.message : "unknown error");
         errors.push(pe);
-        console.error(`lastPrices ${s}: ${pe.category} ${pe.code}: ${pe.message}`);
+                console.error(`lastPrices ${s}: ${pe.category} ${pe.code}: ${pe.message}`);
+        if (pe.category === "AUTH_FAILED") break; // login broken: skip remaining symbols
       }
     }
     return out;
