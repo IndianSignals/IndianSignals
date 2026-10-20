@@ -41,6 +41,18 @@ const toNum = (v: unknown): number => {
 };
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
+export type ProviderCategory = "AUTH_FAILED" | "SESSION" | "RATE_LIMITED" | "NO_DATA" | "UPSTREAM";
+export class ProviderError extends Error {
+  constructor(public readonly category: ProviderCategory, public readonly code: string, message: string) { super(message); }
+}
+const categoryOf = (code: string, msg: string): ProviderCategory => {
+  const m = msg.toLowerCase();
+  if (code === "AG8004" || m.includes("invalid api key")) return "AUTH_FAILED";
+  if (["AG8001", "AG8002", "AG8003"].includes(code) || m.includes("invalid token")) return "SESSION";
+  if (m.includes("rate")) return "RATE_LIMITED";
+  return "UPSTREAM";
+};
+
 export const isMarketOpen = (now: number = Date.now(), env: NodeJS.ProcessEnv = process.env): boolean => sharedIsMarketOpen(now, env);
 const istParts = sharedIstParts;
 
