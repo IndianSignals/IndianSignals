@@ -1366,7 +1366,7 @@ function createMiniChart(signal: DashboardSignal): MiniChart {
   const precision = 2; // NSE tick is ₹0.05
 
   const series = chart.addSeries(CandlestickSeries, {
-    priceFormat: { type: "price", precision, minMove: Math.pow(10, -precision) },
+    priceFormat: { type: "price", precision, minMove: 0.05 },
     // keep Entry / SL / TP1-3 inside the visible price range
     autoscaleInfoProvider: (original: () => AutoscaleInfo | null) => {
       const r = original();
