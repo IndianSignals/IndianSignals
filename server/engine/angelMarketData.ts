@@ -68,6 +68,13 @@ function base32Decode(s: string): Buffer {
   }
   return Buffer.from(out);
 }
+/** Accepts a raw base32 secret, or a pasted otpauth:// URL, with spaces/quotes/dashes. */
+export function cleanSecret(raw: string): string {
+  let s = raw.trim().replace(/^["']|["']$/g, "");
+  const m = /secret=([^&\s]+)/i.exec(s);
+  if (m) s = m[1]!;
+  return s.replace(/[\s=-]/g, "").toUpperCase();
+}
 export function totp(secret: string, at: number = Date.now()): string {
   const counter = Buffer.alloc(8);
   counter.writeBigUInt64BE(BigInt(Math.floor(at / 30_000)));
