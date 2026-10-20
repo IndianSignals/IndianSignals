@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Candle } from "../shared/market.js";
 import { validateCandles } from "../src/market/validateCandles.js";
-import { normalizeSymbol, displaySymbol } from "../src/market/symbol.js";
+import { normalizeSymbol, displaySymbol, isIndexSymbol } from "../src/market/symbol.js";
 import { isTimeframe } from "../src/market/timeframes.js";
 
 const k = (timestamp: number, open: number, high: number, low: number, close: number, volume = 1): Candle => ({ timestamp, open, high, low, close, volume });
