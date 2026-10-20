@@ -10,6 +10,7 @@ import { MongoPresetRepo, PresetService } from "./engine/presetStore.js";
 const config = loadConfig();
 
 const db = await connectMongoDB();
+await ensureAdminUser(db);
 
 const store = new MongoSignalStore(db);
 await store.ensureIndexes();
