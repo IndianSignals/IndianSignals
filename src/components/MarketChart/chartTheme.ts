@@ -90,12 +90,9 @@ export const candleSeriesOptions: CandlestickSeriesPartialOptions = {
   wickDownColor: c.negative.base,
 };
 
-/** Price digits follow the coin: BTC 2dp, ~$1 coins 4dp, 0.000004 coins 9dp. */
-export function priceFormatFor(p: number): { type: "price"; precision: number; minMove: number } {
-  const v = Math.abs(p);
-  let precision = 2;
-  if (v > 0 && v < 1000) precision = v >= 1 ? 4 : Math.min(12, Math.ceil(-Math.log10(v)) + 3);
-  return { type: "price", precision, minMove: 1 / 10 ** precision };
+/** NSE prices move in 0.05 steps, so every price (stock or index) is shown with 2 decimals. */
+export function priceFormatFor(_p: number): { type: "price"; precision: number; minMove: number } {
+  return { type: "price", precision: 2, minMove: 0.05 };
 }
 
 export const volumeSeriesOptions: HistogramSeriesPartialOptions = {
