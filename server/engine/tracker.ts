@@ -217,8 +217,8 @@ export async function trackOutcomes(deps: TrackerDeps): Promise<number> {
             : o.status === "TP3_HIT" ? "🏆 All targets done. Trade complete!"
             : o.status === "SL_HIT" ? "❌ Trade closed at loss. Risk managed, next setup loading…"
             : "⚖️ Closed at breakeven, no loss.";
-          const trail = o.trailStop !== undefined && !o.closed ? `\n🛡 Trailing SL: <b>${usd(o.trailStop)}</b>` : "";
-          const r = await tgSend(`${title}\n\n${tgPair(s)}\n\n📍 Entry: ${usd(s.entry.ideal)}\n🏁 Exit: <b>${usd(o.exit)}</b>${trail}\n\n${tail}`);
+                    const trail = o.trailStop !== undefined && !o.closed ? `\n🛡 Trailing SL: <b>${inr(o.trailStop)}</b>` : "";
+          const r = await tgSend(`${title}\n\n${tgPair(s)}\n\n📍 Entry: ${inr(s.entry.ideal)}\n🏁 Exit: <b>${inr(o.exit)}</b>${trail}\n\n${tail}`);
           const tryKey = `${s.id}:${key}`;
           if (r !== "failed") { tg = key; tgTries.delete(tryKey); }
           else {
