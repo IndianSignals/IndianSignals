@@ -463,7 +463,7 @@ html,body{max-width:100%;overflow-x:hidden}
     return Promise.reject(new TypeError("Not available for NSE"));
   }
   window.fetch = function (input, init) {
-    var url = typeof input === "string" ? input : (input && input.url) || "";
+        var url = typeof input === "string" ? input : (input && (input.href || input.url)) || String(input || "");
     if (/binance\.|okx\.com|coingecko\.com|alternative\.me|coingabbarsignals/.test(url)) {
       if (/coingabbarsignals/.test(url)) return realFetch(url.replace(/^https?:\/\/[^/]+/, ""), init);
       return nsefetch(url);
@@ -1039,7 +1039,7 @@ html[data-theme=light] [style*="color:#71869d"],html[data-theme=light] [style*="
 
   <section class="signal-head">
     <div class="signal-top">
-      <div class="pair"><div class="coin" id="liveCoin">·</div><div><strong id="liveSymbol">Loading…</strong> <span class="pill" id="liveSide">—</span><div class="meta">NSE • Cash Equity</div></div></div>
+      <div class="pair"><div class="coin" id="liveCoin">·</div><div><strong id="liveSymbol">NIFTY</strong> <span class="pill" id="liveSide">—</span><div class="meta">NSE • Cash Equity</div></div></div>
       <div class="sigid" id="sigBox">Loading latest signal…</div>
     </div>
     <div class="kpis">
@@ -2606,7 +2606,7 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
       "<br>Created: " + ist(s.created) + " (IST)<br>Updated: " + ist(now) + " (IST) &middot; Age: " + age(now - s.created);
     txt("liveScore", score + " / 100"); txt("liveScoreNote", grade(score));
     txt("liveTf", s.tf.toUpperCase());
-    txt("liveEntry", "₹" + fP(s.zl) + " \u2013 $" + fP(s.zh));
+    txt("liveEntry", "₹" + fP(s.zl) + " \u2013 ₹" + fP(s.zh));
     txt("livePrice", "₹" + fP(a.price));
     txt("liveStop", "₹" + fP(s.sl));
     txt("liveStatus", "\u25CF " + st[0], st[1]);
