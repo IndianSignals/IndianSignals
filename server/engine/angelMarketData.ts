@@ -153,7 +153,8 @@ export class AngelMarketData implements MarketData {
         await sleep(1500 * (attempt + 1));
         continue;
       }
-      if (res.status === 401 || body?.errorcode === "AG8001" || body?.errorcode === "AG8002" || body?.errorcode === "AG8003" || msg.includes("invalid token")) {
+      if (code === "AG8004" || msg.includes("invalid api key")) throw new ProviderError("AUTH_FAILED", code || "AG8004", "Angel One rejected the API key (Invalid API Key)");
+      if (res.status === 401 || code === "AG8001" || code === "AG8002" || code === "AG8003" || msg.includes("invalid token")) {
         await this.ensureLogin(true);
         continue;
       }
