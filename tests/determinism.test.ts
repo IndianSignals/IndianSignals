@@ -29,7 +29,7 @@ describe("determinism", () => {
     const b = buildSignal(base(c), { now: NOW(c), id: "fixed" });
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
-  it("the injected `now` (not the wall clock) decides which liquidation events are recent", () => {
+  it("the injected `now` (not the wall clock) decides which liquidation events are recent (when enabled)", () => {
     const c = series(250, 0.25);
     const now = NOW(c);
     const liquidations: Liquidation[] = [0, 1, 2, 3].map((i) => ({ timestamp: now - HOUR + i * 1000, side: "long", price: (c.at(-1) as Candle).close, quantity: 10 }));
