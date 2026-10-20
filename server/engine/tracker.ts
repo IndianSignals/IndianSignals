@@ -233,7 +233,7 @@ export async function trackOutcomes(deps: TrackerDeps): Promise<number> {
       } else if (ev?.kind === "entered") {
         if (!s.entered) {
           await deps.store.markEntered(s.id, atIso); changed++;
-          void tgSend(`▶️ <b>ENTRY TRIGGERED</b>\n\n${tgPair(s)}\n\n📍 Entry: ${usd(s.entry.ideal)}\n🛑 SL: ${usd(s.stopLoss.price)}\n🎯 TP1: ${usd(s.takeProfit.tp1)}\n\n⚡ Trade is now running`);
+                    void tgSend(`▶️ <b>ENTRY TRIGGERED</b>\n\n${tgPair(s)}\n\n📍 Entry: ${inr(s.entry.ideal)}\n🛑 SL: ${inr(s.stopLoss.price)}\n🎯 TP1: ${inr(s.takeProfit.tp1)}\n\n⚡ Trade is now running`);
         }
      if (now - Date.parse(s.timestamps.createdAt) > (TF_MS[s.timeframe.primary] ?? 900_000) * 96) {
           await deps.store.setStatus(s.id, "EXPIRED", atIso);
