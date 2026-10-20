@@ -2012,9 +2012,25 @@ document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>{
       });
 
       // Market page: Bitcoin card price
-      document.querySelectorAll(".panel h3").forEach(h => {
-        if (h.textContent.trim() === "NIFTY 50" && h.nextElementSibling) h.nextElementSibling.textContent = money(b.lastPrice, 0);
+            document.querySelectorAll(".panel h3").forEach(h => {
+        if (h.textContent.trim() === "NIFTY 50" && h.nextElementSibling) {
+          h.nextElementSibling.textContent = money(b.lastPrice, 0);
+          const r = h.nextElementSibling.nextElementSibling, rb = r && r.querySelector("b");
+          if (rb) { rb.textContent = chTxt; rb.className = cls; }
+        }
       });
+      try {
+        const bn = await ticker("BANKNIFTYUSDT"), bch = parseFloat(bn.priceChangePercent);
+        document.querySelectorAll(".panel h3").forEach(h => {
+          if (h.textContent.trim() !== "BANK NIFTY" || !h.nextElementSibling) return;
+          h.nextElementSibling.textContent = money(bn.lastPrice, 0);
+          const r = h.nextElementSibling.nextElementSibling, rb = r && r.querySelector("b");
+          if (rb) {
+            rb.textContent = (bch >= 0 ? "Bullish (+" : "Bearish (") + bch.toFixed(2) + "%)";
+            rb.className = bch >= 0 ? "up" : "down";
+          }
+        });
+      } catch (e) {}
 
       // Current Price follows the active signal's symbol (default BTC)
       const cur = byLabel(".kpi", "Current Price");
