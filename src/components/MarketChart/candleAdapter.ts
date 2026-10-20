@@ -5,7 +5,7 @@ import type { Candle } from "../../../shared/market.js";
  * Adapter: shared/market.ts Candle  ->  Lightweight Charts data.
  *
  * Candle.timestamp is the candle OPEN time in epoch MILLISECONDS (see
- * server/engine/marketData.ts, Binance kline field [0]). Lightweight Charts wants
+ * server/engine/angelMarketData.ts, first field of an Angel One candle). Lightweight Charts wants
  * UTC epoch SECONDS. We floor-divide and never apply a timezone offset, so no
  * market time is shifted.
  *
