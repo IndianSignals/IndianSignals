@@ -206,10 +206,6 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
 
           
 
-          <div className="data-card" style={snapshot.derivatives.takerBuySellRatio == null ? { display: "none" } : undefined}>
-            <label>Taker Buy/Sell</label>
-            <strong>{formatNumber(snapshot.derivatives.takerBuySellRatio ?? null, 2)}</strong>
-          </div>
 
           <div className="data-card" style={snapshot.orderBook.imbalance === null ? { display: "none" } : undefined}>
             <label>Order Book</label>
