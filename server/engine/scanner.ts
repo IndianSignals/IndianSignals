@@ -104,17 +104,17 @@ async function guardEntry(input: FinalSignal, tf: Timeframe, deps: EngineDeps, n
   if (input.direction !== "LONG" && input.direction !== "SHORT") return input;
   let signal = input;
   let reason: string | null = null;
-    // BTC_FILTER: "strict" = alts trade only WITH the BTC trend (unclear BTC = no alt entries),
-  // "true" = block only when BTC is against, "soft" = score penalty, "false" = off
-  const btcMode = (process.env.BTC_FILTER ?? "strict").toLowerCase();
-  const isAlt = signal.symbol !== "BTCUSDT";
-  const against = btc !== 0 && isAlt && (signal.direction === "LONG" ? -1 : 1) === btc;
-  if (btcMode === "strict" && isAlt && btc === 0) {
-    reason = "BTC trend is unclear, altcoin entries are paused";
+        // INDEX_FILTER (old name BTC_FILTER): "strict" = stocks trade only WITH the NIFTY trend (unclear NIFTY = no entries),
+  // "true" = block only when NIFTY is against, "soft" = score penalty, "false" = off
+  const btcMode = indexFilterMode(process.env);
+  const isStock = signal.symbol !== BENCHMARK_SYMBOL;
+  const against = btc !== 0 && isStock && (signal.direction === "LONG" ? -1 : 1) === btc;
+  if (btcMode === "strict" && isStock && btc === 0) {
+    reason = "NIFTY trend is unclear, stock entries are paused";
   } else if (against && (btcMode === "true" || btcMode === "strict")) {
-    reason = `BTC trend is against this ${signal.direction}`;
+    reason = `NIFTY trend is against this ${signal.direction}`;
   } else if (against && btcMode === "soft") {
-    const penalty = Number(process.env.BTC_SOFT_PENALTY ?? "5");
+    const penalty = Number(process.env.INDEX_SOFT_PENALTY ?? process.env.BTC_SOFT_PENALTY ?? "5");
     const total = Math.max(0, signal.score.total - penalty);
     signal = {
       ...signal,
