@@ -158,7 +158,7 @@ export class AngelMarketData implements MarketData {
         await this.ensureLogin(true);
         continue;
       }
-      if (!body?.status) throw new Error(`Angel One ${body?.errorcode ?? res.status}: ${body?.message ?? "request failed"}`);
+    if (!res.ok || !body?.status) throw new ProviderError(categoryOf(code, msg), code || String(res.status), `Angel One ${code || res.status}: ${body?.message ?? "request failed"}`);
       return body.data;
     }
     throw new Error("Angel One request failed after retries (rate limit or session)");
