@@ -1170,6 +1170,63 @@ html[data-theme=light] [style*="color:#71869d"],html[data-theme=light] [style*="
       </div>
     </section>
   </section>
+  <section id="findReplaceCard" style="max-width:760px;margin:24px auto;padding:16px;border:1px solid #2a3340;border-radius:12px;background:#0f141b;color:#e6edf3;font-family:inherit">
+  <h3 style="margin:0 0 12px">Find &amp; Replace</h3>
+  <form id="frForm" style="display:grid;gap:10px">
+    <textarea id="frText" rows="8" placeholder="Paste your text here…" required style="width:100%;padding:10px;border-radius:8px;border:1px solid #2a3340;background:#0b0f14;color:inherit"></textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <input id="frFind" placeholder="Find" required style="padding:10px;border-radius:8px;border:1px solid #2a3340;background:#0b0f14;color:inherit">
+      <input id="frReplace" placeholder="Replace with" style="padding:10px;border-radius:8px;border:1px solid #2a3340;background:#0b0f14;color:inherit">
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
+      <label><input type="checkbox" id="frCase"> Match case</label>
+      <label><input type="checkbox" id="frWord"> Whole word</label>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button type="submit" style="padding:10px 18px;border:0;border-radius:8px;background:#2f81f7;color:#fff;font-weight:600;cursor:pointer">Replace all</button>
+      <button type="button" id="frCopy" style="padding:10px 18px;border-radius:8px;border:1px solid #2a3340;background:transparent;color:inherit;cursor:pointer">Copy result</button>
+      <span id="frStatus" role="status" style="font-size:14px;opacity:.85"></span>
+    </div>
+  </form>
+</section>
+
+<script>
+(function () {
+  var API_BASE = "https://indiansignals0.onrender.com/api/v1";
+  var $ = function (id) { return document.getElementById(id); };
+
+  $("frForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var status = $("frStatus");
+    status.textContent = "Working…";
+    fetch(API_BASE + "/tools/find-replace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: $("frText").value,
+        find: $("frFind").value,
+        replace: $("frReplace").value,
+        caseSensitive: $("frCase").checked,
+        wholeWord: $("frWord").checked
+      })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (o) {
+        if (!o.ok) { status.textContent = (o.j.error && o.j.error.message) || "Request failed"; return; }
+        $("frText").value = o.j.result;
+        status.textContent = o.j.count + " replacement" + (o.j.count === 1 ? "" : "s") + " made";
+      })
+      .catch(function () { status.textContent = "Could not reach the server"; });
+  });
+
+  $("frCopy").addEventListener("click", function () {
+    var status = $("frStatus");
+    var done = function () { status.textContent = "Copied"; };
+    if (navigator.clipboard) navigator.clipboard.writeText($("frText").value).then(done);
+    else { $("frText").select(); document.execCommand("copy"); done(); }
+  });
+})();
+</script>
 </main>
 
 <aside class="right">
