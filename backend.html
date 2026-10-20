@@ -454,9 +454,9 @@ async function signalsView() {
 }
 
 // ===== SECTION VIEWS: all sidebar and top-nav items (client side, no new backend needed) =====
-const SYMS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "LINKUSDT", "TRXUSDT"];
-const DEFAULT_WATCH = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
-const BIN = "https://data-api.binance.vision/api/v3";
+const SYMS = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "SBIN", "BHARTIARTL", "ITC", "LT", "KOTAKBANK"];
+const DEFAULT_WATCH = ["RELIANCE", "TCS", "INFY"];
+const TF_MAP = { "5m": "5m", "15m": "15m", "1h": "1H", "4h": "4H", "1d": "1D" };
 const INP = "padding:8px;background:#07101d;color:#fff;border:1px solid #1d3550;border-radius:6px";
 const ls = {
   get: (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v === null ? d : v; } catch { return d; } },
