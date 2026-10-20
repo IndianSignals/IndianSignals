@@ -82,10 +82,10 @@ export const DEFAULT_CONFIG: BuilderConfig = {
     requireCandle: (process.env.CANDLE_CONFIRM ?? "true") !== "false",
     candleVolMin: Number(process.env.CANDLE_VOL_MIN ?? "1"),                // raise to 1.2 for stricter volume
         requireFib: (process.env.CORE4 ?? "true") === "false" && (process.env.FIB_ENTRY ?? "true") !== "false",
-    core: process.env.CORE_INDICATORS ?? "ema,rsi,smc,liq",
+        core: process.env.CORE_INDICATORS ?? "ema,rsi,smc",   // liq needs crypto liquidation data; NSE cash has none
     core4: (process.env.CORE4 ?? "true") !== "false",   // true = only EMA + RSI + SMC + Liquidation; "false" = old full engine
     smc: signalMode(process.env.SMC_MODE, "soft"),   // off | soft | strict
-    liq: signalMode(process.env.LIQ_MODE, "soft"),   // off | soft | strict
+    liq: signalMode(process.env.LIQ_MODE, "off"),    // off | soft | strict (NSE has no liquidation feed, so off)
   },
   fibStop: (process.env.FIB_ENTRY ?? "true") !== "false",
   fibMinScore: Number(process.env.FIB_MIN_SCORE ?? "65"),    // score needed in Fib mode (pullbacks score lower on momentum)
