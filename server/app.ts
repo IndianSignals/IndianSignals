@@ -80,6 +80,15 @@ export function createApp(config: ServerConfig, deps: AppDeps = {}): Express {
   if (deps.settings) app.use("/api/v1", createSettingsRouter(deps.settings, deps.presets));
   app.use("/engine", createBacktestRouter(config.scan, deps.settings));
 
+    // Serve the built frontend (dist/web) + SPA fallback
+  const webDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
+  if (fs.existsSync(path.join(webDir, "index.html"))) {
+    app.use(express.static(webDir));
+    app.get(/^\/(?!api\/|engine\/).*/, (_req, res) => {
+      res.sendFile(path.join(webDir, "index.html"));
+    });
+  }
+
   // 404
   app.use((_req, res) => {
     res.status(404).json({
