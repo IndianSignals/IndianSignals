@@ -721,19 +721,20 @@ function oldBacktestView() {
 
 async function watchView() {
   host.innerHTML = panel("Watchlists", "Saved in this browser",
-    `<input id="wi" placeholder="e.g. LINKUSDT" style="${INP}"> <button id="wa" class="btn p">Add</button> <span id="wm" class="red"></span><table class="table" style="margin-top:10px">${th(["Symbol", "Price", "24h %", ""])}<tbody id="vb"></tbody></table>`, "Watchlists");
+    `<input id="wi" placeholder="e.g. HDFCBANK" style="${INP}"> <button id="wa" class="btn p">Add</button> <span id="wm" class="red"></span><table class="table" style="margin-top:10px">${th(["Symbol", "Price", "24h %", ""])}<tbody id="vb"></tbody></table>`, "Watchlists");
   const load = async () => {
     const list = ls.get("cg_watch", DEFAULT_WATCH); if (!$("vb")) return;
     if (!list.length) { $("vb").innerHTML = '<tr><td colspan="4">Empty. Add a symbol above.</td></tr>'; return; }
     try {
       const rows = await tickers(list); if (!$("vb")) return;
-      $("vb").innerHTML = rows.map(x => { const ch = +x.priceChangePercent; return `<tr><td>${esc(x.symbol)}</td><td>$${fmtP(x.lastPrice)}</td><td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td><td><button class="btn" data-rm="${esc(x.symbol)}">Remove</button></td></tr>`; }).join("");
+      $("vb").innerHTML = rows.map(x => { const ch = +x.priceChangePercent; return `<tr><td>${esc(x.symbol)}</td><td>₹${fmtP(x.lastPrice)}</td><td class="${ch >= 0 ? "green" : "red"}">${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%</td><td><button class="btn" data-rm="${esc(x.symbol)}">Remove</button></td></tr>`; }).join("");
     } catch (e) { if ($("vb")) $("vb").innerHTML = rowErr(4, e); }
   };
   $("wa").onclick = async () => {
     const s = $("wi").value.trim().toUpperCase(); if (!s) return;
-    const r = await fetch(`${BIN}/ticker/price?symbol=${encodeURIComponent(s)}`).catch(() => null);
-    if (!r || !r.ok) { $("wm").textContent = "Symbol not found on Binance"; return; }
+    let ok = false;
+    try { const d = await api("/prices?symbols=" + encodeURIComponent(s)); ok = !!(d.data && d.data[s] > 0); } catch (e) {}
+    if (!ok) { $("wm").textContent = "Symbol not found"; return; }
     const l = ls.get("cg_watch", DEFAULT_WATCH); if (!l.includes(s)) l.push(s);
     ls.set("cg_watch", l); $("wm").textContent = ""; $("wi").value = ""; load();
   };
