@@ -180,7 +180,7 @@ function scoreCore4(input: ScoreInput, ind: NonNullable<ReturnType<typeof calcIn
 function scoreCoreSel(input: ScoreInput, ind: NonNullable<ReturnType<typeof calcIndicators>>, atr: number, close: number): ScoreResult {
   const g = input.gates ?? {};
   const sel = new Set((g.core ?? "ema,rsi,smc,liq").toLowerCase().split(",").map((x) => x.trim()));
-  const useEma = sel.has("ema"), useRsi = sel.has("rsi");
+    const useEma = sel.has("ema"), useRsi = sel.has("rsi"), useFno = sel.has("fno");
   const smcMode: SignalMode = sel.has("smc") ? (g.smc && g.smc !== "off" ? g.smc : "soft") : "off";
   const liqMode: SignalMode = sel.has("liq") ? (g.liq && g.liq !== "off" ? g.liq : "soft") : "off";
   const smc = smcMode !== "off" ? calcSmc(input.candles, atr) : null;
