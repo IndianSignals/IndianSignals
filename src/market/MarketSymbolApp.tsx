@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import type { Timeframe } from "../../shared/market.js";
 import { DEFAULT_TIMEFRAME, isTimeframe } from "./timeframes.js";
-import { normalizeSymbol } from "./symbol.js";
+import { DEFAULT_SYMBOL, normalizeSymbol } from "./symbol.js";
 import { MarketSymbolView } from "./MarketSymbolView.js";
 
 /** URL contract (docs/routes.md: `/market/:symbol?tf=`): here `?page=market&symbol=BTC-USDT&tf=1H`. */
