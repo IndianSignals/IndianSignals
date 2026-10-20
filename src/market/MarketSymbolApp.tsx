@@ -5,7 +5,7 @@ import { DEFAULT_TIMEFRAME, isTimeframe } from "./timeframes.js";
 import { DEFAULT_SYMBOL, normalizeSymbol } from "./symbol.js";
 import { MarketSymbolView } from "./MarketSymbolView.js";
 
-/** URL contract (docs/routes.md: `/market/:symbol?tf=`): here `?page=market&symbol=BTC-USDT&tf=1H`. */
+/** URL contract (docs/routes.md: `/market/:symbol?tf=`): here `?page=market&symbol=RELIANCE&tf=1H`. */
 const readUrl = (): { raw: string | null; tf: Timeframe } => {
   const p = new URLSearchParams(window.location.search);
   const tf = p.get("tf");
