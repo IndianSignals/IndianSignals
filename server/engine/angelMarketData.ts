@@ -387,11 +387,13 @@ export class AngelMarketData implements MarketData {
     };
   }
 
-  /** NSE cash has no funding / OI / long-short data: only the order-book imbalance is real. */
+  /** NSE has no funding / long-short data. Real here: order-book imbalance, plus F&O PCR and OI build-up for stocks that have F&O. */
   async getDerivatives(symbol: string, _tf: Timeframe): Promise<DerivativesInput> {
     let bookImbalance: number | null = null;
     try { bookImbalance = (await this.getOrderBook(symbol)).imbalance; } catch { /* leave null */ }
-    return { fundingRate: null, oiChangePct: null, longShortRatio: null, bookImbalance, asOf: Date.now(), source: "angelone" };
+    let pcr: number | null = null, oiBuildup: OiBuildup | null = null, oiChangePct: number | null = null;
+    try { const f = await this.fnoFor(symbol); pcr = f.pcr; oiBuildup = f.buildup?.kind ?? null; oiChangePct = f.buildup?.oiChangePct ?? null; } catch { /* leave null */ }
+    return { fundingRate: null, oiChangePct, longShortRatio: null, bookImbalance, pcr, oiBuildup, asOf: Date.now(), source: "angelone" };
   }
 
     marketTypeOf(): "cash" { return "cash"; }
