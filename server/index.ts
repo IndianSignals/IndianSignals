@@ -1,6 +1,6 @@
 import { loadConfig } from "./config/env.js";
 import { createApp } from "./app.js";
-import { connectMongoDB } from "./db/mongodb.js";
+import { connectMongoDB, ensureAdminUser } from "./db/mongodb.js";
 import { createMarketData } from "./engine/angelMarketData.js";
 import { MongoSignalStore } from "./engine/mongoStore.js";
 import { EngineService } from "./engine/scanner.js";
