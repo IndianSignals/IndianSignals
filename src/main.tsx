@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { MarketSymbolApp } from "./market/MarketSymbolApp.js";
+import { isMarketOpen } from "../shared/indianMarket.js";
 import {
   CandlestickSeries,
   LineStyle,
