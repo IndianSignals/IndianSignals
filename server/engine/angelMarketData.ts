@@ -274,8 +274,15 @@ export class AngelMarketData implements MarketData {
   private async loadMaster(): Promise<void> {
     const res = await this.fetchFn(MASTER_URL, { signal: AbortSignal.timeout(60_000) });
     if (!res.ok) throw new Error(`Instrument master HTTP ${res.status}`);
-    const rows = (await res.json()) as { token?: string; symbol?: string; exch_seg?: string }[];
+        const rows = (await res.json()) as ScripRow[];
+    const nowMs = Date.now();
+    const fno = new Map<string, FnoContract[]>();
     for (const r of rows) {
+      if (r.exch_seg === "NFO") {   // live futures + options (next 75 days) for the F&O signals
+        const c = parseFnoRow(r, nowMs);
+        if (c) (fno.get(c.name) ?? fno.set(c.name, []).get(c.name)!).push(c);
+        continue;
+      }
       if (r.exch_seg === "NSE" && r.symbol?.endsWith("-EQ") && r.token) {
         const n = r.symbol.slice(0, -3).toUpperCase();
         if (!this.tokens.has(n)) this.tokens.set(n, { exch: "NSE", token: r.token });
