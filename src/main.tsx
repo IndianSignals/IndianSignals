@@ -856,8 +856,7 @@ const nseSymbol = (raw: unknown): string =>
 const want = new Set(signals.map((s) => nseSymbol(s.symbol)).filter(Boolean));
     if (want.size === 0) return;
 
-  // 1) Ask our own server first (works on every network).
-  const fresh = new Set<string>();
+  // Prices come from our server, which asks Angel One (the browser holds no keys).
   try {
     const r = await fetch(`${SIGNAL_API}/prices?symbols=${[...want].join(",")}`, {
             signal:
