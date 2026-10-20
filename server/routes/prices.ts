@@ -36,7 +36,8 @@ router.get("/prices", async (req, res) => {
       res.json({ data: hit.data, meta: { sourceExchange: "angelone", timestamp: hit.at, stale: true } });
       return;
     }
-    res.status(502).json({ error: { code: "upstream_error", message: "Price provider unavailable" } });
+    const pe = err instanceof ProviderError ? err : null;
+    res.status(502).json({ error: { code: pe ? pe.category.toLowerCase() : "upstream_error", message: pe ? pe.message : "Price provider unavailable", providerCode: pe?.code } });
   }
 });
 
