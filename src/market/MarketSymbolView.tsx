@@ -195,13 +195,9 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
         >
           
 
-          <div className="data-card" style={snapshot.derivatives.fundingRate === null ? { display: "none" } : undefined}>
-            <label>Funding</label>
-            <strong>
-              {snapshot.derivatives.fundingRate === null
-                ? "Unavailable"
-                : `${(snapshot.derivatives.fundingRate * 100).toFixed(4)}%`}
-            </strong>
+          <div className="data-card" style={snapshot.ticker.volume24h > 0 ? undefined : { display: "none" }}>
+            <label>Traded value (today)</label>
+            <strong>{fmtValue(snapshot.ticker.volume24h)}</strong>
           </div>
 
           <div className="data-card" style={snapshot.derivatives.oiChangePct === null ? { display: "none" } : undefined}>
