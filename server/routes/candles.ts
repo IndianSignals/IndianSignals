@@ -43,10 +43,21 @@ router.get("/market/snapshot", async (req, res) => {
   const started = Date.now();
 
   try {
-    const data = await market.getMarketSnapshot(
-      parsed.data.symbol,
-      parsed.data.timeframe,
-    );
+        const sKey = `${parsed.data.symbol}|${parsed.data.timeframe}`;
+    const sHit = snapCache.get(sKey);
+    let data: Snap;
+    if (sHit && Date.now() - sHit.at < 10_000) {
+      data = sHit.data;
+    } else {
+      let sp = snapInflight.get(sKey);
+      if (!sp) {
+        sp = market.getMarketSnapshot(parsed.data.symbol, parsed.data.timeframe).finally(() => { snapInflight.delete(sKey); });
+        snapInflight.set(sKey, sp);
+      }
+      data = await sp;
+      snapCache.set(sKey, { at: Date.now(), data });
+      if (snapCache.size > 100) snapCache.clear();
+    }
 
     res.json({
       data,
