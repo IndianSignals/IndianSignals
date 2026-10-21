@@ -3,7 +3,7 @@ import type { Candle, Timeframe } from "../../shared/market.js";
 import { isMarketOpen as sharedIsMarketOpen, istParts as sharedIstParts, MCX_SYMBOLS } from "../../shared/indianMarket.js";
 import type { DerivativesInput, OiBuildup } from "../../shared/scoring.js";
 import type { MarketData, MarketSnapshot, OrderBookSnapshot, Ticker24h } from "./marketData.js";
-import { buildFnoPlan, loadFnoConfig, parseFnoRow, selectFnoContracts } from "../../shared/fno.js";
+import { buildFnoPlan, loadFnoConfig, parseExpiry, parseFnoRow, selectFnoContracts } from "../../shared/fno.js";
 import type { FnoContract, FnoPlan, FnoSignalInput, ScripRow } from "../../shared/fno.js";
 
 /**
