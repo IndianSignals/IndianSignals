@@ -77,7 +77,8 @@ router.get("/candles", async (req, res) => {
     return;
   }
   const { symbol, timeframe, limit } = parsed.data;
-  const key = `${symbol}|${timeframe}|${limit}`;
+    const fetchLimit = timeframe !== "4H" && limit <= 300 ? 300 : limit;   // small polls (limit 10) reuse the same cached 300 bars
+  const key = `${symbol}|${timeframe}|${fetchLimit}`;
   const started = Date.now();
 
   try {
