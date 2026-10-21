@@ -37,6 +37,12 @@ const FIXED: Record<string, { exch: string; token: string }> = {
   SENSEX: { exch: "BSE", token: "99919000" },
 };
 
+/** MCX futures roll every month: use the nearest contract that is more than 2 days from expiry (expiry-day trading is thin). */
+export function pickMcxContract<T extends { expiry: number }>(list: T[], now: number): T | null {
+  const sorted = [...list].sort((a, b) => a.expiry - b.expiry);
+  return sorted.find((c) => c.expiry - now > 2 * 864e5) ?? sorted.find((c) => c.expiry > now) ?? null;
+}
+
 const toNum = (v: unknown): number => {
   const n = typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" ? Number(v) : NaN;
   if (!Number.isFinite(n)) throw new Error("Non-numeric value in Angel One response");
