@@ -168,7 +168,8 @@ export class AngelMarketData implements MarketData {
   }
 
   private async post(path: string, payload: unknown, gapKey: string, gapMs: number): Promise<unknown> {
-    for (let attempt = 0; attempt < 4; attempt++) {
+    let lastWhy = "";
+    for (let attempt = 0; attempt < 6; attempt++) {
       await this.ensureLogin();
       await pace(gapKey, gapMs);
       const res = await this.fetchFn(`${HOST}${path}`, {
