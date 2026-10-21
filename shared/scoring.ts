@@ -334,7 +334,7 @@ if (input.gates?.core4) return scoreCoreSel(input, ind, atr, close);
   if (g.requireCandle) {
     const cc = calcCandleConfirm(candles, s);
     if (!cc.pattern) critical = critical ?? "No engulfing or pin-bar confirmation candle";
-    else if (cc.volRatio < g.candleVolMin) critical = critical ?? `Confirmation candle volume is only ${cc.volRatio.toFixed(1)}x average`;
+    else if (cc.volRatio > 0 && cc.volRatio < g.candleVolMin) critical = critical ?? `Confirmation candle volume is only ${cc.volRatio.toFixed(1)}x average`;
     else conf.push(`${cc.pattern === "engulfing" ? "Engulfing" : "Pin-bar rejection"} candle with ${cc.volRatio.toFixed(1)}x volume`);
   }
 
