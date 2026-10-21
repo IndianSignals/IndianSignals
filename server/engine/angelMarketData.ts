@@ -370,7 +370,7 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
     const inst = await this.resolve(symbol);
     const data = await this.post("/rest/secure/angelbroking/historical/v1/getCandleData", {
       exchange: inst.exch, symboltoken: inst.token, interval, fromdate: istStamp(fromMs), todate: istStamp(toMs),
-    }, "candle", 400);
+    }, "candle", 600);
     if (!Array.isArray(data)) return [];
     const out: Candle[] = [];
     for (const row of data) {
