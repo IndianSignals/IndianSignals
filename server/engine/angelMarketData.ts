@@ -260,6 +260,17 @@ export class AngelMarketData implements MarketData {
     return { pcr: this.fnoCache?.pcr.get(u) ?? null, buildup: this.fnoCache?.buildup.get(u) ?? null };
   }
 
+  /* ---------- instrument master: ONE shared download ---------- */
+  private masterInflight: Promise<void> | null = null;
+  private masterFailAt = 0;
+  /** Every stock needs the big instrument master (~40 MB). Before: each symbol started its own download, 4 at once, and they all timed out. Now: one download is shared, and after a failure we wait 30 s before trying again. */
+  private async ensureMaster(): Promise<void> {
+    if (this.masterLoaded) return;
+    if (Date.now() - this.masterFailAt < 30_000) throw new Error("Angel One instrument master download failed a moment ago, retrying shortly (set ANGEL_TOKENS to skip it)");
+    this.masterInflight ??= this.loadMaster().catch((e: unknown) => { this.masterFailAt = Date.now(); throw e; }).finally(() => { this.masterInflight = null; });
+    await this.masterInflight;
+  }
+
   /* ---------- symbol -> token ---------- */
   private async resolve(symbol: string): Promise<{ exch: string; token: string; tsym: string }> {
     const name = symbol.toUpperCase();
