@@ -1960,7 +1960,7 @@ document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>{
       document.querySelectorAll(".mini-row").forEach(row => {
         const sp = row.querySelector("span"), bb = row.querySelector("b");
         if (!sp || !bb || sp.textContent.trim() !== "NIFTY") return;
-        bb.textContent = bb.textContent.includes("₹") ? money(b.lastPrice, 0) + " " + chTxt : chTxt;
+        bb.textContent = bb.textContent.includes("₹") ? money(b.lastPrice, 2) + " " + chTxt : chTxt;
         bb.className = cls;
       });
 
