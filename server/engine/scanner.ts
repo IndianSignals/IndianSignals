@@ -231,6 +231,7 @@ export class EngineService {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private intervalMs = 0;
   private nextRunAt: number | null = null;
+  private scanStartedAt = 0;
 
   constructor(private readonly deps: EngineDeps, private readonly settings: ScanSettings) {}
 
