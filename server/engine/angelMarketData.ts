@@ -397,7 +397,8 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
       if (!Array.isArray(row)) continue;
       const ts = Date.parse(String(row[0]));
       if (!Number.isFinite(ts)) continue;
-      out.push({ timestamp: ts, open: toNum(row[1]), high: toNum(row[2]), low: toNum(row[3]), close: toNum(row[4]), volume: toNum(row[5]) });
+      const vol = Number(row[5]);   // index candles (NIFTY etc.) can send null/empty volume
+      out.push({ timestamp: ts, open: toNum(row[1]), high: toNum(row[2]), low: toNum(row[3]), close: toNum(row[4]), volume: Number.isFinite(vol) ? vol : 0 });
     }
     return out;
   }
