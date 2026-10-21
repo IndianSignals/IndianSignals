@@ -265,7 +265,7 @@ export class AngelMarketData implements MarketData {
     const name = symbol.toUpperCase();
     const fixed = FIXED[name] ?? this.tokens.get(name);
     if (fixed) return { ...fixed, tsym: name };
-    if (!this.masterLoaded) await this.loadMaster();
+    await this.ensureMaster();
     const hit = this.tokens.get(name);
     if (!hit) throw new Error(`Angel One: no NSE token for ${name} (add it to ANGEL_TOKENS)`);
     return { ...hit, tsym: name };
