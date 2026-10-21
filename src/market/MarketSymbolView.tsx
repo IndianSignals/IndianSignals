@@ -121,6 +121,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
 
     const controller = new AbortController();
     let activeRequest = true;
+    let retryTimer: number | undefined;
 
     setSnapshotStatus("loading");
 
