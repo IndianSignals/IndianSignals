@@ -140,6 +140,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
 
     return () => {
       activeRequest = false;
+      window.clearTimeout(retryTimer);
       controller.abort();
     };
   }, [symbol, timeframe]);
