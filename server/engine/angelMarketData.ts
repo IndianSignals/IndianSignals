@@ -115,8 +115,8 @@ export class AngelMarketData implements MarketData {
 
   constructor(private readonly timeoutMs = 10_000, private readonly fetchFn: typeof fetch = fetch) {
     for (const pair of (process.env.ANGEL_TOKENS ?? "").split(",")) {
-      const [sym, tok] = pair.split(":").map((s) => s?.trim());
-      if (sym && tok) this.tokens.set(sym.toUpperCase(), { exch: "NSE", token: tok });
+      const [sym, tok, ex] = pair.split(":").map((s) => s?.trim());   // SYMBOL:token or SYMBOL:token:EXCHANGE
+      if (sym && tok && !MCX_SYMBOLS.has(sym.toUpperCase())) this.tokens.set(sym.toUpperCase(), { exch: (ex || "NSE").toUpperCase(), token: tok });   // MCX futures roll monthly: always from the master
     }
   }
 
