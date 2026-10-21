@@ -283,7 +283,7 @@ export class AngelMarketData implements MarketData {
   }
 
   private async loadMaster(): Promise<void> {
-    const res = await this.fetchFn(MASTER_URL, { signal: AbortSignal.timeout(60_000) });
+    const res = await this.fetchFn(MASTER_URL, { signal: AbortSignal.timeout(120_000) });
     if (!res.ok) throw new Error(`Instrument master HTTP ${res.status}`);
         const rows = (await res.json()) as ScripRow[];
     const nowMs = Date.now();
