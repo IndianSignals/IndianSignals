@@ -105,6 +105,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
   const toggle = (k: IndicatorKey): void => setActive((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
     const label = symbol ? displaySymbol(symbol) : rawSymbol;
   const open24 = usePrevClose(symbol);
+  const [snapTry, setSnapTry] = useState(0);
   const isIndex = symbol !== null && isIndexSymbol(symbol);
   const lastPrice = candles.at(-1)?.close ?? null;
   const chgPts = lastPrice !== null && open24 !== null ? lastPrice - open24 : null;
