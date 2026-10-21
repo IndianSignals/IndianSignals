@@ -1967,7 +1967,7 @@ document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>{
       // Market page: Bitcoin card price
             document.querySelectorAll(".panel h3").forEach(h => {
         if (h.textContent.trim() === "NIFTY 50" && h.nextElementSibling) {
-          h.nextElementSibling.textContent = money(b.lastPrice, 0);
+          h.nextElementSibling.textContent = money(b.lastPrice, 2);
           const r = h.nextElementSibling.nextElementSibling, rb = r && r.querySelector("b");
           if (rb) { rb.textContent = chTxt; rb.className = cls; }
         }
