@@ -1976,7 +1976,7 @@ document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>{
         const bn = await ticker("BANKNIFTYUSDT"), bch = parseFloat(bn.priceChangePercent);
         document.querySelectorAll(".panel h3").forEach(h => {
           if (h.textContent.trim() !== "BANK NIFTY" || !h.nextElementSibling) return;
-          h.nextElementSibling.textContent = money(bn.lastPrice, 0);
+          h.nextElementSibling.textContent = money(bn.lastPrice, 2);
           const r = h.nextElementSibling.nextElementSibling, rb = r && r.querySelector("b");
           if (rb) {
             rb.textContent = (bch >= 0 ? "Bullish (+" : "Bearish (") + bch.toFixed(2) + "%)";
