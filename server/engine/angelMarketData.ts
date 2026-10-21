@@ -300,8 +300,23 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
     return { ...hit, tsym: name };
   }
 
+    /** The 40 MB master often fails on the first try on Render free (cold network / reset). Retry 3 times and show the real cause, not just "fetch failed". */
   private async loadMaster(): Promise<void> {
-    const res = await this.fetchFn(MASTER_URL, { signal: AbortSignal.timeout(120_000) });
+    let last: unknown;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try { await this.loadMasterOnce(); return; } catch (e) {
+        last = e;
+        const cause = e instanceof Error && e.cause instanceof Error ? ` (${e.cause.message})` : "";
+        console.error(`[angel] master attempt ${attempt}/3 failed: ${e instanceof Error ? e.message : String(e)}${cause}`);
+        if (attempt < 3) await sleep(attempt * 3000);
+      }
+    }
+    const cause = last instanceof Error && last.cause instanceof Error ? ` (${last.cause.message})` : "";
+    throw new Error(`${last instanceof Error ? last.message : String(last)}${cause}`);
+  }
+
+  private async loadMasterOnce(): Promise<void> {
+    const res = await this.fetchFn(MASTER_URL, { signal: AbortSignal.timeout(120_000), headers: { "User-Agent": "Mozilla/5.0 IndianSignals", Accept: "application/json" } });
     if (!res.ok) throw new Error(`Instrument master HTTP ${res.status}`);
         if (!res.body) throw new Error("Instrument master: empty body");
     // Stream + parse row by row instead of JSON.parse on the whole 40 MB file (OOM on Render free).
