@@ -134,6 +134,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
       .catch((err: unknown) => {
         if (controller.signal.aborted || !activeRequest) return;
         console.error("market snapshot error:", err);
+        retryTimer = window.setTimeout(() => setSnapTry((n) => n + 1), 8000);
         setSnapshotStatus("error");
       });
 
