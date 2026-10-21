@@ -29,7 +29,7 @@ const INDICES: ReadonlySet<string> = new Set(["NIFTY", "BANKNIFTY", "FINNIFTY", 
 
 export function normalizeSymbol(raw: string | null | undefined): string | null {
   if (!raw) return null;
-  const s = raw.trim().toUpperCase().replace(/^NSE:/, "").replace(/\.NS$/, "").replace(/-EQ$/, "");
+  const s = raw.trim().toUpperCase().replace(/^NSE:/, "").replace(/\.NS$/, "").replace(/-EQ$/, "").replace(/[-_\/]?USDT$/, "");
   const alias = ALIASES[s.replace(/[\s_-]/g, "")];
   if (alias) return alias;
   const t = s.replace(/[\s_]/g, ""); // keeps "&" and "-": M&M, BAJAJ-AUTO
