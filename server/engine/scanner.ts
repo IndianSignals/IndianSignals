@@ -323,8 +323,9 @@ export class EngineService {
       this.timer = null;
       void (async () => {
                 // Scheduled scans only run while NSE is open; the admin "scan now" button still works any time.
-        if (isMarketOpen(this.now, process.env)) {
-          try { await this.runScan(); } catch (e) { this.log.error(`[scan] scheduled run failed: ${errMsg(e)}`); }
+        const openNow = this.settings.symbols.filter((s) => isSymbolOpen(s, this.now, process.env));   // NSE/BSE 09:15-15:30, MCX 09:00-23:30
+        if (openNow.length > 0) {
+          try { await this.runScan(openNow.length === this.settings.symbols.length ? {} : { symbols: openNow }); } catch (e) { this.log.error(`[scan] scheduled run failed: ${errMsg(e)}`); }
         }
         if (this.intervalMs > 0) this.schedule(this.intervalMs);
       })();
