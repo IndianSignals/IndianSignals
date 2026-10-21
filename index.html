@@ -2421,8 +2421,7 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
 
   const fmt = p => {
     const n = parseFloat(p);
-    if (n >= 1000) return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-    if (n >= 1) return n.toFixed(3);
+       if (n >= 1) return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (n >= 0.01) return n.toFixed(4);
     return n.toFixed(8);
   };
