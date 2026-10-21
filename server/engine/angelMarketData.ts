@@ -287,7 +287,30 @@ export class AngelMarketData implements MarketData {
   private async loadMaster(): Promise<void> {
     const res = await this.fetchFn(MASTER_URL, { signal: AbortSignal.timeout(120_000) });
     if (!res.ok) throw new Error(`Instrument master HTTP ${res.status}`);
-        const rows = (await res.json()) as ScripRow[];
+        if (!res.body) throw new Error("Instrument master: empty body");
+    // Stream + parse row by row instead of JSON.parse on the whole 40 MB file (OOM on Render free).
+    const rows: ScripRow[] = [];
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let pos = 0;
+      for (;;) {
+        const s = buf.indexOf("{", pos);
+        const e = s === -1 ? -1 : buf.indexOf("}", s);
+        if (s === -1 || e === -1) break;
+        pos = e + 1;
+        try {
+          const r = JSON.parse(buf.slice(s, e + 1)) as ScripRow;
+          if ((r.exch_seg === "NSE" && r.symbol?.endsWith("-EQ")) || r.exch_seg === "NFO") rows.push(r);
+        } catch { /* skip bad row */ }
+      }
+      buf = buf.slice(pos);
+    }
+    if (rows.length === 0) throw new Error("Instrument master parsed 0 rows");
     const nowMs = Date.now();
     const fno = new Map<string, FnoContract[]>();
     for (const r of rows) {
