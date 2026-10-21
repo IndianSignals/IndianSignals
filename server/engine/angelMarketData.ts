@@ -320,7 +320,7 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
         pos = e + 1;
         try {
           const r = JSON.parse(buf.slice(s, e + 1)) as ScripRow;
-          if ((r.exch_seg === "NSE" && r.symbol?.endsWith("-EQ")) || r.exch_seg === "NFO") rows.push(r);
+          if ((r.exch_seg === "NSE" && r.symbol?.endsWith("-EQ")) || r.exch_seg === "NFO" || (r.exch_seg === "MCX" && (r.instrumenttype ?? "").toUpperCase() === "FUTCOM" && MCX_SYMBOLS.has((r.name ?? "").toUpperCase()))) rows.push(r);
         } catch { /* skip bad row */ }
       }
       buf = buf.slice(pos);
