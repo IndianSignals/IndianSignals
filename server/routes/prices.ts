@@ -27,7 +27,9 @@ router.get("/prices", async (req, res) => {
     return;
   }
   try {
-    const data = await createMarketData().lastPrices(wanted);
+        const md = createMarketData();
+    const data = await md.lastPrices(wanted);
+    const q = md.quoteExtras(wanted);
     if (Object.keys(data).length === 0) throw new Error("no prices returned");
     cache.set(key, { at: Date.now(), data });
     if (cache.size > 100) cache.clear();
