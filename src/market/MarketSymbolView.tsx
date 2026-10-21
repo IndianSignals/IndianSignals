@@ -143,7 +143,7 @@ export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChan
       window.clearTimeout(retryTimer);
       controller.abort();
     };
-  }, [symbol, timeframe]);
+}, [symbol, timeframe, snapTry]);
 
 
 
