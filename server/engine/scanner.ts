@@ -7,7 +7,7 @@ import { fnoInputFromSignal, fnoTelegram } from "../../shared/fno.js";
 import type { FnoPlan } from "../../shared/fno.js";
 import { calcIndicators } from "../../shared/indicators.js";
 import { trackOutcomes, tgSend, tgPair, inr } from "./tracker.js";
-import { BENCHMARK_SYMBOL, indexFilterMode, isMarketOpen } from "../../shared/indianMarket.js";
+import { BENCHMARK_SYMBOL, indexFilterMode, isMarketOpen, isMcxOpen, isMcxSymbol, isSymbolOpen } from "../../shared/indianMarket.js";
 import { CONFIRMATION_TF, EXECUTION_TF, checkHardFilters, loadHardFilterConfig } from "./marketData.js";
 import type { MarketData } from "./marketData.js";
 import type { ScanOutcome, ScanSummary, SignalStore, SymbolResult } from "./store.js";
