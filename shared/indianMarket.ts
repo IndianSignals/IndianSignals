@@ -26,6 +26,18 @@ export function isMarketOpen(now: number = Date.now(), env: Env = {}): boolean {
   return minutes >= MARKET_OPEN_MIN && minutes < MARKET_CLOSE_MIN;
 }
 
+/** MCX commodity futures scanned here (Angel exchange "MCX"). Trading Mon-Fri 09:00-23:30 IST. */
+export const MCX_SYMBOLS: ReadonlySet<string> = new Set(["CRUDEOIL", "NATURALGAS"]);
+export const isMcxSymbol = (s: string): boolean => MCX_SYMBOLS.has(String(s).toUpperCase());
+export function isMcxOpen(now: number = Date.now(), env: Env = {}): boolean {
+  if (!isTradingDay(now, env)) return false;
+  const { minutes } = istParts(now);
+  return minutes >= 9 * 60 && minutes < 23 * 60 + 30;
+}
+/** Is the market of THIS symbol open right now (NSE/BSE cash and indices vs MCX)? */
+export const isSymbolOpen = (symbol: string, now: number = Date.now(), env: Env = {}): boolean =>
+  isMcxSymbol(symbol) ? isMcxOpen(now, env) : isMarketOpen(now, env);
+
 export const formatINR = (n: number): string => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n);
 export const roundToTick = (price: number, tick = 0.05): number => Math.round(Math.round(price / tick) * tick * 100) / 100;
 
