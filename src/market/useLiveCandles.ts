@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Candle, Timeframe } from "../../shared/market.js";
-import { isMarketOpen } from "../../shared/indianMarket.js";
+import { isSymbolOpen } from "../../shared/indianMarket.js";
 import { fetchCandles } from "./marketApi.js";
 import { BAR_MS, mergeLive } from "./nseTime.js";
 import { validateCandles } from "./validateCandles.js";
@@ -44,7 +44,7 @@ export function useLiveCandles(
     const poll = async (): Promise<void> => {
       if (ctrl.signal.aborted) return;
       let wait = POLL_MS;
-      if (!isMarketOpen(Date.now())) {
+    if (!isSymbolOpen(symbol, Date.now())) {
         setStatus("closed");
         wait = CLOSED_RECHECK_MS;
       } else {
