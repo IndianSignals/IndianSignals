@@ -180,7 +180,8 @@ export class AngelMarketData implements MarketData {
       try { body = JSON.parse(text) as Reply; } catch { body = null; }
       const msg = `${body?.message ?? ""} ${text.slice(0, 120)}`.toLowerCase();
       const code = String(body?.errorcode ?? body?.errorCode ?? "");
-      if (res.status === 429 || res.status === 403 || msg.includes("exceeding access rate") || msg.includes("rate")) {
+      this.lastWhy = `HTTP ${res.status} ${code} ${text.slice(0, 100)}`;
+      if (res.status === 429 || res.status === 403 || code === "AB1021" || msg.includes("exceeding access rate") || msg.includes("too many requests") || msg.includes("rate limit")) {
         await sleep(1500 * (attempt + 1));
         continue;
       }
