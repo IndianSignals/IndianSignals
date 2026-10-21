@@ -289,6 +289,11 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
     const fixed = FIXED[name] ?? this.tokens.get(name);
     if (fixed) return { ...fixed, tsym: name };
     await this.ensureMaster();
+        if (MCX_SYMBOLS.has(name)) {
+      const c = pickMcxContract(this.mcx.get(name) ?? [], Date.now());
+      if (!c) throw new Error(`Angel One: no live MCX future found for ${name}`);
+      return { exch: "MCX", token: c.token, tsym: c.symbol };
+    }
     const hit = this.tokens.get(name);
     if (!hit) throw new Error(`Angel One: no NSE token for ${name} (add it to ANGEL_TOKENS)`);
     return { ...hit, tsym: name };
