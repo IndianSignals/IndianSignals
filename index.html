@@ -414,7 +414,7 @@ html,body{max-width:100%;overflow-x:hidden}
     var key = "p|" + need.join(",");
     return cached(key, 3000, function () {
       return api("/prices?symbols=" + encodeURIComponent(need.slice(0, 50).join(",")), 60000).then(function (b) {
-        Object.keys(b.data || {}).forEach(function (k) { px[k] = { v: b.data[k], at: Date.now() }; });
+        Object.keys(b.data || {}).forEach(function (k) { px[k] = { v: b.data[k], q: (b.q || {})[k] || null, at: Date.now() }; });
       });
     });
   }
