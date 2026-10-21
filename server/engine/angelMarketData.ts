@@ -284,8 +284,9 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
   }
 
   /* ---------- symbol -> token ---------- */
-  private async resolve(symbol: string): Promise<{ exch: string; token: string; tsym: string }> {
-    const name = symbol.toUpperCase();
+    private async resolve(symbol: string): Promise<{ exch: string; token: string; tsym: string }> {
+    // Old crypto-style names from stale browser state (NIFTYUSDT, NIFTY-USDT) and NSE:/.NS/-EQ forms are mapped to the plain NSE name.
+    const name = symbol.trim().toUpperCase().replace(/^(NSE|BSE|MCX):/, "").replace(/\.(NS|BO)$/, "").replace(/-EQ$/, "").replace(/[-_/]?USDT$/, "");
     const fixed = FIXED[name] ?? this.tokens.get(name);
     if (fixed) return { ...fixed, tsym: name };
     await this.ensureMaster();
