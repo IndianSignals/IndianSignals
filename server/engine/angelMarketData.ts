@@ -330,6 +330,11 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
         const fno = new Map<string, FnoContract[]>();
     const mcx = new Map<string, { token: string; symbol: string; expiry: number }[]>();
     for (const r of rows) {
+            if (r.exch_seg === "MCX") {
+        const nm = (r.name ?? "").toUpperCase(), ex = parseExpiry(r.expiry ?? "");
+        if (r.token && r.symbol && ex !== null) (mcx.get(nm) ?? mcx.set(nm, []).get(nm)!).push({ token: r.token, symbol: r.symbol, expiry: ex });
+        continue;
+      }
       if (r.exch_seg === "NFO") {   // live futures + options (next 75 days) for the F&O signals
         const c = parseFnoRow(r, nowMs);
         if (c) (fno.get(c.name) ?? fno.set(c.name, []).get(c.name)!).push(c);
@@ -341,6 +346,7 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
       }
     }
     this.fnoByName = fno;
+    this.mcx = mcx;
     this.masterAt = Date.now();
         this.masterLoaded = true;
     // Tell the owner the tokens of the scanned symbols once, so ANGEL_TOKENS can skip this big download after the next restart.
