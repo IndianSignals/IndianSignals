@@ -240,8 +240,10 @@ export class EngineService {
   private get log(): Pick<Console, "info" | "warn" | "error"> { return this.deps.log ?? console; }
 
   async runScan(opts: { symbols?: string[]; timeframe?: Timeframe } = {}): Promise<ScanSummary> {
-    if (this.scanning) throw new EngineBusyError();
+        // A scan that hangs (a network call that never answers) must not block every later scan: after 30 min it is treated as dead.
+    if (this.scanning && Date.now() - this.scanStartedAt < 30 * 60_000) throw new EngineBusyError();
     this.scanning = true;
+    this.scanStartedAt = Date.now();
     try {
       const symbols = opts.symbols ?? this.settings.symbols;
       const tf = opts.timeframe ?? this.settings.timeframe;
