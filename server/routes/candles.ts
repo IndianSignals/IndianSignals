@@ -16,6 +16,10 @@ const market = createMarketData();
 
 // tiny cache so refreshes don't hammer Angel One
 const cache = new Map<string, { at: number; data: Candle[] }>();
+const inflight = new Map<string, Promise<Candle[]>>();   // same request already running => share it (no duplicate Angel calls)
+type Snap = Awaited<ReturnType<typeof market.getMarketSnapshot>>;
+const snapCache = new Map<string, { at: number; data: Snap }>();
+const snapInflight = new Map<string, Promise<Snap>>();
 const TTL_MS = 15000;
 
 const router = Router();
