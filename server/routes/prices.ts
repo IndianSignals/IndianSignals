@@ -23,7 +23,7 @@ router.get("/prices", async (req, res) => {
   const key = wanted.join(",");
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) {
-    res.json({ data: hit.data, meta: { sourceExchange: "angelone", timestamp: hit.at } });
+    res.json({ data: hit.data, q: hit.q, meta: { sourceExchange: "angelone", timestamp: hit.at } });
     return;
   }
   try {
