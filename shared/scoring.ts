@@ -335,7 +335,7 @@ if (input.gates?.core4) return scoreCoreSel(input, ind, atr, close);
     const cc = calcCandleConfirm(candles, s);
     if (!cc.pattern) critical = critical ?? "No engulfing or pin-bar confirmation candle";
     else if (cc.volRatio > 0 && cc.volRatio < g.candleVolMin) critical = critical ?? `Confirmation candle volume is only ${cc.volRatio.toFixed(1)}x average`;
-    else conf.push(`${cc.pattern === "engulfing" ? "Engulfing" : "Pin-bar rejection"} candle with ${cc.volRatio.toFixed(1)}x volume`);
+    else conf.push(`${cc.pattern === "engulfing" ? "Engulfing" : "Pin-bar rejection"} candle${cc.volRatio > 0 ? ` with ${cc.volRatio.toFixed(1)}x volume` : ""}`);
   }
 
   // Gate 4: Fibonacci pullback. Price must be inside the 50-61.8% pocket of the last impulse.
