@@ -263,6 +263,8 @@ export class AngelMarketData implements MarketData {
   /* ---------- instrument master: ONE shared download ---------- */
   private masterInflight: Promise<void> | null = null;
   private masterFailAt = 0;
+  private masterWhy = "";
+  private lastWhy = "";
   /** Every stock needs the big instrument master (~40 MB). Before: each symbol started its own download, 4 at once, and they all timed out. Now: one download is shared, and after a failure we wait 30 s before trying again. */
   private async ensureMaster(): Promise<void> {
     if (this.masterLoaded) return;
