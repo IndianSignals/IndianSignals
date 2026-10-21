@@ -30,7 +30,9 @@ router.get("/prices", async (req, res) => {
   }
   try {
         const md = createMarketData();
-    const data = await md.lastPrices(wanted);
+    let lp = inflight.get(key);
+    if (!lp) { lp = md.lastPrices(wanted).finally(() => { inflight.delete(key); }); inflight.set(key, lp); }
+    const data = await lp;
     const q = md.quoteExtras(wanted);
     if (Object.keys(data).length === 0) throw new Error("no prices returned");
     cache.set(key, { at: Date.now(), data, q });
