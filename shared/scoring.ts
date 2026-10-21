@@ -459,7 +459,7 @@ if (input.gates?.core4) return scoreCoreSel(input, ind, atr, close);
   const vols = candles.slice(-21, -1).map((x) => x.volume);
   const avgV = vols.reduce((a, b) => a + b, 0) / vols.length;
   const vr = avgV > 0 ? k.volume / avgV : 0;
-  vm += vr >= 1.2 ? 2 : vr >= 0.8 ? 1 : 0;
+  vm += avgV <= 0 ? 1 : vr >= 1.2 ? 2 : vr >= 0.8 ? 1 : 0;   // indices have no volume: neutral point
   if (vr >= 1.5) conf.push(`Volume ${vr.toFixed(1)}x the 20-bar average`);
 
   // ---- 6. Derivatives + order book (10) ----
