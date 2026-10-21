@@ -269,7 +269,7 @@ export class AngelMarketData implements MarketData {
   private async ensureMaster(): Promise<void> {
     if (this.masterLoaded) return;
     if (Date.now() - this.masterFailAt < 30_000) throw new Error(`Angel One instrument master failed: ${this.masterWhy} (retrying shortly; set ANGEL_TOKENS to skip it)`);
-    this.masterInflight ??= this.loadMaster().catch((e: unknown) => { this.masterFailAt = Date.now(); throw e; }).finally(() => { this.masterInflight = null; });
+    this.masterInflight ??= this.loadMaster().catch((e: unknown) => { this.masterFailAt = Date.now(); this.masterWhy = e instanceof Error ? e.message : String(e); console.error(`[angel] master download failed: ${this.masterWhy}`); throw e; }).finally(() => { this.masterInflight = null; });
     await this.masterInflight;
   }
 
