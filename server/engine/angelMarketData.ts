@@ -193,7 +193,7 @@ export class AngelMarketData implements MarketData {
     if (!res.ok || !body?.status) throw new ProviderError(categoryOf(code, msg), code || String(res.status), `Angel One ${code || res.status}: ${body?.message ?? "request failed"}`);
       return body.data;
     }
- throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", "Angel One request failed after retries (rate limit or session)");
+throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request failed after retries: ${this.lastWhy || "rate limit or session"}`);
   }
 
   /* ---------- F&O: PCR + OI build-up (Angel One derivatives market-data APIs) ---------- */
