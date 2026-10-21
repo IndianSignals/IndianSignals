@@ -109,7 +109,8 @@ export class AngelMarketData implements MarketData {
   private loginAt = 0;
   private loginInflight: Promise<void> | null = null;
   private tokens = new Map<string, { exch: string; token: string }>();
-  private masterLoaded = false;
+    private masterLoaded = false;
+  private mcx = new Map<string, { token: string; symbol: string; expiry: number }[]>();
   private quoteCache = new Map<string, { at: number; q: Record<string, unknown> }>();
 
   constructor(private readonly timeoutMs = 10_000, private readonly fetchFn: typeof fetch = fetch) {
