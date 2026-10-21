@@ -12,6 +12,8 @@ type Extras = ReturnType<ReturnType<typeof createMarketData>["quoteExtras"]>;
 const STALE_MAX_MS = 60_000;   // an older price is never served as if it were live: the page shows "unavailable" instead of yesterday's price
 const cache = new Map<string, { at: number; data: PriceMap; q: Extras }>();
 
+const inflight = new Map<string, Promise<PriceMap>>();   // identical request already running => share it
+
 const router = Router();
 
 router.get("/prices", async (req, res) => {
