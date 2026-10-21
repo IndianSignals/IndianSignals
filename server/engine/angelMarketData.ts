@@ -301,7 +301,11 @@ export class AngelMarketData implements MarketData {
     }
     this.fnoByName = fno;
     this.masterAt = Date.now();
-    this.masterLoaded = true;
+        this.masterLoaded = true;
+    // Tell the owner the tokens of the scanned symbols once, so ANGEL_TOKENS can skip this big download after the next restart.
+    const want = (process.env.SCAN_SYMBOLS ?? "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+    const line = want.filter((s) => this.tokens.has(s)).map((s) => `${s}:${this.tokens.get(s)!.token}`).join(",");
+    if (line) console.log(`[angel] instrument master loaded. To skip this download on the next start, set ANGEL_TOKENS=${line}`);
   }
 
   /* ---------- F&O signals: futures + call/put (weekly and monthly) ---------- */
