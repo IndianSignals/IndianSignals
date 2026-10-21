@@ -88,10 +88,16 @@ router.get("/candles", async (req, res) => {
       data = hit.data;
     } else {
       // MAX_SAFE_INTEGER => still-forming candle is INCLUDED (needed for live chart)
-      data = await market.getCandles(symbol, timeframe as Timeframe, limit, Number.MAX_SAFE_INTEGER);
-      cache.set(key, { at: started, data });
+            let p = inflight.get(key);
+      if (!p) {
+        p = market.getCandles(symbol, timeframe as Timeframe, fetchLimit, Number.MAX_SAFE_INTEGER).finally(() => { inflight.delete(key); });
+        inflight.set(key, p);
+      }
+      data = await p;
+      cache.set(key, { at: Date.now(), data });
       if (cache.size > 200) cache.clear();
     }
+    data = data.slice(-limit);
     const body: ProviderResponse<Candle[]> = {
       data,
             meta: {
