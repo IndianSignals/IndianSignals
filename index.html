@@ -427,11 +427,20 @@ html,body{max-width:100%;overflow-x:hidden}
       return Promise.all(names.map(function (n, i) {
         if (!px[n]) return null;
         return (withDaily ? daily(n) : Promise.resolve([])).then(function (d) {
-          var last = px[n].v, t = d[d.length - 1], prev = d.length > 1 ? d[d.length - 2].c : (t ? t.o : last);
+                    // Day change = live price vs the PREVIOUS SESSION close. Angel's own quote gives that (qx.c). Fallback: daily candles,
+          // but a candle is only "today" if its IST date is today (early in the session today's daily candle may not exist yet).
+          var last = px[n].v, qx = px[n].q, t = d[d.length - 1];
+          var istDay = function (ms) { return new Date(ms + 19800000).toISOString().slice(0, 10); };
+          var todayC = !!t && istDay(t.t) === istDay(Date.now());
+          var prev = qx && qx.c > 0 ? qx.c : (todayC && d.length > 1 ? d[d.length - 2].c : (t ? t.c : last));
           var chg = prev > 0 ? (last - prev) / prev * 100 : 0;
-          return { symbol: syms[i], price: String(last), lastPrice: String(last), openPrice: String(t ? t.o : last), prevClosePrice: String(prev),
-            priceChangePercent: String(chg), highPrice: String(t ? Math.max(t.h, last) : last), lowPrice: String(t ? Math.min(t.l, last) : last),
-            volume: String(t ? t.v : 0), quoteVolume: String(t ? t.v * last : 0), swap: false };
+          var o = qx && qx.o > 0 ? qx.o : (todayC ? t.o : last);
+          var hi = qx && qx.h > 0 ? Math.max(qx.h, last) : (todayC ? Math.max(t.h, last) : last);
+          var lo = qx && qx.l > 0 ? Math.min(qx.l, last) : (todayC ? Math.min(t.l, last) : last);
+          var vol = qx ? qx.v : (todayC ? t.v : 0);
+          return { symbol: syms[i], price: String(last), lastPrice: String(last), openPrice: String(o), prevClosePrice: String(prev),
+            priceChangePercent: String(chg), highPrice: String(hi), lowPrice: String(lo),
+            volume: String(vol), quoteVolume: String(vol * last), swap: false };
         });
       })).then(function (r) { return r.filter(Boolean); });
     });
