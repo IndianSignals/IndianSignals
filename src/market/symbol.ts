@@ -17,9 +17,15 @@ const ALIASES: Readonly<Record<string, string>> = {
   NIFTYFINSERVICE: "FINNIFTY",
   FINNIFTY: "FINNIFTY",
   NIFTYMIDCAPSELECT: "MIDCPNIFTY",
-  MIDCPNIFTY: "MIDCPNIFTY",
+    MIDCPNIFTY: "MIDCPNIFTY",
+  SENSEX: "SENSEX",
+  BSESENSEX: "SENSEX",
+  CRUDE: "CRUDEOIL",
+  CRUDEOIL: "CRUDEOIL",
+  NATGAS: "NATURALGAS",
+  NATURALGAS: "NATURALGAS",
 };
-const INDICES: ReadonlySet<string> = new Set(["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"]);
+const INDICES: ReadonlySet<string> = new Set(["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX"]);
 
 export function normalizeSymbol(raw: string | null | undefined): string | null {
   if (!raw) return null;
