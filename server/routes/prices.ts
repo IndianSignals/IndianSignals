@@ -31,13 +31,13 @@ router.get("/prices", async (req, res) => {
     const data = await md.lastPrices(wanted);
     const q = md.quoteExtras(wanted);
     if (Object.keys(data).length === 0) throw new Error("no prices returned");
-    cache.set(key, { at: Date.now(), data });
+    cache.set(key, { at: Date.now(), data, q });
     if (cache.size > 100) cache.clear();
-    res.json({ data, meta: { sourceExchange: "angelone", timestamp: Date.now() } });
+    res.json({ data, q, meta: { sourceExchange: "angelone", timestamp: Date.now() } });
   } catch (err) {
     console.error("prices error:", err);
-    if (hit) {
-      res.json({ data: hit.data, meta: { sourceExchange: "angelone", timestamp: hit.at, stale: true } });
+        if (hit && Date.now() - hit.at <= STALE_MAX_MS) {
+      res.json({ data: hit.data, q: hit.q, meta: { sourceExchange: "angelone", timestamp: hit.at, stale: true } });
       return;
     }
     const pe = err instanceof ProviderError ? err : null;
