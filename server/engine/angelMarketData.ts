@@ -503,6 +503,19 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
     return out;
   }
 
+  /** Today's reference numbers from the same Angel quote: previous close (c), open, high, low and day volume. Reads the quote cache that lastPrices() just filled. */
+  quoteExtras(symbols: string[]): Record<string, { c: number; o: number; h: number; l: number; v: number }> {
+    const n = (v: unknown): number => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+    const out: Record<string, { c: number; o: number; h: number; l: number; v: number }> = {};
+    for (const s of symbols) {
+      const hit = this.quoteCache.get(s);
+      if (!hit || Date.now() - hit.at > 15_000) continue;
+      const c = n(hit.q.close);
+      if (c > 0) out[s] = { c, o: n(hit.q.open), h: n(hit.q.high), l: n(hit.q.low), v: n(hit.q.tradeVolume) };
+    }
+    return out;
+  }
+
   /** One Angel quote call for many symbols (up to 50 tokens per request). */
   private async quoteMany(symbols: string[]): Promise<Map<string, Record<string, unknown>>> {
     const out = new Map<string, Record<string, unknown>>();
