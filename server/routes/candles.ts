@@ -114,7 +114,7 @@ router.get("/candles", async (req, res) => {
     console.error("candles error:", err);
     const stale = cache.get(key);
         if (stale) {
-      res.json({ data: stale.data, meta: { sourceExchange: "angelone", symbol, timestamp: Date.now(), timeframe: timeframe as Timeframe, dataQuality: { status: "stale", ageMs: Date.now() - stale.at }, latencyMs: Date.now() - started } });
+      res.json({ data: stale.data.slice(-limit), meta: { sourceExchange: "angelone", symbol, timestamp: Date.now(), timeframe: timeframe as Timeframe, dataQuality: { status: "stale", ageMs: Date.now() - stale.at }, latencyMs: Date.now() - started } });
       return;
     }
     res.status(502).json({ error: { code: "upstream_error", message: "Market data provider unavailable" } });
