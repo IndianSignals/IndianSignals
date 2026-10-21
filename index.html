@@ -2456,19 +2456,35 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
     });
   }
 
+  function buildStatic() {
+    const html = COINS.map(s => '<span class="cg-ticker__item" data-sym="' + s + '"><b>' + s +
+      '</b><span class="cg-ticker__price">…</span><span class="cg-ticker__chg"></span></span>').join("");
+    track.innerHTML = html + html; // duplicate for seamless loop
+    built = true;
+  }
+  let busy = false, fails = 0, timer = 0;
+  function schedule(ms) { clearTimeout(timer); timer = setTimeout(load, ms); }
   async function load() {
+    if (busy) return;
+    if (document.hidden) { schedule(10000); return; }
+    busy = true;
     try {
       const r = await fetch(API);
       if (!r.ok) throw new Error(r.status);
       const data = await r.json();
-      if (!built) build(data);
+      if (!Array.isArray(data) || !data.length) throw new Error("empty");
       update(data);
+      fails = 0;
     } catch (e) {
-      if (!built) track.innerHTML = '<span class="cg-ticker__loading">Prices unavailable</span>';
+      fails++;   // keep the last prices on screen, just retry sooner
+    } finally {
+      busy = false;
+      schedule(fails ? Math.min(30000, 3000 * fails) : 10000);
     }
   }
+  buildStatic();
   load();
-  setInterval(load, 10000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) schedule(300); });
 })();
 </script>
 <script>
