@@ -2647,7 +2647,7 @@ var bd = $("posCalcBackdrop");
             var res = null, hosts = ["https://data-api.binance.vision", "https://api.binance.com", "https://api1.binance.com", "https://api.binance.us"];
       for (var hi = 0; hi < 1 && !(res && res.ok); hi++) { try { res = await fetch(hosts[hi] + "/api/v3/klines?symbol=" + encodeURIComponent(sym) + "&interval=" + tf + "&limit=300"); } catch (e2) { res = null; } }
       if (!res) throw new Error("network");
-      if (!res.ok) throw new Error("HTTP " + res.status);
+      if (!res.ok) { var eb = null; try { eb = await res.json(); } catch (e3) {} throw new Error((eb && (eb.msg || (eb.error && eb.error.message))) || ("HTTP " + res.status)); }
       var k = (await res.json()).map(function (x) { return { t: x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5] }; });
       if (k.length < 60) throw new Error("not enough candles");
       if (my !== seq || sym !== curSym()) return;           // symbol changed while loading
