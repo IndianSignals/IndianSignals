@@ -327,7 +327,8 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
     }
     if (rows.length === 0) throw new Error("Instrument master parsed 0 rows");
     const nowMs = Date.now();
-    const fno = new Map<string, FnoContract[]>();
+        const fno = new Map<string, FnoContract[]>();
+    const mcx = new Map<string, { token: string; symbol: string; expiry: number }[]>();
     for (const r of rows) {
       if (r.exch_seg === "NFO") {   // live futures + options (next 75 days) for the F&O signals
         const c = parseFnoRow(r, nowMs);
