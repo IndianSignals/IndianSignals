@@ -101,7 +101,7 @@ export async function fetchMarketSnapshot(
 
 export async function fetchCandles(symbol: string, timeframe: Timeframe, limit: number, signal: AbortSignal): Promise<Candle[]> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 12_000);
+  const timer = setTimeout(() => ctrl.abort(), 30_000);
   const onAbort = (): void => ctrl.abort();
   signal.addEventListener("abort", onAbort, { once: true });
   try {
