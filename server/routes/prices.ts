@@ -8,7 +8,9 @@ const TTL_MS = 3000;
 const MAX_SYMBOLS = 50;
 
 type PriceMap = Record<string, number>;
-const cache = new Map<string, { at: number; data: PriceMap }>();
+type Extras = ReturnType<ReturnType<typeof createMarketData>["quoteExtras"]>;
+const STALE_MAX_MS = 60_000;   // an older price is never served as if it were live: the page shows "unavailable" instead of yesterday's price
+const cache = new Map<string, { at: number; data: PriceMap; q: Extras }>();
 
 const router = Router();
 
