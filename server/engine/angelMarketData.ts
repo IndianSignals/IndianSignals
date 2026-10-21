@@ -33,7 +33,8 @@ const FIXED: Record<string, { exch: string; token: string }> = {
   NIFTY: { exch: "NSE", token: "99926000" },
   BANKNIFTY: { exch: "NSE", token: "99926009" },
   FINNIFTY: { exch: "NSE", token: "99926037" },
-  MIDCPNIFTY: { exch: "NSE", token: "99926074" },
+    MIDCPNIFTY: { exch: "NSE", token: "99926074" },
+  SENSEX: { exch: "BSE", token: "99919000" },
 };
 
 const toNum = (v: unknown): number => {
