@@ -109,7 +109,7 @@ async function guardEntry(input: FinalSignal, tf: Timeframe, deps: EngineDeps, n
         // INDEX_FILTER (old name BTC_FILTER): "strict" = stocks trade only WITH the NIFTY trend (unclear NIFTY = no entries),
   // "true" = block only when NIFTY is against, "soft" = score penalty, "false" = off
   const btcMode = indexFilterMode(process.env);
-  const isStock = signal.symbol !== BENCHMARK_SYMBOL;
+  const isStock = signal.symbol !== BENCHMARK_SYMBOL && !isMcxSymbol(signal.symbol);   // commodities do not follow the NIFTY trend
   const against = btc !== 0 && isStock && (signal.direction === "LONG" ? -1 : 1) === btc;
   if (btcMode === "strict" && isStock && btc === 0) {
     reason = "NIFTY trend is unclear, stock entries are paused";
