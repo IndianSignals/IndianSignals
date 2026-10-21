@@ -10,6 +10,8 @@ export const DEFAULT_SYMBOL = "NIFTY";
 
 /** Index names people type -> the symbol the server knows. Compared after removing spaces, "_" and "-". */
 const ALIASES: Readonly<Record<string, string>> = {
+  MM: "M&M",
+  BAJAJAUTO: "BAJAJ-AUTO",
   NIFTY50: "NIFTY",
   NIFTY: "NIFTY",
   NIFTYBANK: "BANKNIFTY",
