@@ -2670,7 +2670,7 @@ var bd = $("posCalcBackdrop");
       var final = s && status(s, a.price)[2];
       if (!s || s.tf !== tf || final || Date.now() - s.created > 12 * 3600e3) { s = build(sym, tf, a); saveSig(s); }
       window.__userPair = sym;                              // stops the old backend script overwriting our values
-      render(s, a, sym);
+      render(s, a, sym); if (window.__CGF) window.__CGF[sym] = 0;
         } catch (e) { console.error("CG engine:", e);
           var _m = String(e && e.message || e);
           if (my === seq && sym !== "NIFTYUSDT" && !/network|Failed to fetch|abort/i.test(_m)) {
