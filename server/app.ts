@@ -11,6 +11,7 @@ import { getMongoDB } from "./db/mongodb.js";
 import signalsRouter from "./routes/signals.js";
 import candlesRouter from "./routes/candles.js";
 import pricesRouter from "./routes/prices.js";
+import pushRouter from "./routes/push.js";
 
 import { createEngineRouter } from "./routes/engine.js";
 import { createBacktestRouter } from "./engine/backtestReport.js";
