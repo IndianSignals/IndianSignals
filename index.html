@@ -8305,7 +8305,7 @@ X.badge = badge; X.notes = notes;
     var c3 = (ls != null && (d > 0 ? ls >= 1 : ls <= 1) ? 1 : 0) + (fr != null && Math.abs(fr) < 0.0005 ? 1 : 0) + (oi != null && oi > 0 ? 1 : 0);
     var okDer = S.perp ? c3 >= 2 : false;
     var dSup = (A.price - A.z.sup.hi) / A.price * 100, dRes = (A.z.res.lo - A.price) / A.price * 100;
-    var okLiq = isFinite(S.imb) ? S.imb * d > 0 : false;
+    var okLiq = Number.isFinite(S.imb) ? S.imb * d > 0 : false;
     var flags = [["Structure", okStruct], ["Volume", okVol], ["Derivatives", okDer], ["Liquidity", okLiq]];
     var yes = flags.filter(function (x) { return x[1]; }).map(function (x) { return x[0]; }), no = flags.filter(function (x) { return !x[1]; }).map(function (x) { return x[0]; });
     function set(i, ok, html) { var r = rows[i], ic = r.firstElementChild, tx = r.querySelector("div"), sc = r.querySelector(".rscore"); if (tx) tx.innerHTML = html; if (ic) ic.className = ok ? "up" : "down"; if (sc) { sc.textContent = ok ? "+" : "\u2212"; sc.className = "rscore " + (ok ? "up" : "down"); } }
@@ -8313,7 +8313,7 @@ X.badge = badge; X.notes = notes;
     set(1, okStruct, "<b>Trend + Structure</b><br>4H " + S.A4.st.t + ", 1H " + S.A1.st.t + ". 4H price " + (S.A4.price >= S.A4.e50 ? "above" : "below") + " EMA 50 (" + fp(S.A4.e50) + ").");
     set(2, okVol, "<b>Volume</b><br>" + A.vr.toFixed(2) + "\u00D7 20-bar average, taker CVD " + (isFinite(cvd) ? (cvd >= 0 ? "+" : "\u2212") + usd(cvd) : "n/a") + " (" + S.w.l + ").");
     set(3, okDer, "<b>Derivatives</b><br>" + (S.perp ? "L/S " + (ls == null ? "n/a" : ls.toFixed(2)) + ", funding " + (fr == null ? "n/a" : (fr * 100).toFixed(4) + "%") + ", OI " + (oi == null ? "n/a" : pc(oi)) + " (" + S.w.l + ")." : "No OKX perpetual for this coin."));
-    set(4, okLiq, "<b>Liquidity</b><br>Support " + zt(A.z.sup) + " (" + dSup.toFixed(2) + "% below), resistance " + zt(A.z.res) + " (" + dRes.toFixed(2) + "% above). Order book " + (isFinite(S.imb) ? (S.imb >= 0 ? "bid" : "ask") + " heavy " + Math.abs(S.imb * 100).toFixed(0) + "%." : "n/a."));
+    set(4, okLiq, "<b>Liquidity</b><br>Support " + zt(A.z.sup) + " (" + dSup.toFixed(2) + "% below), resistance " + zt(A.z.res) + " (" + dRes.toFixed(2) + "% above). Order book " + (Number.isFinite(S.imb) ? (S.imb >= 0 ? "bid" : "ask") + " heavy " + Math.abs(S.imb * 100).toFixed(0) + "%." : "n/a."));
     var inv = rows[5].querySelector("div");
     if (inv) inv.innerHTML = "<b>Invalidating Factors</b><br>" + (d > 0 ? "Break below " + fp(A.z.sup.lo) + " or loss of 4H uptrend (close under 4H EMA 50 " + fp(S.A4.e50) + ")." : "Break above " + fp(A.z.res.hi) + " or loss of 4H downtrend (close over 4H EMA 50 " + fp(S.A4.e50) + ").");
     stamp("reasoning-panel", stampTxt);
