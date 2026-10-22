@@ -81,6 +81,17 @@ router.get("/market/snapshot", async (req, res) => {
   }
 });
 
+router.get("/market/depth", async (req, res) => {
+  const parsed = z.object({ symbol: z.string().trim().toUpperCase().regex(SYMBOL_RE) }).safeParse(req.query);
+  if (!parsed.success) { res.status(400).json({ error: { code: "invalid_query", message: "Invalid symbol" } }); return; }
+  try {
+    res.json({ data: await market.getDepth(parsed.data.symbol), meta: { sourceExchange: "angelone", symbol: parsed.data.symbol, timestamp: Date.now() } });
+  } catch (err) {
+    console.error("depth error:", err);
+    res.status(502).json({ error: { code: "upstream_error", message: "Market data provider unavailable" } });
+  }
+});
+
 router.get("/candles", async (req, res) => {
   const parsed = querySchema.safeParse(req.query);
   if (!parsed.success) {
