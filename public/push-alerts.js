@@ -92,7 +92,7 @@
     unlock(); setMsg("Sending...");
     try {
       var sub = await ensure(), r = await post("/push/test", { endpoint: sub.endpoint });
-      setMsg(r.ok ? "Sent. Lock the phone and wait a few seconds." : r.status === 429 ? "Wait 15 seconds." : "Failed (HTTP " + r.status + ")");
+      setMsg(r.ok ? "Sent. Lock the phone and wait a few seconds." : r.status === 429 ? "Wait 15 seconds." : "Failed (HTTP " + r.status + ")", true);
     } catch (e) { setMsg(e && e.message ? e.message : "Failed"); }
   }
   async function disable() {
