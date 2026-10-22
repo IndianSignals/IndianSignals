@@ -2384,7 +2384,9 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
     window.__userPair=sym;
     var live=document.getElementById("liveSymbol");
     if(live) live.textContent=sym.replace(/USDT$/,"");
-    var u=new URL(location.href); u.searchParams.set("symbol",sym);
+        ["liveScore","liveEntry","livePrice","liveStop","liveStatus"].forEach(function(id){var e=document.getElementById(id); if(e) e.textContent="\u2014";});
+    var ln=document.getElementById("liveScoreNote"); if(ln) ln.textContent="Loading\u2026";
+    var u=new URL(location.href); u.searchParams.set("symbol",sym.replace(/USDT$/,""));
     history.replaceState(history.state,"",u);
     var inp=document.getElementById("pairSearch");
     if(inp){ inp.value=""; inp.blur(); }
