@@ -8329,9 +8329,8 @@ X.badge = badge; X.notes = notes;
     var sym = symbol(), tf = tfNow(), base = sym.replace(/USDT$/, ""), swap = base + "-USDT-SWAP", spot = base + "-USDT", w = win(tf), perp = true, inst = swap;
     lastKey = sym + tf;
     try {
-      var kE;
-      try { kE = await candles(swap, tf, 300); }
-      catch (e) { if (e.code !== "51001") throw e; perp = false; inst = spot; kE = await candles(spot, tf, 300); }
+            var kE;
+      perp = false; inst = spot; kE = await candles(spot, tf, 300);   // NSE: no perpetual swaps
       var R = await Promise.allSettled([
         candles(inst, "4h", 300), candles(inst, "1h", 300),
         perp ? api("/public/funding-rate", { instId: swap }) : Promise.reject(),
