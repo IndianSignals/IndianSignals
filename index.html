@@ -2358,10 +2358,10 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
   document.body.appendChild(drop);
 
   function norm(v){
-    var x=(v||"").toUpperCase().replace(/[\s\-_\/]/g,"");
-    if(!x||x==="USDT") return null;
-    if(!/USDT$/.test(x)) x+="USDT";
-    return /^[A-Z0-9]{5,20}$/.test(x)?x:null;
+    var x=(v||"").toUpperCase().replace(/^NSE:/,"").replace(/\.NS$/,"").replace(/-EQ$/,"").replace(/[\s\-_\/&]/g,"").replace(/USDT$/,"");
+    var AL={NIFTY50:"NIFTY",NIFTYBANK:"BANKNIFTY",NIFTYFINSERVICE:"FINNIFTY",BSESENSEX:"SENSEX",CRUDE:"CRUDEOIL",NATGAS:"NATURALGAS"};
+    x=AL[x]||x;
+    return /^[A-Z0-9]{1,20}$/.test(x)?x+"USDT":null;
   }
   function hide(){ drop.style.display="none"; }
   function show(inp){
