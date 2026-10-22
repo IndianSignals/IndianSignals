@@ -6,6 +6,12 @@ import { DEFAULT_SYMBOL, normalizeSymbol } from "./symbol.js";
 import { MarketSymbolView } from "./MarketSymbolView.js";
 
 /** URL contract (docs/routes.md: `/market/:symbol?tf=`): here `?page=market&symbol=RELIANCE&tf=1H`. */
+/** Chart ka default timeframe = Settings wala (signal engine ke saath match). */
+const settingsTf = (): Timeframe => {
+  const w = window as unknown as { CGS?: { get(): { tf?: string } } };
+  const m: Record<string, Timeframe> = { "1m": "1m", "5m": "5m", "15m": "15m", "30m": "30m", "1h": "1H", "4h": "4H", "1d": "1D" };
+  return m[String(w.CGS?.get().tf ?? "").toLowerCase()] ?? DEFAULT_TIMEFRAME;
+};
 const readUrl = (): { raw: string | null; tf: Timeframe } => {
   const p = new URLSearchParams(window.location.search);
   const tf = p.get("tf");
