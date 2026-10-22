@@ -27,7 +27,7 @@
   function css() {
     var s = document.createElement("style");
     s.textContent =
-      "##isBell{position:fixed;right:6px;bottom:84px;opacity:.8;z-index:99998;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:#111827;color:#fff;font-size:22px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer}" +
+      "#isBell{position:fixed;right:6px;bottom:84px;opacity:.8;z-index:99998;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:#111827;color:#fff;font-size:22px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer}" +
       "#isBell.on{background:#16a34a}" +
       "#isPanel{position:fixed;right:14px;bottom:140px;z-index:99998;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:12px;width:230px;font:14px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none}" +
       "#isPanel button{display:block;width:100%;margin:6px 0 0;padding:9px;border-radius:8px;border:0;background:#2563eb;color:#fff;font-size:14px}" +
