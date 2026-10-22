@@ -85,7 +85,7 @@
       if (p !== "granted") throw new Error("Notifications are blocked. Allow them in browser site settings.");
       await ensure();
       try { localStorage.setItem(KEY, "1"); } catch (e) { /* ignore */ }
-      render(true); setMsg("Done. Tap Send test alert."); beep(); buzz();
+      render(true); setMsg("Done. Alerts are ON.", true); beep(); buzz();
     } catch (e) { setMsg(e && e.message ? e.message : "Failed"); }
   }
   async function test() {
