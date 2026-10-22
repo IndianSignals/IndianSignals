@@ -15,7 +15,7 @@ const settingsTf = (): Timeframe => {
 const readUrl = (): { raw: string | null; tf: Timeframe } => {
   const p = new URLSearchParams(window.location.search);
   const tf = p.get("tf");
-  return { raw: p.get("symbol") || document.getElementById("liveSymbol")?.textContent?.trim() || DEFAULT_SYMBOL, tf: isTimeframe(tf) ? tf : DEFAULT_TIMEFRAME };
+  return { raw: p.get("symbol") || document.getElementById("liveSymbol")?.textContent?.trim() || DEFAULT_SYMBOL, tf: isTimeframe(tf) ? tf : settingsTf() };
 };
 
 export function MarketSymbolApp(): ReactElement | null {
