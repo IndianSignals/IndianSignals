@@ -2365,7 +2365,7 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
   }
   function hide(){ drop.style.display="none"; }
   function show(inp){
-    var q=inp.value.toUpperCase().replace(/[\s\-_\/]/g,"").replace(/USDT$/,"");
+       var q=inp.value.toUpperCase().replace(/[\s\-_\/]/g,"").replace(/USDT$/,"");
     var m=COINS.filter(function(c){return !q||c.indexOf(q)===0;});
     if(!m.length){ hide(); return; }
     drop.innerHTML=m.map(function(c){
