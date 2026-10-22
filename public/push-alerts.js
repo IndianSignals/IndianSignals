@@ -34,7 +34,13 @@
       "#isPanel button.red{background:#dc2626}#isPanel small{display:block;margin-top:8px;color:#9ca3af}";
     document.head.appendChild(s);
   }
-  function setMsg(t) { if (msg) msg.textContent = t || ""; }
+    var hideT = null;
+  function closePanel() { if (panel) panel.style.display = "none"; }
+  function setMsg(t, autoClose) {
+    if (msg) msg.textContent = t || "";
+    clearTimeout(hideT);
+    if (autoClose) hideT = setTimeout(closePanel, 2500);   // panel hides itself after the action
+  }
   function render(on) {
     btn.textContent = on ? "🔔" : "🔕"; btn.className = on ? "on" : "";
     btn.title = on ? "Signal alerts ON" : "Turn on signal alerts";
