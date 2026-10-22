@@ -2403,12 +2403,24 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
       go(first?first.dataset.c:e.target.value);
     } else if(e.key==="Escape") hide();
   });
-  document.addEventListener("pointerdown",function(e){
+    document.addEventListener("pointerdown",function(e){
     var it=e.target.closest&&e.target.closest(".pd-item");
-    if(it){ e.preventDefault(); go(it.dataset.c); return; }
+    if(it){ if(e.pointerType==="mouse"){ e.preventDefault(); go(it.dataset.c); } return; }
     if(e.target.id!=="pairSearch") hide();
   });
-  window.addEventListener("scroll",function(e){ if(e.target!==drop) hide(); },true);
+  document.addEventListener("click",function(e){
+    var it=e.target.closest&&e.target.closest(".pd-item");
+    if(it){ e.preventDefault(); go(it.dataset.c); }
+  });
+  var focusAt=0;
+  document.addEventListener("focusin",function(e){ if(e.target.id==="pairSearch") focusAt=Date.now(); });
+  window.addEventListener("scroll",function(e){
+    if(e.target===drop||(e.target.nodeType===1&&drop.contains(e.target))) return;
+    var inp=document.getElementById("pairSearch");
+    if(inp&&document.activeElement===inp){ if(Date.now()-focusAt>700) show(inp); return; }
+    hide();
+  },true);
+  window.addEventListener("resize",function(){ var inp=document.getElementById("pairSearch"); if(inp&&document.activeElement===inp) show(inp); });
 })();
 </script>
 <script>
