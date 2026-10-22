@@ -8244,9 +8244,11 @@ X.badge = badge; X.notes = notes;
     });
   }
   function book(inst) {
-    return api("/market/books", { instId: inst, sz: 20 }).then(function (r) {
-      var s = function (a) { return a.reduce(function (t, l) { return t + (+l[1]); }, 0); }, b = s(r[0].bids), a = s(r[0].asks);
-      return (b + a) > 0 ? (b - a) / (b + a) : NaN;
+        var n = String(inst).replace(/-USDT(-SWAP)?$/, "");
+    return fetch("/api/v1/market/snapshot?symbol=" + encodeURIComponent(NSE.dec(n)) + "&timeframe=1H").then(function (r) { return r.json(); }).then(function (b) {
+      var i = b && b.data && b.data.orderBook && b.data.orderBook.imbalance;
+      if (typeof i !== "number") throw new Error("no depth");
+      return i;
     });
   }
 
