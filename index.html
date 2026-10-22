@@ -1909,6 +1909,7 @@ document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>{
     const d=await r.json();
     const s=d.signals&&d.signals[0];
     if(!s||window.__userPair)return;
+    if(window.NSE&&NSE.LIST.indexOf(NSE.dec(s.symbol))<0)return;   // crypto/unknown symbol: keep NIFTY
     $("liveSymbol").textContent=s.symbol.replace(/USDT$/,"");
     $("liveSide").textContent=s.side;
     $("liveScore").textContent=s.score+" / 100";
