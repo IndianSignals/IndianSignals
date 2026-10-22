@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchCandles, fetchMarketSnapshot, type MarketSnapshotResponse } from "./marketApi.js";
 import type { CSSProperties, ReactElement } from "react";
 import type { Timeframe } from "../../shared/market.js";
