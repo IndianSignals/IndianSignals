@@ -48,6 +48,7 @@ async function tgPost(text: string): Promise<TgResult> {
 // One message at a time, with a small gap: Telegram allows about 1 message per second per chat and drops the rest (HTTP 429).
 let tgQueue: Promise<unknown> = Promise.resolve();
 export function tgSend(text: string): Promise<TgResult> {
+  pushFromTelegram(text);   // same event also goes to phones that enabled alerts on the website
   const run = tgQueue.then(() => tgPost(text), () => tgPost(text));
   tgQueue = run.then(() => sleep(tgTiming.gapMs), () => sleep(tgTiming.gapMs));
   return run;
