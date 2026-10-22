@@ -94,6 +94,26 @@ export interface MarketSymbolViewProps {
 export function MarketSymbolView({ symbol, rawSymbol, timeframe, onTimeframeChange }: MarketSymbolViewProps): ReactElement {
   const { status, candles: history, error, retry } = useMarketCandles(symbol, timeframe);
   const { candles, status: liveStatus } = useLiveCandles(symbol, timeframe, history, status === "ready", retry);
+  const failRef = useRef(0);
+  useEffect(() => { failRef.current = 0; }, [symbol]);
+  useEffect(() => {
+    if (!symbol || symbol === DEFAULT_SYMBOL) return;
+    const toDefault = (): void => {
+      const u = new URL(window.location.href);
+      u.searchParams.set("symbol", DEFAULT_SYMBOL);
+      window.history.replaceState(window.history.state, "", u);
+      const live = document.getElementById("liveSymbol");
+      if (live) live.textContent = DEFAULT_SYMBOL; // observers update chart + signal panel
+    };
+    if (status === "empty") { toDefault(); return; }
+    if (status === "error") {
+      failRef.current += 1;
+      if (failRef.current >= 2) { toDefault(); return; }
+      const t = window.setTimeout(retry, 2500);
+      return () => window.clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, symbol]);
   const baseHeight = useChartHeight();
   const [chartApi, setChartApi] = useState<MarketChartApi | null>(null);
   const [snapshot, setSnapshot] = useState<MarketSnapshotResponse | null>(null);
