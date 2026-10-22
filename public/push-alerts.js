@@ -100,8 +100,8 @@
       var reg = await navigator.serviceWorker.getRegistration(), sub = reg && await reg.pushManager.getSubscription();
       if (sub) { await post("/push/unsubscribe", { endpoint: sub.endpoint }).catch(function () {}); await sub.unsubscribe(); }
     } catch (e) { /* ignore */ }
-    try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
-    render(false);
+        try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+    render(false); closePanel();
   }
 
   /* ---------- start ---------- */
