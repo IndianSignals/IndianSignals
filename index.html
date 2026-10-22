@@ -452,6 +452,9 @@ var LIST = ["NIFTY","BANKNIFTY","FINNIFTY","MIDCPNIFTY","SENSEX","CRUDEOIL","NAT
     var fail = function (e) { return J({ code: -1, msg: String(e && e.message || e) }, 502); };
     try {
       if (/\/klines$/.test(p)) return klines(g("symbol"), g("interval"), g("limit")).then(J, fail);
+            if (/\/depth$/.test(p)) {
+        return api("/market/depth?symbol=" + encodeURIComponent(dec(g("symbol")))).then(function (b) { return J(b.data || { bids: [], asks: [] }); }, fail);
+      }
       if (/\/ticker\/(24hr|price)$/.test(p)) {
         var many = g("symbols"), one = g("symbol"), list = many ? JSON.parse(many) : one ? [one] : [];
         return rows(list, /24hr$/.test(p)).then(function (r) {
