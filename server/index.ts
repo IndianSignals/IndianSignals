@@ -12,6 +12,7 @@ const config = loadConfig();
 
 const db = await connectMongoDB();
 await ensureAdminUser(db);
+await initPush(db).catch((e: unknown) => console.warn(`[push] disabled: ${e instanceof Error ? e.message : String(e)}`));
 
 const store = new MongoSignalStore(db);
 await store.ensureIndexes();
