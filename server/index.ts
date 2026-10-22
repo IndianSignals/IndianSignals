@@ -6,6 +6,7 @@ import { MongoSignalStore } from "./engine/mongoStore.js";
 import { EngineService } from "./engine/scanner.js";
 import { MongoSettingsRepo, SettingsService } from "./engine/settingsStore.js";
 import { MongoPresetRepo, PresetService } from "./engine/presetStore.js";
+import { initPush } from "./engine/webpush.js";
 
 const config = loadConfig();
 
