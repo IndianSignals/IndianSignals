@@ -38,5 +38,5 @@ export function MarketSymbolApp(): ReactElement | null {
   }, []);
 
   if (!url.raw) return null; // no symbol in the URL: the existing market page is left exactly as it was
-  return <MarketSymbolView symbol={normalizeSymbol(url.raw)} rawSymbol={url.raw} timeframe={url.tf} onTimeframeChange={onTimeframeChange} />;
+  return <MarketSymbolView symbol={normalizeSymbol(url.raw) ?? DEFAULT_SYMBOL} rawSymbol={url.raw} timeframe={url.tf} onTimeframeChange={onTimeframeChange} />;
 }
