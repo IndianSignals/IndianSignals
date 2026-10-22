@@ -3340,7 +3340,7 @@ var bd = $("posCalcBackdrop");
   // ---------- render: order book ----------
   function renderOb(base, fresh) {
     var p = $("order-panel"); if (!p) return;
-    var o = fresh ? D.ob : null, none = !fresh ? "\u2026" : "n/a";
+    var o = fresh ? D.ob : null, none = !fresh ? "\u2026" : (/^(NIFTY|BANKNIFTY|FINNIFTY|MIDCPNIFTY|SENSEX)(USDT)?$/.test(String(D.sym || "")) ? "Index: no depth" : "n/a");
     if (!o) {
       card(p, "Spread", none, "", "Best bid / ask"); card(p, "Imbalance", none, "", "Bid vs ask volume"); card(p, "Depth", none, "", "Within visible range");
       p.querySelectorAll(".depth-side").forEach(function (s) { delete s.dataset.sig; Array.prototype.slice.call(s.querySelectorAll(".depth-row")).forEach(function (r) { r.remove(); }); });
