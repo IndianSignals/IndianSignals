@@ -507,6 +507,15 @@ throw new ProviderError("UPSTREAM", "RETRIES_EXHAUSTED", `Angel One request fail
     };
   }
 
+    /** Raw depth levels (Angel gives 5 per side) for the Order Book tab. */
+  async getDepth(symbol: string): Promise<{ bids: [number, number][]; asks: [number, number][] }> {
+    const q = await this.quote(symbol);
+    const d = (q.depth ?? {}) as { buy?: { price?: number; quantity?: number }[]; sell?: { price?: number; quantity?: number }[] };
+    const lv = (a?: { price?: number; quantity?: number }[]): [number, number][] =>
+      (a ?? []).map((l): [number, number] => [Number(l.price ?? 0), Number(l.quantity ?? 0)]).filter((x) => x[0] > 0 && x[1] > 0);
+    return { bids: lv(d.buy), asks: lv(d.sell) };
+  }
+
   /** NSE has no funding / long-short data. Real here: order-book imbalance, plus F&O PCR and OI build-up for stocks that have F&O. */
   async getDerivatives(symbol: string, _tf: Timeframe): Promise<DerivativesInput> {
     let bookImbalance: number | null = null;
