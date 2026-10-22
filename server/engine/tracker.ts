@@ -19,8 +19,14 @@ export const tgTiming = { gapMs: 1100, retryMs: 1000 };
 const sleep = (ms: number): Promise<void> => (ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve());
 
 async function tgPost(text: string): Promise<TgResult> {
-  const token = process.env.TELEGRAM_BOT_TOKEN ?? "", chat = process.env.TELEGRAM_CHAT_ID ?? "";
-  if (!token || !chat) return "off";
+  const token = process.env.TELEGRAM_BOT_TOKEN ?? "";
+  const chats = (process.env.TELEGRAM_CHAT_ID ?? "").split(",").map((c) => c.trim()).filter(Boolean);   // several chats: TELEGRAM_CHAT_ID=123456789,-1002848852465
+  if (!token || chats.length === 0) return "off";
+  const results = await Promise.all(chats.map((c) => tgPostTo(text, token, c)));
+  return results.includes("sent") ? "sent" : "failed";
+}
+
+async function tgPostTo(text: string, token: string, chat: string): Promise<TgResult> {
   let plain = false;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
