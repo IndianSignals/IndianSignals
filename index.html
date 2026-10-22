@@ -2612,7 +2612,7 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
 
     // Signal Summary (center card + right panel)
     panels("Signal Summary").forEach(function (p) {
-      var btn = p.querySelector(".btnrow button"); if (btn) { btn.textContent = s.side; btn.className = long ? "buy" : "sell"; }
+      var btn = p.querySelector(".btnrow button"); if (btn) { btn.textContent = score < 60 ? "NO SIGNAL" : s.side; btn.className = long ? "buy" : "sell"; btn.style.opacity = score < 60 ? ".55" : ""; }
       put(p, "Direction", s.side, dirCls);
       put(p, "Setup Score", score + " / 100", dirCls);
       var bar = p.querySelector(".scoreline i"); if (bar) bar.style.width = Math.min(100, score) + "%";
