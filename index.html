@@ -2600,7 +2600,7 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
     // header
     var coin = $("liveCoin"); if (coin && coin.textContent !== base[0]) coin.textContent = base[0];
     txt("liveSymbol", base + "");
-    var pill = $("liveSide"); if (pill) { pill.textContent = s.side; pill.style.cssText = long ? "" : "background:#3a0d16;color:#ff6b7d;border-color:#7a2230"; }
+    var pill = $("liveSide"); if (pill) { pill.textContent = score < 60 ? "NO SIGNAL" : s.side; pill.style.cssText = long ? "" : "background:#3a0d16;color:#ff6b7d;border-color:#7a2230"; }
     var sb = $("sigBox"); if (sb) sb.innerHTML = "Signal ID: CGS-" + new Date(s.created).toISOString().slice(0, 10).replace(/-/g, "") + "-" + base +
       "<br>Created: " + ist(s.created) + " (IST)<br>Updated: " + ist(now) + " (IST) &middot; Age: " + age(now - s.created);
     txt("liveScore", score + " / 100"); txt("liveScoreNote", grade(score));
