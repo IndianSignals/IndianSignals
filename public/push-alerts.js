@@ -111,6 +111,7 @@
     panel = document.createElement("div"); panel.id = "isPanel";
     document.body.appendChild(panel); document.body.appendChild(btn);
     btn.onclick = function () { unlock(); panel.style.display = panel.style.display === "block" ? "none" : "block"; };
+    document.addEventListener("click", function (e) { if (panel.style.display === "block" && !panel.contains(e.target) && e.target !== btn) closePanel(); });   // tap outside = close
     var on = false; try { on = localStorage.getItem(KEY) === "1" && supported && Notification.permission === "granted"; } catch (e) { on = false; }
     render(on);
     if (on) ensure().catch(function () { /* will retry next visit */ });   // keeps the server list fresh
