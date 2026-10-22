@@ -8271,7 +8271,7 @@ X.badge = badge; X.notes = notes;
     put("#technical-panel .data-grid",
       card("Market Structure", A.st.t, cl(A.st.v), "4H " + S.A4.st.t + " \u00B7 1H " + S.A1.st.t) +
       card("Momentum", bull ? "Bullish" : bear ? "Bearish" : "Neutral", cl(momV), "RSI " + A.rsi.toFixed(1) + " \u00B7 MACD hist " + (A.hist >= 0 ? "+" : "") + fp(A.hist)) +
-      card("Volume", volUp ? "Increasing" : "Fading", volUp ? "up" : "down", A.vr.toFixed(2) + "\u00D7 20-bar avg"));
+      card("Volume", volUp ? "Increasing" : "Fading", volUp ? "up" : "down", (isFinite(A.vr) ? A.vr.toFixed(2) + "\u00D7" : "n/a") + " 20-bar avg"));
     put("#technical-panel .detail-list",
       row("Support Zone", "Nearest swing-low demand (" + tf + ")", zt(A.z.sup) + " <span class='neutral'>(" + ((A.z.sup.hi - A.price) / A.price * 100).toFixed(2) + "%)</span>") +
       row("Resistance Zone", "Nearest swing-high supply (" + tf + ")", zt(A.z.res) + " <span class='neutral'>(+" + ((A.z.res.lo - A.price) / A.price * 100).toFixed(2) + "%)</span>") +
@@ -8311,7 +8311,7 @@ X.badge = badge; X.notes = notes;
     function set(i, ok, html) { var r = rows[i], ic = r.firstElementChild, tx = r.querySelector("div"), sc = r.querySelector(".rscore"); if (tx) tx.innerHTML = html; if (ic) ic.className = ok ? "up" : "down"; if (sc) { sc.textContent = ok ? "+" : "\u2212"; sc.className = "rscore " + (ok ? "up" : "down"); } }
     set(0, yes.length >= 3, "<b>Primary Reason</b><br>" + yes.length + "/4 checks agree with " + sideTxt + (yes.length ? ": " + yes.join(", ") : "") + (no.length ? ". Against: " + no.join(", ") : "") + ".");
     set(1, okStruct, "<b>Trend + Structure</b><br>4H " + S.A4.st.t + ", 1H " + S.A1.st.t + ". 4H price " + (S.A4.price >= S.A4.e50 ? "above" : "below") + " EMA 50 (" + fp(S.A4.e50) + ").");
-    set(2, okVol, "<b>Volume</b><br>" + A.vr.toFixed(2) + "\u00D7 20-bar average, taker CVD " + (isFinite(cvd) ? (cvd >= 0 ? "+" : "\u2212") + usd(cvd) : "n/a") + " (" + S.w.l + ").");
+    set(2, okVol, "<b>Volume</b><br>" + (isFinite(A.vr) ? A.vr.toFixed(2) + "\u00D7" : "n/a") + " 20-bar average, taker CVD " + (isFinite(cvd) ? (cvd >= 0 ? "+" : "\u2212") + usd(cvd) : "n/a") + " (" + S.w.l + ").");
     set(3, okDer, "<b>Derivatives</b><br>" + (S.perp ? "L/S " + (ls == null ? "n/a" : ls.toFixed(2)) + ", funding " + (fr == null ? "n/a" : (fr * 100).toFixed(4) + "%") + ", OI " + (oi == null ? "n/a" : pc(oi)) + " (" + S.w.l + ")." : "No OKX perpetual for this coin."));
     set(4, okLiq, "<b>Liquidity</b><br>Support " + zt(A.z.sup) + " (" + dSup.toFixed(2) + "% below), resistance " + zt(A.z.res) + " (" + dRes.toFixed(2) + "% above). Order book " + (Number.isFinite(S.imb) ? (S.imb >= 0 ? "bid" : "ask") + " heavy " + Math.abs(S.imb * 100).toFixed(0) + "%." : "n/a."));
     var inv = rows[5].querySelector("div");
