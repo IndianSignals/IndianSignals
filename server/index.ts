@@ -43,8 +43,7 @@ const engine = new EngineService(
 );
 
 engine.startTracker(10_000);
-startDailySummary(store);
-
+startDailySummary(store, db);
 const selfUrl = process.env.RENDER_EXTERNAL_URL;
 if (selfUrl) {
   setInterval(() => {
