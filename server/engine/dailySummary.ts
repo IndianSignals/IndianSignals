@@ -143,7 +143,7 @@ async function releaseDay(db: Db | undefined, ymd: string): Promise<void> {
 export function startDailySummary(store: SignalStore, db?: Db): void {
   if ((process.env.DAILY_SUMMARY ?? "true").toLowerCase() === "false") return;
   const m = /^(\d{1,2}):(\d{2})$/.exec(process.env.DAILY_SUMMARY_TIME ?? "08:40");
-  const at = m ? Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2])) : 08 * 60 + 40;
+  const at = m ? Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2])) : 8 * 60 + 40;
     let lastSent = "";
   let fails = 0;
   if ((process.env.DAILY_SUMMARY_TEST ?? "").toLowerCase() === "true") void sendDailySummary(store).catch((e: unknown) => console.warn("[daily-summary] test failed:", e));
