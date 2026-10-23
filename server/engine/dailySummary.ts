@@ -71,9 +71,9 @@ export function prevTradingDay(now: number = Date.now()): number {
 export function buildDailySummary(all: FinalSignal[], now: number = Date.now(), reportDay: number = prevTradingDay(now)): string {
   const day = istParts(reportDay).ymd;
   const rows = signalsOfDay(all, day).map(classify);
-  const head = `📊 <b>DAILY SIGNAL REPORT</b>\n🗓 ${dateLabel(now)} · Market closed 🔔\n${LINE}`;
+  const head = `📊 <b>DAILY SIGNAL REPORT</b>\n🗓 ${dateLabel(reportDay)} · Previous session recap 🌅\n${LINE}`;
   const foot = `\n${LINE}\n⚠️ <i>Not financial advice. Results are measured on signal levels, not actual orders.</i>`;
-  if (rows.length === 0) return `${head}\n\n😴 <b>Aaj koi signal nahi bana.</b>\nNo-trade days are part of the game — capital safe hai.${foot}`;
+  if (rows.length === 0) return `${head}\n\n😴 <b>Us din koi signal nahi bana.</b>\nNo-trade days are part of the game — capital safe hai.${foot}`;
 
   const count = (r: Result): number => rows.filter((x) => x.result === r).length;
   const wins = count("WIN"), losses = count("LOSS"), be = count("BE"), open = count("RUNNING"), pend = count("PENDING"), skip = count("SKIPPED");
@@ -117,9 +117,9 @@ export function buildDailySummary(all: FinalSignal[], now: number = Date.now(), 
   return lines.join("\n");
 }
 
-export async function sendDailySummary(store: SignalStore, now: number = Date.now()): Promise<string> {
+export async function sendDailySummary(store: SignalStore, now: number = Date.now(), reportDay: number = prevTradingDay(now)): Promise<string> {
   const all = await store.listHistory({ limit: 500 });
-  const text = buildDailySummary(all, now);
+  const text = buildDailySummary(all, now, reportDay);
   const res = await tgSend(text);
   console.log(`[daily-summary] ${res}`);
   return res;
@@ -142,8 +142,8 @@ async function releaseDay(db: Db | undefined, ymd: string): Promise<void> {
 
 export function startDailySummary(store: SignalStore, db?: Db): void {
   if ((process.env.DAILY_SUMMARY ?? "true").toLowerCase() === "false") return;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(process.env.DAILY_SUMMARY_TIME ?? "15:40");
-  const at = m ? Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2])) : 15 * 60 + 40;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(process.env.DAILY_SUMMARY_TIME ?? "08:40");
+  const at = m ? Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2])) : 08 * 60 + 40;
     let lastSent = "";
   let fails = 0;
   if ((process.env.DAILY_SUMMARY_TEST ?? "").toLowerCase() === "true") void sendDailySummary(store).catch((e: unknown) => console.warn("[daily-summary] test failed:", e));
