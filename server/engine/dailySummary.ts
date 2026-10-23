@@ -1,3 +1,4 @@
+import type { Db } from "mongodb";
 import type { FinalSignal } from "../models/signal.js";
 import type { SignalStore } from "./store.js";
 import { inr, tgSend } from "./tracker.js";
