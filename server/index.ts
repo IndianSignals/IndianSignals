@@ -7,6 +7,7 @@ import { EngineService } from "./engine/scanner.js";
 import { MongoSettingsRepo, SettingsService } from "./engine/settingsStore.js";
 import { MongoPresetRepo, PresetService } from "./engine/presetStore.js";
 import { initPush } from "./engine/webpush.js";
+import { startDailySummary } from "./engine/dailySummary.js";
 
 const config = loadConfig();
 
@@ -42,6 +43,7 @@ const engine = new EngineService(
 );
 
 engine.startTracker(10_000);
+startDailySummary(store);
 
 const selfUrl = process.env.RENDER_EXTERNAL_URL;
 if (selfUrl) {
