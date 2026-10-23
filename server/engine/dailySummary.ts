@@ -115,19 +115,39 @@ export async function sendDailySummary(store: SignalStore, now: number = Date.no
   return res;
 }
 
-export function startDailySummary(store: SignalStore): void {
+/** One report per day, even across restarts / several instances: the first one to insert today's marker wins. */
+async function claimDay(db: Db | undefined, ymd: string): Promise<boolean> {
+  if (!db) return true;
+  try {
+    await db.collection<{ _id: string }>("daily_summary").insertOne({ _id: ymd, at: new Date() } as never);
+    return true;
+  } catch (e) {
+    if ((e as { code?: number }).code !== 11000) console.warn("[daily-summary] marker failed, skipping:", e instanceof Error ? e.message : e);
+    return false;   // already sent today (or database trouble: better no report than a duplicate)
+  }
+}
+async function releaseDay(db: Db | undefined, ymd: string): Promise<void> {
+  if (db) await db.collection<{ _id: string }>("daily_summary").deleteOne({ _id: ymd } as never).catch(() => undefined);
+}
+
+export function startDailySummary(store: SignalStore, db?: Db): void {
   if ((process.env.DAILY_SUMMARY ?? "true").toLowerCase() === "false") return;
   const m = /^(\d{1,2}):(\d{2})$/.exec(process.env.DAILY_SUMMARY_TIME ?? "15:40");
   const at = m ? Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2])) : 15 * 60 + 40;
-  let lastSent = "";
+    let lastSent = "";
+  let fails = 0;
   if ((process.env.DAILY_SUMMARY_TEST ?? "").toLowerCase() === "true") void sendDailySummary(store).catch((e: unknown) => console.warn("[daily-summary] test failed:", e));
   setInterval(() => {
     const now = Date.now();
     const { ymd, minutes } = istParts(now);
     // Window of 60 min after the set time: a restart later than that will not resend an old report.
     if (ymd === lastSent || !isTradingDay(now, process.env) || minutes < at || minutes >= at + 60) return;
-    lastSent = ymd;
-    void sendDailySummary(store, now).catch((e: unknown) => console.warn("[daily-summary] failed:", e));
+        lastSent = ymd;
+    void (async () => {
+      if (!(await claimDay(db, ymd))) return;
+      const res = await sendDailySummary(store, now).catch((e: unknown) => { console.warn("[daily-summary] failed:", e); return "failed"; });
+      if (res === "failed" && ++fails < 3) { await releaseDay(db, ymd); lastSent = ""; }   // Telegram refused: try again in 30s, 3 times at most
+    })();
   }, 30_000).unref();
   console.log(`[daily-summary] Telegram report every trading day at ${String(Math.floor(at / 60)).padStart(2, "0")}:${String(at % 60).padStart(2, "0")} IST`);
 }
