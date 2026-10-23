@@ -488,7 +488,7 @@ var LIST = ["NIFTY","BANKNIFTY","FINNIFTY","MIDCPNIFTY","SENSEX","CRUDEOIL","NAT
 <script>
 (function(){
   var KEY='cgs-settings', THEME_KEY='cgs-theme';
-  var DEF={theme:'dark',fs:'normal',tz:'Asia/Kolkata',tf:'15m',pair:'NIFTYUSDT',balance:100000,riskPct:1,leverage:1,fee:0.05,minRR:2,maxDailyLoss:3,maxTrades:3,
+  var DEF={theme:'dark',fs:'normal',tz:'Asia/Kolkata',tf:'15m',pair:'NIFTYUSDT',balance:100000,riskPct:1,leverage:1,fee:0.05,minRR:1,maxDailyLoss:3,maxTrades:3,
     sigAlerts:true,mktAlerts:true,sound:false,push:false,minScore:70,side:'both',refreshMs:5000};
   function read(){try{return Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){return Object.assign({},DEF);}}
   var S=read();
@@ -2511,7 +2511,7 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
   "use strict";
   var KL = "https://data-api.binance.vision/api/v3/klines";
   var CG = window.CG = window.CG || {};
-  CG.cfg = Object.assign({ balance: 100000, riskPct: 1, leverage: 1, refreshMs: 20000, tpMult: [1.5, 2.5, 3.5], tpSplit: [33, 33, 34] }, CG.cfg || {});
+  CG.cfg = Object.assign({ balance: 100000, riskPct: 1, leverage: 1, refreshMs: 20000, tpMult: [1, 2, 3], tpSplit: [33, 33, 34] }, CG.cfg || {});
   CG.state = CG.state || {};
   var $ = function (id) { return document.getElementById(id); };
   var last = function (a) { return a[a.length - 1]; };
@@ -2552,7 +2552,7 @@ drop.style.cssText="position:fixed;display:none;z-index:99999;max-height:260px;o
     var p = pts(a), long = p >= 3, dir = long ? 1 : -1, price = a.price;
     var dist = Math.max(1.5 * a.atr, price * 0.003);
     return { sym: sym, tf: tf, side: long ? "LONG" : "SHORT", entry: price, zl: price * 0.9985, zh: price * 1.0015,
-      sl: price - dir * dist, tp: CG.cfg.tpMult.map(function (m) { return price + dir * dist * m; }), rr: CG.cfg.tpMult[1], created: Date.now() };
+      sl: price - dir * dist, tp: CG.cfg.tpMult.map(function (m) { return price + dir * dist * m; }), rr: CG.cfg.tpMult[0], created: Date.now() };
   }
   function loadSig(sym) { try { return JSON.parse(localStorage.getItem("cgs_sig_" + sym)); } catch (e) { return null; } }
   function saveSig(s) { try { localStorage.setItem("cgs_sig_" + s.sym, JSON.stringify(s)); } catch (e) {} }
@@ -2918,7 +2918,7 @@ var bd = $("posCalcBackdrop");
     if (supL == null) { var mn = Math.min.apply(null, rec.map(function (x) { return x.l; })); if (mn < price) supL = mn; }
     if (resL == null) { var mx = Math.max.apply(null, rec.map(function (x) { return x.h; })); if (mx > price) resL = mx; }
     info.sr = { sup: supL, res: resL };
-    var R = Math.abs(s.entry - s.sl) || price * 0.003, mult = (cfg.tpMult || [1.5, 2.5, 3.5])[1];
+    var R = Math.abs(s.entry - s.sl) || price * 0.003, mult = (cfg.tpMult || [1, 2, 3])[1];
     var opp = d > 0 ? (resL != null ? resL - price : Infinity) : (supL != null ? price - supL : Infinity);
     var back = d > 0 ? (supL != null ? price - supL : Infinity) : (resL != null ? resL - price : Infinity);
     var head = Number.isFinite(opp) ? clamp(opp / (R * mult), 0, 1.2) / 1.2 : 1;
