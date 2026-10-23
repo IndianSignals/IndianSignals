@@ -6,7 +6,7 @@ import { IST_OFFSET_MS, isTradingDay, istParts } from "../../shared/indianMarket
 
 /**
  * Daily Telegram report, sent once after the market closes (default 15:40 IST, trading days only).
- * Env: DAILY_SUMMARY=false (turn off), DAILY_SUMMARY_TIME=15:40 (IST), DAILY_SUMMARY_TEST=true (send once at boot).
+ * Env: DAILY_SUMMARY=false (turn off), DAILY_SUMMARY_TIME=08:40 (IST), DAILY_SUMMARY_TEST=true (send once at boot).
  */
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const LINE = "━━━━━━━━━━━━━━━━━━";
@@ -58,8 +58,18 @@ export function signalsOfDay(all: FinalSignal[], ymd: string): FinalSignal[] {
     .sort((a, b) => a.timestamps.createdAt.localeCompare(b.timestamps.createdAt));
 }
 
-export function buildDailySummary(all: FinalSignal[], now: number = Date.now()): string {
-  const day = istParts(now).ymd;
+/** The last trading day before `now` (Monday morning -> Friday). */
+export function prevTradingDay(now: number = Date.now()): number {
+  for (let i = 1; i <= 10; i++) {
+    const t = now - i * 86_400_000;
+    if (isTradingDay(t, process.env)) return t;
+  }
+  return now - 86_400_000;
+}
+
+/** `reportDay` = any timestamp inside the IST day to report on (default: the previous trading day). */
+export function buildDailySummary(all: FinalSignal[], now: number = Date.now(), reportDay: number = prevTradingDay(now)): string {
+  const day = istParts(reportDay).ymd;
   const rows = signalsOfDay(all, day).map(classify);
   const head = `📊 <b>DAILY SIGNAL REPORT</b>\n🗓 ${dateLabel(now)} · Market closed 🔔\n${LINE}`;
   const foot = `\n${LINE}\n⚠️ <i>Not financial advice. Results are measured on signal levels, not actual orders.</i>`;
